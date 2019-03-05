@@ -5,9 +5,13 @@ Database models for edx_schedule.
 
 from __future__ import absolute_import, unicode_literals
 
-# from django.db import models
+from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
+from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
+from django.utils.translation import gettext_lazy as _
 from model_utils.models import TimeStampedModel
+from opaque_keys.edx.django.models import BlockTypeKeyField, CourseKeyField
 
 
 @python_2_unicode_compatible
@@ -15,12 +19,21 @@ class DatePolicy(TimeStampedModel):
     """
     TODO: replace with a brief description of the model.
 
-    TODO: Add either a negative or a positive PII annotation to the end of this docstring.  For more
-    information, see OEP-30:
-    https://open-edx-proposals.readthedocs.io/en/latest/oep-0030-arch-pii-markup-and-auditing.html
+    .. no_pii:
     """
 
-    # TODO: add field definitions
+    course_id = CourseKeyField(db_index=True, max_length=255)
+    abs_date = models.DateTimeField(null=True)
+    rel_date = models.IntegerField(null=True)
+
+    def clean(self):
+        """
+        Validate data before saving.
+        """
+        if self.abs_date and self.rel_date:
+            raise ValidationError(_("Absolute and relative dates cannot both be used"))
+        elif not (self.abs_date or self.rel_date):
+            raise ValidationError(_("Either absolute or relative date must be set"))
 
     def __str__(self):
         """
@@ -31,16 +44,20 @@ class DatePolicy(TimeStampedModel):
 
 
 @python_2_unicode_compatible
-class ContentDate(TimeStampedModel):
+class ContentDate(models.Model):
     """
     TODO: replace with a brief description of the model.
 
-    TODO: Add either a negative or a positive PII annotation to the end of this docstring.  For more
-    information, see OEP-30:
-    https://open-edx-proposals.readthedocs.io/en/latest/oep-0030-arch-pii-markup-and-auditing.html
+    .. no_pii:
     """
 
-    # TODO: add field definitions
+    policy = models.ForeignKey(DatePolicy)
+    location = BlockTypeKeyField(null=True, default=None, db_index=True, max_length=255)
+
+    class Meta:
+        """Django Metadata."""
+
+        unique_together = ('policy', 'location')
 
     def __str__(self):
         """
@@ -55,12 +72,24 @@ class UserDate(TimeStampedModel):
     """
     TODO: replace with a brief description of the model.
 
-    TODO: Add either a negative or a positive PII annotation to the end of this docstring.  For more
-    information, see OEP-30:
-    https://open-edx-proposals.readthedocs.io/en/latest/oep-0030-arch-pii-markup-and-auditing.html
+    .. no_pii:
     """
 
-    # TODO: add field definitions
+    user = models.ForeignKey(get_user_model())
+    policy = models.ForeignKey(DatePolicy)
+    abs_date = models.DateTimeField(null=True)
+    rel_date = models.IntegerField(null=True)
+    reason = models.TextField(default='')
+    actor = models.ForeignKey(get_user_model(), null=True, default=None, related_name="actor")
+
+    def clean(self):
+        """
+        Validate data before saving.
+        """
+        if self.abs_date and self.rel_date:
+            raise ValidationError(_("Absolute and relative dates cannot both be used"))
+        elif not (self.abs_date or self.rel_date):
+            raise ValidationError(_("Either absolute or relative date must be set"))
 
     def __str__(self):
         """
