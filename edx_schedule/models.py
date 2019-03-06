@@ -5,6 +5,8 @@ Database models for edx_schedule.
 
 from __future__ import absolute_import, unicode_literals
 
+from datetime import timedelta
+
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -81,6 +83,16 @@ class UserDate(TimeStampedModel):
     rel_date = models.IntegerField(null=True)
     reason = models.TextField(default='')
     actor = models.ForeignKey(get_user_model(), null=True, default=None, related_name="actor")
+
+    @property
+    def actual_date(self):
+        """
+        Returns the normalized date
+        """
+        if self.abs_date:
+            return self.abs_date
+        else:
+            return self.policy.actual_date + timedelta(days=self.rel_date)
 
     def clean(self):
         """

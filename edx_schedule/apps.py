@@ -14,3 +14,12 @@ class EdxScheduleConfig(AppConfig):
     """
 
     name = 'edx_schedule'
+    plugin_app = {
+        u'url_config': {
+            u'lms.djangoapp': {
+                u'namespace': u'edx_schedule',
+                u'regex': u'^api/',
+                u'relative_path': u'urls',
+            },
+        },
+    }

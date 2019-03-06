@@ -88,7 +88,6 @@ setup(
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Framework :: Django',
-        'Framework :: Django :: 1.8',
         'Framework :: Django :: 1.11',
         'Framework :: Django :: 2.0',
         'Intended Audience :: Developers',
@@ -99,4 +98,14 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.6',
     ],
+    entry_points={
+        'lms.djangoapp': [
+            "edx_schedule = edx_schedule.apps:EdxScheduleConfig",
+        ],
+        'cms.djangoapp': [
+            "edx_schedule = edx_schedule.apps:EdxScheduleConfig",
+        ],
+
+    },
+
 )
