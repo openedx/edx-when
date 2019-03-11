@@ -1,9 +1,9 @@
-.. edx-schedule documentation master file, created by
+.. edx-when documentation master file, created by
    sphinx-quickstart on Mon Mar 04 10:57:27 2019.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-edx-schedule
+edx-when
 ===============================
 Your project description goes here
 

@@ -1,14 +1,14 @@
 [main]
 host = https://www.transifex.com
 
-[edx-platform.edx-schedule]
-file_filter = edx_schedule/conf/locale/<lang>/LC_MESSAGES/django.po
-source_file = edx_schedule/conf/locale/en/LC_MESSAGES/django.po
+[edx-platform.edx-when]
+file_filter = edx_when/conf/locale/<lang>/LC_MESSAGES/django.po
+source_file = edx_when/conf/locale/en/LC_MESSAGES/django.po
 source_lang = en
 type = PO
 
-[edx-platform.edx-schedule-js]
-file_filter = edx_schedule/conf/locale/<lang>/LC_MESSAGES/djangojs.po
-source_file = edx_schedule/conf/locale/en/LC_MESSAGES/djangojs.po
+[edx-platform.edx-when-js]
+file_filter = edx_when/conf/locale/<lang>/LC_MESSAGES/djangojs.po
+source_file = edx_when/conf/locale/en/LC_MESSAGES/djangojs.po
 source_lang = en
 type = PO

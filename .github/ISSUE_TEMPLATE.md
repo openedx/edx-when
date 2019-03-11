@@ -1,4 +1,4 @@
-* edx-schedule version:
+* edx-when version:
 * Django version:
 * Python version:
 * Operating System:

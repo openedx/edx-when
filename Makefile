@@ -81,14 +81,14 @@ selfcheck: ## check that the Makefile is well-formed
 
 extract_translations: ## extract strings to be translated, outputting .mo files
 	rm -rf docs/_build
-	cd edx-schedule && ../manage.py makemessages -l en -v1 -d django
-	cd edx-schedule && ../manage.py makemessages -l en -v1 -d djangojs
+	cd edx-when && ../manage.py makemessages -l en -v1 -d django
+	cd edx-when && ../manage.py makemessages -l en -v1 -d djangojs
 
 compile_translations: ## compile translation files, outputting .po files for each supported language
-	cd edx-schedule && ../manage.py compilemessages
+	cd edx-when && ../manage.py compilemessages
 
 detect_changed_source_translations:
-	cd edx-schedule && i18n_tool changed
+	cd edx-when && i18n_tool changed
 
 pull_translations: ## pull translations from Transifex
 	tx pull -af --mode reviewed
@@ -97,7 +97,7 @@ push_translations: ## push source translation files (.po) from Transifex
 	tx push -s
 
 dummy_translations: ## generate dummy translation (.po) files
-	cd edx_schedule && i18n_tool dummy
+	cd edx_when && i18n_tool dummy
 
 build_dummy_translations: extract_translations dummy_translations compile_translations ## generate and compile dummy translation files
 

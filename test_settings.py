@@ -31,13 +31,13 @@ DATABASES = {
 INSTALLED_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
-    'edx_schedule',
+    'edx_when',
 )
 
 LOCALE_PATHS = [
-    root('edx_schedule', 'conf', 'locale'),
+    root('edx_when', 'conf', 'locale'),
 ]
 
-ROOT_URLCONF = 'edx_schedule.urls'
+ROOT_URLCONF = 'edx_when.urls'
 
 SECRET_KEY = 'insecure-secret-key'

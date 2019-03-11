@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Database models for edx_schedule.
+Database models for edx_when.
 """
 
 from __future__ import absolute_import, unicode_literals
@@ -13,7 +13,7 @@ from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import gettext_lazy as _
 from model_utils.models import TimeStampedModel
-from opaque_keys.edx.django.models import BlockTypeKeyField, CourseKeyField
+from opaque_keys.edx.django.models import UsageKeyField, CourseKeyField
 
 
 @python_2_unicode_compatible
@@ -24,18 +24,7 @@ class DatePolicy(TimeStampedModel):
     .. no_pii:
     """
 
-    course_id = CourseKeyField(db_index=True, max_length=255)
-    abs_date = models.DateTimeField(null=True)
-    rel_date = models.IntegerField(null=True)
-
-    def clean(self):
-        """
-        Validate data before saving.
-        """
-        if self.abs_date and self.rel_date:
-            raise ValidationError(_("Absolute and relative dates cannot both be used"))
-        elif not (self.abs_date or self.rel_date):
-            raise ValidationError(_("Either absolute or relative date must be set"))
+    abs_date = models.DateTimeField(null=True, db_index=True)
 
     def __str__(self):
         """
@@ -53,13 +42,16 @@ class ContentDate(models.Model):
     .. no_pii:
     """
 
+    course_id = CourseKeyField(db_index=True, max_length=255)
     policy = models.ForeignKey(DatePolicy)
-    location = BlockTypeKeyField(null=True, default=None, db_index=True, max_length=255)
+    location = UsageKeyField(null=True, default=None, db_index=True, max_length=255)
+    field = models.CharField(max_length=255, default='')
+    active = models.BooleanField(default=True, db_index=True)
 
     class Meta:
         """Django Metadata."""
 
-        unique_together = ('policy', 'location')
+        unique_together = ('policy', 'location', 'field')
 
     def __str__(self):
         """
@@ -78,7 +70,7 @@ class UserDate(TimeStampedModel):
     """
 
     user = models.ForeignKey(get_user_model())
-    policy = models.ForeignKey(DatePolicy)
+    content_date = models.ForeignKey(ContentDate)
     abs_date = models.DateTimeField(null=True)
     rel_date = models.IntegerField(null=True)
     reason = models.TextField(default='')
@@ -92,7 +84,7 @@ class UserDate(TimeStampedModel):
         if self.abs_date:
             return self.abs_date
         else:
-            return self.policy.actual_date + timedelta(days=self.rel_date)
+            return self.content_date.policy.abs_date + timedelta(days=self.rel_date)
 
     def clean(self):
         """

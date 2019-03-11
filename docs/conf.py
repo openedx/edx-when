@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=invalid-name
 """
-edx-schedule documentation build configuration file.
+edx-when documentation build configuration file.
 
 This file is execfile()d with the current directory set to its
 containing dir.
@@ -42,7 +42,7 @@ def get_version(*file_paths):
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(REPO_ROOT)
 
-VERSION = get_version('../edx_schedule', '__init__.py')
+VERSION = get_version('../edx_when', '__init__.py')
 
 # Configure Django for autodoc usage
 settings.configure()
@@ -96,7 +96,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'edx-schedule'
+project = 'edx-when'
 copyright = edx_theme.COPYRIGHT  # pylint: disable=redefined-builtin
 author = edx_theme.AUTHOR
 project_title = 'Schedule'
@@ -183,7 +183,7 @@ html_theme_path = [edx_theme.get_html_theme_path()]
 # The name for this set of Sphinx documents.
 # "<project> v<release> documentation" by default.
 #
-# html_title = 'edx-schedule v0.1.0'
+# html_title = 'edx-when v0.1.0'
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
 #
@@ -496,8 +496,8 @@ def on_init(app):  # pylint: disable=unused-argument
         # If we are, assemble the path manually
         bin_path = os.path.abspath(os.path.join(sys.prefix, 'bin'))
         apidoc_path = os.path.join(bin_path, apidoc_path)
-    check_call([apidoc_path, '-o', docs_path, os.path.join(root_path, 'edx_schedule'),
-                os.path.join(root_path, 'edx_schedule/migrations')])
+    check_call([apidoc_path, '-o', docs_path, os.path.join(root_path, 'edx_when'),
+                os.path.join(root_path, 'edx_when/migrations')])
 
 
 def setup(app):

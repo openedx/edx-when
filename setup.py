@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=W6005,W6100
 """
-Package metadata for edx_schedule.
+Package metadata for edx_when.
 """
 from __future__ import absolute_import, print_function
 
@@ -58,7 +58,7 @@ def is_requirement(line):
     )
 
 
-VERSION = get_version('edx_schedule', '__init__.py')
+VERSION = get_version('edx_when', '__init__.py')
 
 if sys.argv[-1] == 'tag':
     print("Tagging the version on github:")
@@ -70,15 +70,15 @@ README = open(os.path.join(os.path.dirname(__file__), 'README.rst')).read()
 CHANGELOG = open(os.path.join(os.path.dirname(__file__), 'CHANGELOG.rst')).read()
 
 setup(
-    name='edx-schedule',
+    name='edx-when',
     version=VERSION,
     description="""Your project description goes here""",
     long_description=README + '\n\n' + CHANGELOG,
     author='edX',
     author_email='oscm@edx.org',
-    url='https://github.com/edx/edx-schedule',
+    url='https://github.com/edx/edx-when',
     packages=[
-        'edx_schedule',
+        'edx_when',
     ],
     include_package_data=True,
     install_requires=load_requirements('requirements/base.in'),
@@ -100,10 +100,10 @@ setup(
     ],
     entry_points={
         'lms.djangoapp': [
-            "edx_schedule = edx_schedule.apps:EdxScheduleConfig",
+            "edx_when = edx_when.apps:EdxWhenConfig",
         ],
         'cms.djangoapp': [
-            "edx_schedule = edx_schedule.apps:EdxScheduleConfig",
+            "edx_when = edx_when.apps:EdxWhenConfig",
         ],
 
     },
