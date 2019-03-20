@@ -5,6 +5,9 @@ edx_when Django application initialization.
 
 from __future__ import absolute_import, unicode_literals
 
+import traceback
+import warnings
+
 from django.apps import AppConfig
 
 
@@ -23,3 +26,13 @@ class EdxWhenConfig(AppConfig):
             },
         },
     }
+
+    def ready(self):
+        """
+        Set up signal handlers for edx_when.
+        """
+        try:
+            import edx_when.signals  # pylint: disable=unused-variable
+        except ImportError:
+            warnings.warn("Not able to import code from edx-platform")
+            traceback.print_exc()

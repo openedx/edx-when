@@ -13,7 +13,7 @@ from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import gettext_lazy as _
 from model_utils.models import TimeStampedModel
-from opaque_keys.edx.django.models import UsageKeyField, CourseKeyField
+from opaque_keys.edx.django.models import CourseKeyField, UsageKeyField
 
 
 @python_2_unicode_compatible
@@ -79,7 +79,7 @@ class UserDate(TimeStampedModel):
     @property
     def actual_date(self):
         """
-        Returns the normalized date
+        Return the normalized date.
         """
         if self.abs_date:
             return self.abs_date
