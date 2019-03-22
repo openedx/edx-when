@@ -84,7 +84,14 @@ class UserDate(TimeStampedModel):
         if self.abs_date:
             return self.abs_date
         else:
-            return self.content_date.policy.abs_date + timedelta(days=self.rel_date)
+            return self.content_date.policy.abs_date + timedelta(days=self.rel_date or 0)
+
+    @property
+    def location(self):
+        """
+        Return the content location.
+        """
+        return self.content_date.location
 
     def clean(self):
         """
