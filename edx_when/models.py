@@ -71,10 +71,10 @@ class UserDate(TimeStampedModel):
 
     user = models.ForeignKey(get_user_model())
     content_date = models.ForeignKey(ContentDate)
-    abs_date = models.DateTimeField(null=True)
-    rel_date = models.IntegerField(null=True)
-    reason = models.TextField(default='')
-    actor = models.ForeignKey(get_user_model(), null=True, default=None, related_name="actor")
+    abs_date = models.DateTimeField(null=True, blank=True)
+    rel_date = models.IntegerField(null=True, blank=True)
+    reason = models.TextField(default='', blank=True)
+    actor = models.ForeignKey(get_user_model(), null=True, default=None, blank=True, related_name="actor")
 
     @property
     def actual_date(self):
@@ -101,6 +101,8 @@ class UserDate(TimeStampedModel):
             raise ValidationError(_("Absolute and relative dates cannot both be used"))
         elif not (self.abs_date or self.rel_date):
             raise ValidationError(_("Either absolute or relative date must be set"))
+        elif self.actual_date < self.content_date.policy.abs_date:
+            raise ValidationError(_("Override date must be later than policy date"))
 
     def __str__(self):
         """

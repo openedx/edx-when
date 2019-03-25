@@ -5,6 +5,7 @@ from __future__ import absolute_import, unicode_literals
 
 import logging
 
+from django.core.exceptions import ValidationError
 from edx_django_utils.cache.utils import DEFAULT_REQUEST_CACHE
 from opaque_keys.edx.keys import CourseKey, UsageKey
 
@@ -90,7 +91,10 @@ def get_overrides_for_block(course_id, block_id):
         else:
             users.add(udate.user_id)
         username = udate.user.username
-        full_name = udate.user.profile.name
+        try:
+            full_name = udate.user.profile.name
+        except AttributeError:
+            full_name = 'unknown'
         override = udate.actual_date
         dates.append((username, full_name, override))
     return dates
@@ -108,12 +112,12 @@ def get_overrides_for_user(course_id, user):
                 content_date__course_id=course_id,
                 user=user,
                 content_date__active=True).order_by('-modified')
-    users = set()
+    blocks = set()
     for udate in query:
-        if udate.user_id in users:
+        if udate.content_date.location in blocks:
             continue
         else:
-            users.add(udate.user_id)
+            blocks.add(udate.content_date.location)
         yield {'location': udate.content_date.location, 'actual_date': udate.actual_date}
 
 
@@ -143,7 +147,9 @@ def set_date_for_block(course_id, block_id, field, abs_date, rel_date=None, user
         userd.actor = actor
         userd.reason = reason or ''
         userd.content_date = existing_date
-        if userd.actual_date < existing_date.policy.abs_date:
+        try:
+            userd.full_clean()
+        except ValidationError:
             raise InvalidDateError(userd.actual_date)
         userd.save()
         log.info('Saved override for user=%d loc=%s date=%s', userd.user_id, userd.location, userd.actual_date)

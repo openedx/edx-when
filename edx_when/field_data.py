@@ -36,14 +36,14 @@ class DateLookupFieldData(FieldData):
         Return field value for given block and field name.
         """
         if name in api.FIELDS_TO_EXTRACT:
-            log.info('location %r %r', block.location, name)
+            log.debug('location %r %r', block.location, name)
             val = self._course_dates.get((block.location, name), NOT_FOUND)
         else:
             val = NOT_FOUND
         if val is NOT_FOUND:
             val = self._defaults.get(block, name)
         else:
-            log.info('Got value for %r, %s, %s', block.location, name, val)
+            log.debug('Got value for %r, %s, %s', block.location, name, val)
         return val
 
     def set(self, block, name, value):
