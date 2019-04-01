@@ -105,6 +105,9 @@ setup(
         'cms.djangoapp': [
             "edx_when = edx_when.apps:EdxWhenConfig",
         ],
+        'openedx.block_structure_transformer': [
+            'load_date_data = edx_when.field_data:DateOverrideTransformer'
+        ],
 
     },
 

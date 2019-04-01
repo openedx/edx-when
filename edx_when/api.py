@@ -39,16 +39,17 @@ def set_dates_for_course(course_key, items):
                     set_date_for_block(course_key, location, field, val)
 
 
-def get_dates_for_course(course_id, user=None):
+def get_dates_for_course(course_id, user=None, use_cached=True):
     """
     Return dictionary of dates for the given course_id and optional user.
 
         key: block location, field name
         value: datetime object
     """
+    log.debug("Getting dates for %s as %s", course_id, user)
     cache_key = 'course_dates.%s.%s' % (course_id, user.id if user else '')
     dates = DEFAULT_REQUEST_CACHE.data.get(cache_key, None)
-    if dates is not None:
+    if use_cached and dates is not None:
         return dates
     course_id = _ensure_key(CourseKey, course_id)
     qset = models.ContentDate.objects.filter(course_id=course_id, active=True).select_related('policy')

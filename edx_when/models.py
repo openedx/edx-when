@@ -99,8 +99,6 @@ class UserDate(TimeStampedModel):
         """
         if self.abs_date and self.rel_date:
             raise ValidationError(_("Absolute and relative dates cannot both be used"))
-        elif not (self.abs_date or self.rel_date):
-            raise ValidationError(_("Either absolute or relative date must be set"))
         elif self.actual_date < self.content_date.policy.abs_date:
             raise ValidationError(_("Override date must be later than policy date"))
 
