@@ -59,7 +59,7 @@ def get_dates_for_course(course_id, user=None, use_cached=True):
         key = (cdate.location, cdate.field)
         dates[key] = cdate.policy.abs_date
         policies[cdate.id] = key
-    if user:
+    if user and not user.is_anonymous:
         for userdate in models.UserDate.objects.filter(
                 user=user,
                 content_date__course_id=course_id,
@@ -143,7 +143,7 @@ def set_date_for_block(course_id, block_id, field, abs_date, rel_date=None, user
         existing_date = models.ContentDate(course_id=course_id, location=block_id, field=field)
         existing_date.policy, __ = models.DatePolicy.objects.get_or_create(abs_date=abs_date)
 
-    if user:
+    if user and not user.is_anonymous:
         userd = models.UserDate(user=user, abs_date=abs_date, rel_date=rel_date)
         userd.actor = actor
         userd.reason = reason or ''
