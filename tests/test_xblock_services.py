@@ -115,3 +115,13 @@ class TransformerTests(XblockTests):
             call_args = arg[0]
             if call_args[0] == self.items[0][0]:
                 assert call_args[2] == override
+
+        # now make it raise exceptions
+        # attributeerror is swallowed
+        # in the case where a block does not exist for some reason
+        block_structure.override_xblock_field.side_effect = AttributeError()
+        transformer.transform(usage_info, block_structure)
+        # other exceptions should bubble up
+        block_structure.override_xblock_field.side_effect = ValueError()
+        with self.assertRaises(ValueError):
+            transformer.transform(usage_info, block_structure)
