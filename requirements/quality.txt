@@ -33,7 +33,7 @@ enum34==1.1.6
 fs==2.4.4
 funcsigs==1.0.2
 future==0.17.1
-futures==3.2.0            # via caniusepython3, isort
+futures==3.2.0     ; python_version<='3'       # via caniusepython3, isort
 idna==2.8
 isort==4.3.16
 jinja2==2.10
