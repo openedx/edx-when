@@ -5,7 +5,9 @@ from __future__ import absolute_import, unicode_literals
 
 import logging
 
+import six
 from django.core.exceptions import ValidationError
+from django.utils.dateparse import parse_datetime
 from edx_django_utils.cache.utils import DEFAULT_REQUEST_CACHE
 from opaque_keys.edx.keys import CourseKey, UsageKey
 
@@ -134,6 +136,8 @@ def set_date_for_block(course_id, block_id, field, abs_date, rel_date=None, user
     """
     course_id = _ensure_key(CourseKey, course_id)
     block_id = _ensure_key(UsageKey, block_id)
+    if abs_date and isinstance(abs_date, six.string_types):
+        abs_date = parse_datetime(abs_date)
     try:
         existing_date = models.ContentDate.objects.get(course_id=course_id, location=block_id, field=field)
         existing_date.active = True
@@ -156,7 +160,7 @@ def set_date_for_block(course_id, block_id, field, abs_date, rel_date=None, user
         log.info('Saved override for user=%d loc=%s date=%s', userd.user_id, userd.location, userd.actual_date)
     else:
         if existing_date.policy.abs_date != abs_date:
-            log.info('updating policy %r', existing_date)
+            log.info('updating policy %r %r -> %r', existing_date, existing_date.policy.abs_date, abs_date)
             existing_date.policy = models.DatePolicy.objects.get_or_create(abs_date=abs_date)[0]
     existing_date.save()
 

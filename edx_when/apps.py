@@ -5,9 +5,6 @@ edx_when Django application initialization.
 
 from __future__ import absolute_import, unicode_literals
 
-import traceback
-import warnings
-
 from django.apps import AppConfig
 
 
@@ -18,21 +15,21 @@ class EdxWhenConfig(AppConfig):
 
     name = 'edx_when'
     plugin_app = {
-        u'url_config': {
-            u'lms.djangoapp': {
-                u'namespace': u'edx_when',
-                u'regex': u'^api/',
-                u'relative_path': u'urls',
+        'url_config': {
+            'lms.djangoapp': {
+                'namespace': u'edx_when',
+                'regex': u'^api/',
+                'relative_path': u'urls',
             },
         },
+        'signals_config': {
+            'cms.djangoapp': {
+                'receivers': [
+                    {
+                        'receiver_func_name': 'extract_dates',
+                        'signal_path': 'xmodule.modulestore.django.COURSE_PUBLISHED'
+                    }
+                ]
+            }
+        }
     }
-
-    def ready(self):
-        """
-        Set up signal handlers for edx_when.
-        """
-        try:
-            import edx_when.signals  # pylint: disable=unused-variable
-        except ImportError:
-            warnings.warn("Not able to import code from edx-platform")
-            traceback.print_exc()
