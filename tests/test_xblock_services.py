@@ -48,6 +48,7 @@ class TestFieldData(XblockTests):
     Tests for the FieldData subclass.
     """
 
+    @api.override_enabled()
     def test_field_data_get(self):
         defaults = mock.MagicMock()
         dfd = field_data.DateLookupFieldData(defaults, course_id=self.course_id, use_cached=False)
