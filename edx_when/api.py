@@ -5,7 +5,9 @@ from __future__ import absolute_import, unicode_literals
 
 import logging
 
+import crum
 import six
+import waffle
 from django.core.exceptions import ValidationError
 from django.utils.dateparse import parse_datetime
 from edx_django_utils.cache.utils import DEFAULT_REQUEST_CACHE
@@ -22,6 +24,24 @@ def _ensure_key(key_class, key_obj):
     if not isinstance(key_obj, key_class):
         key_obj = key_class.from_string(key_obj)
     return key_obj
+
+
+def is_enabled_for_course(course_key, request=None):
+    """
+    Return whether edx-when is enabled for this course.
+    """
+    request = request or crum.get_current_request()
+    if not waffle.flag_is_active(request, 'edx-when-enabled'):
+        return waffle.flag_is_active(request, 'edx-when:{}'.format(course_key))
+    return True
+
+
+def override_enabled():
+    """
+    Return decorator that enables edx-when.
+    """
+    from waffle.testutils import override_flag
+    return override_flag('edx-when-enabled', active=True)
 
 
 def set_dates_for_course(course_key, items):

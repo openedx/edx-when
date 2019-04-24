@@ -32,6 +32,7 @@ INSTALLED_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'edx_when',
+    'waffle',
 )
 
 LOCALE_PATHS = [

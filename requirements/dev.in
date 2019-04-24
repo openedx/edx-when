@@ -6,3 +6,4 @@
 
 diff-cover                # Changeset diff test coverage
 edx-i18n-tools            # For i18n_tool dummy
+path.py==11.5.0

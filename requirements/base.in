@@ -5,3 +5,5 @@ django-model-utils        # Provides TimeStampedModel abstract base class
 edx-opaque-keys
 edx-drf-extensions
 xblock
+django-waffle
+django-crum
