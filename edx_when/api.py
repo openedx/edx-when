@@ -11,6 +11,7 @@ import waffle
 from django.core.exceptions import ValidationError
 from django.utils.dateparse import parse_datetime
 from edx_django_utils.cache.utils import DEFAULT_REQUEST_CACHE
+from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey, UsageKey
 
 from edx_when import models
@@ -69,7 +70,16 @@ def get_dates_for_course(course_id, user=None, use_cached=True):
         value: datetime object
     """
     log.debug("Getting dates for %s as %s", course_id, user)
-    cache_key = 'course_dates.%s.%s' % (course_id, user.id if user else '')
+
+    cache_key = 'course_dates.%s'
+    if user:
+        if isinstance(user, int):
+            user_id = user
+        else:
+            user_id = user.id if not user.is_anonymous else ''
+        cache_key += '.%d' % user_id
+    else:
+        user_id = None
     dates = DEFAULT_REQUEST_CACHE.data.get(cache_key, None)
     if use_cached and dates is not None:
         return dates
@@ -81,9 +91,9 @@ def get_dates_for_course(course_id, user=None, use_cached=True):
         key = (cdate.location, cdate.field)
         dates[key] = cdate.policy.abs_date
         policies[cdate.id] = key
-    if user and not user.is_anonymous:
+    if user_id:
         for userdate in models.UserDate.objects.filter(
-                user=user,
+                user_id=user_id,
                 content_date__course_id=course_id,
                 content_date__active=True).select_related(
                     'content_date', 'content_date__policy'
@@ -91,6 +101,16 @@ def get_dates_for_course(course_id, user=None, use_cached=True):
             dates[policies[userdate.content_date_id]] = userdate.actual_date
     DEFAULT_REQUEST_CACHE.data[cache_key] = dates
     return dates
+
+
+def get_date_for_block(course_id, block_id, name='due', user=None):
+    """
+    Return the date for block in the course for the (optional) user.
+    """
+    try:
+        return get_dates_for_course(course_id, user).get((_ensure_key(UsageKey, block_id), name), None)
+    except InvalidKeyError:
+        return None
 
 
 def get_overrides_for_block(course_id, block_id):
