@@ -77,7 +77,7 @@ def get_dates_for_course(course_id, user=None, use_cached=True):
             user_id = user
         else:
             user_id = user.id if not user.is_anonymous else ''
-        cache_key += '.%d' % user_id
+        cache_key += '.%s' % user_id
     else:
         user_id = None
     dates = DEFAULT_REQUEST_CACHE.data.get(cache_key, None)
