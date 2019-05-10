@@ -1,7 +1,7 @@
 # openedx.yaml
 
 ---
-owner: edx/educator-dahlia
+owner: davestgermain
 nick: edx-when
 tags:
     - tools
@@ -13,5 +13,6 @@ oeps:
     oep-5:
         state: False
         reason: TODO - Implement for this application if appropriate
+    oep-7: true     # Python 3
     oep-30:
         state: True
