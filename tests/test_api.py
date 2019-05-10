@@ -51,7 +51,7 @@ class ApiTests(TestCase):
 
         override_date = datetime(2019, 4, 6)
         api.set_date_for_block(block_id.course_key, block_id, 'due', override_date, user=self.user)
-        retrieved = api.get_dates_for_course(block_id.course_key, user=self.user)
+        retrieved = api.get_dates_for_course(block_id.course_key, user=self.user.id)
         assert len(retrieved) == 3
         assert retrieved[block_id, 'due'] == override_date
 
