@@ -42,6 +42,13 @@ class ApiTests(TestCase):
         # second time is cached
         retrieved = api.get_dates_for_course(items[0][0].course_key)
         assert len(retrieved) == 3
+        return items
+
+    def test_clear_dates_for_course(self):
+        items = self.test_get_dates_for_course()
+        api.clear_dates_for_course(items[0][0].course_key)
+        retrieved = api.get_dates_for_course(items[0][0].course_key, use_cached=False)
+        assert not retrieved
 
     def test_set_user_override(self):
         items = make_items()
