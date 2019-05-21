@@ -18,7 +18,7 @@ from edx_when import models
 
 log = logging.getLogger('edx-when')
 
-FIELDS_TO_EXTRACT = ('due', 'start')
+FIELDS_TO_EXTRACT = ('due', 'start', 'end')
 
 
 def _ensure_key(key_class, key_obj):
@@ -60,6 +60,14 @@ def set_dates_for_course(course_key, items):
                 if val:
                     log.info('Setting date for %r, %s, %r', location, field, val)
                     set_date_for_block(course_key, location, field, val)
+
+
+def clear_dates_for_course(course_key):
+    """
+    Set all dates to inactive.
+    """
+    course_key = _ensure_key(CourseKey, course_key)
+    models.ContentDate.objects.filter(course_id=course_key, active=True).update(active=False)
 
 
 def get_dates_for_course(course_id, user=None, use_cached=True):
