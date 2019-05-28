@@ -5,6 +5,7 @@ owner: davestgermain
 nick: edx-when
 tags:
     - tools
+    - library
 oeps:
     oep-2: True
     oep-3:
@@ -14,5 +15,6 @@ oeps:
         state: False
         reason: TODO - Implement for this application if appropriate
     oep-7: true     # Python 3
+    oep-18: true    # make upgrade
     oep-30:
         state: True
