@@ -87,3 +87,10 @@ class ApiTests(TestCase):
         block_id, data = items[0]
         assert api.get_date_for_block(course_id, block_id, user=self.user) == data['due']
         assert api.get_date_for_block(course_id, 'bad', user=self.user) is None
+
+    def test_is_enabled(self):
+        items = make_items()
+        course_id = items[0][0].course_key
+        assert not api.is_enabled_for_course(course_id)
+        api.set_dates_for_course(course_id, items)
+        assert api.is_enabled_for_course(course_id)
