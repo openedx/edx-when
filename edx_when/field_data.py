@@ -39,9 +39,8 @@ class DateLookupFieldData(FieldData):
         Load the dates from the database.
         """
         dates = {}
-        if api.is_enabled_for_course(course_id):
-            for (location, field), date in api.get_dates_for_course(course_id, user, use_cached=use_cached).items():
-                dates[text_type(location), field] = date
+        for (location, field), date in api.get_dates_for_course(course_id, user, use_cached=use_cached).items():
+            dates[text_type(location), field] = date
         self._course_dates = dates
 
     def has(self, block, name):
