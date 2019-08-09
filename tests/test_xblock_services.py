@@ -62,17 +62,30 @@ class TestFieldData(XblockTests):
         assert defaults.get.called_once_with(block.location, 'foo')
 
         # non-existent value
-        defaults.get.side_effect = KeyError()
+        defaults.has.return_value = False
         badblock = MockBlock('foo')
         assert dfd.has(badblock, 'foo') is False
 
         # block with parent with date
         child = MockBlock('child', block)
         date = dfd.get(child, 'due')
-        assert date == self.items[0][1]['due']
+        assert dfd.get(child, 'due') is defaults.get(child, 'due')
+        assert dfd.default(child, 'due') == self.items[0][1]['due']
 
-        with self.assertRaises(KeyError):
-            dfd.get(badblock, 'due')
+        assert dfd.get(badblock, 'due') is defaults.get(badblock, 'due')
+
+    def test_field_data_has(self):
+        defaults = mock.MagicMock()
+        dfd = field_data.DateLookupFieldData(defaults, course_id=self.course_id, use_cached=False)
+        block = MockBlock(self.items[0][0])
+
+        assert dfd.has(block, 'due') is True
+        assert dfd.has(block, 'foo') is defaults.has(block, 'foo')
+        child = MockBlock('child', block)
+        # import pdb;pdb.set_trace()
+        assert dfd.has(child, 'due') is False
+        assert dfd.default(child, 'due') == self.items[0][1]['due']
+        assert dfd.default(child, 'foo') is defaults.default(child, 'foo')
 
     def test_field_data_set_delete(self):
         defaults = mock.MagicMock()
