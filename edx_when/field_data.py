@@ -8,9 +8,26 @@ from xblock.field_data import FieldData
 
 from . import api
 
+try:
+    from xmodule.modulestore.inheritance import InheritanceMixin
+    INHERITABLE_FIELDS = set(InheritanceMixin.fields.keys())
+except ImportError:
+    INHERITABLE_FIELDS = set(('due', 'start', 'end'))
+
+
 log = logging.getLogger('edx-when')
 
 NOT_FOUND = object()
+
+
+def _lineage(block):
+    """
+    Return an iterator over all ancestors of the given block.
+    """
+    parent = block.get_parent()
+    while parent:
+        yield parent
+        parent = parent.get_parent()
 
 
 class DateLookupFieldData(FieldData):
@@ -47,14 +64,20 @@ class DateLookupFieldData(FieldData):
         """
         Return whether the field exists in the block.
         """
-        try:
-            return bool(self.get(block, name))
-        except KeyError:
-            return False
+        val = self._get(block, name)
+        if val is NOT_FOUND:
+            if name in INHERITABLE_FIELDS:
+                for ancestor in _lineage(block):
+                    if self._get(ancestor, name) is not NOT_FOUND:
+                        return False
 
-    def get(self, block, name):
+        return val is not NOT_FOUND or self._defaults.has(block, name)
+
+    def _get(self, block, name):
         """
-        Return field value for given block and field name.
+        Return the value, if it's in edx-when.
+
+        Otherwise, return NOT_FOUND
         """
         if not isinstance(name, text_type):
             name = text_type(name)
@@ -62,17 +85,27 @@ class DateLookupFieldData(FieldData):
             val = self._course_dates.get((text_type(block.location), name), NOT_FOUND)
         else:
             val = NOT_FOUND
-        if val is NOT_FOUND:
-            try:
-                val = self._defaults.get(block, name)
-            except KeyError:
-                parent = block.get_parent()
-                if parent:
-                    val = self.get(parent, name)
-                else:
-                    raise
-            log.debug("NOT FOUND %r %r", (block.location, name), self._course_dates)
         return val
+
+    def get(self, block, name):
+        """
+        Return field value for given block and field name.
+        """
+        val = self._get(block, name)
+        if val is not NOT_FOUND:
+            return val
+        return self._defaults.get(block, name)
+
+    def default(self, block, name):
+        """
+        Return the default for the field.
+        """
+        if name in INHERITABLE_FIELDS:
+            for ancestor in _lineage(block):
+                value = self._get(ancestor, name)
+                if value is not NOT_FOUND:
+                    return value
+        return self._defaults.default(block, name)
 
     def set(self, block, name, value):
         """
