@@ -21,7 +21,10 @@ def extract_dates(sender, course_key, **kwargs):  # pylint: disable=unused-argum
     elif course.self_paced:
         log.info('%s is self-paced. Clearing due dates', course_key)
         clear_dates_for_course(course_key)
-        date_items = [(course.location, own_metadata(course))]
+        metadata = own_metadata(course)
+        # self-paced courses may accidentally have a course due date
+        metadata.pop('due', None)
+        date_items = [(course.location, metadata)]
     else:
         log.info('Publishing course dates for %s', course_key)
         date_items = []
