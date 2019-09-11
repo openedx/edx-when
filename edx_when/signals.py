@@ -6,7 +6,7 @@ import logging
 from six import text_type
 from xblock.fields import Scope
 
-from .api import FIELDS_TO_EXTRACT, clear_dates_for_course, set_dates_for_course
+from .api import FIELDS_TO_EXTRACT, set_dates_for_course
 
 log = logging.getLogger(__name__)
 
@@ -33,6 +33,27 @@ def date_field_values(date_fields, xblock):
     return result
 
 
+def extract_dates_from_course(course):
+    """
+    Extract all dates from the supplied course.
+    """
+    from xmodule.modulestore.django import modulestore  # pylint: disable=import-error
+
+    log.info('Publishing course dates for %s', course.id)
+    if course.self_paced:
+        metadata = date_field_values(FIELDS_TO_EXTRACT, course)
+        # self-paced courses may accidentally have a course due date
+        metadata.pop('due', None)
+        date_items = [(course.location, metadata)]
+    else:
+        date_items = []
+        items = modulestore().get_items(course.id)
+        log.info('extracting dates from %d items in %s', len(items), course.id)
+        for item in items:
+            date_items.append((item.location, date_field_values(FIELDS_TO_EXTRACT, item)))
+    return date_items
+
+
 def extract_dates(sender, course_key, **kwargs):  # pylint: disable=unused-argument
     """
     Extract dates from blocks when publishing a course.
@@ -42,23 +63,12 @@ def extract_dates(sender, course_key, **kwargs):  # pylint: disable=unused-argum
     log.info("Extracting dates from %s", course_key)
 
     course = modulestore().get_course(course_key)
+
     if not course:
         log.info("No course found for key %s", course_key)
-        return None
-    elif course.self_paced:
-        log.info('%s is xblock-paced. Clearing due dates', course_key)
-        clear_dates_for_course(course_key)
-        metadata = date_field_values(FIELDS_TO_EXTRACT, course)
-        # xblock-paced courses may accidentally have a course due date
-        metadata.pop('due', None)
-        date_items = [(course.location, metadata)]
-    else:
-        log.info('Publishing course dates for %s', course_key)
-        date_items = []
-        items = modulestore().get_items(course_key)
-        log.info('extracting dates from %d items in %s', len(items), course_key)
-        for item in items:
-            date_items.append((item.location, date_field_values(FIELDS_TO_EXTRACT, item)))
+        return
+
+    date_items = extract_dates_from_course(course)
 
     try:
         set_dates_for_course(course_key, date_items)

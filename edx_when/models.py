@@ -5,7 +5,7 @@ Database models for edx_when.
 
 from __future__ import absolute_import, unicode_literals
 
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -24,7 +24,8 @@ class DatePolicy(TimeStampedModel):
     .. no_pii:
     """
 
-    abs_date = models.DateTimeField(null=True, db_index=True)
+    abs_date = models.DateTimeField(null=True, blank=True, db_index=True)
+    rel_date = models.DurationField(null=True, blank=True, db_index=True)
 
     def __str__(self):
         """
@@ -32,6 +33,20 @@ class DatePolicy(TimeStampedModel):
         """
         # TODO: return a string appropriate for the data fields
         return '<DatePolicy, ID: {}>'.format(self.id)
+
+    @property
+    def actual_date(self):
+        """
+        Return the normalized date.
+        """
+        return self.rel_date or self.abs_date
+
+    def clean(self):
+        """
+        Validate data before saving.
+        """
+        if self.abs_date and self.rel_date:
+            raise ValidationError(_("Absolute and relative dates cannot both be used"))
 
 
 @python_2_unicode_compatible
@@ -72,7 +87,7 @@ class UserDate(TimeStampedModel):
     user = models.ForeignKey(get_user_model())
     content_date = models.ForeignKey(ContentDate)
     abs_date = models.DateTimeField(null=True, blank=True)
-    rel_date = models.IntegerField(null=True, blank=True)
+    rel_date = models.DurationField(null=True, blank=True, db_index=True)
     reason = models.TextField(default='', blank=True)
     actor = models.ForeignKey(get_user_model(), null=True, default=None, blank=True, related_name="actor")
 
@@ -84,7 +99,7 @@ class UserDate(TimeStampedModel):
         if self.abs_date:
             return self.abs_date
         else:
-            return self.content_date.policy.abs_date + timedelta(days=self.rel_date or 0)
+            return self.content_date.policy.actual_date + self.rel_date
 
     @property
     def location(self):
@@ -99,7 +114,11 @@ class UserDate(TimeStampedModel):
         """
         if self.abs_date and self.rel_date:
             raise ValidationError(_("Absolute and relative dates cannot both be used"))
-        elif self.actual_date < self.content_date.policy.abs_date:
+
+        policy_date = self.content_date.policy.actual_date
+        if self.rel_date is not None and self.rel_date.total_seconds() < 0:
+            raise ValidationError(_("Override date must be later than policy date"))
+        if self.abs_date is not None and isinstance(policy_date, datetime) and self.abs_date < policy_date:
             raise ValidationError(_("Override date must be later than policy date"))
 
     def __str__(self):
