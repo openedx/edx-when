@@ -5,7 +5,7 @@ import logging
 
 from .api import clear_dates_for_course, set_dates_for_course
 
-log = logging.getLogger('edx-when')
+log = logging.getLogger(__name__)
 
 
 def extract_dates(sender, course_key, **kwargs):  # pylint: disable=unused-argument

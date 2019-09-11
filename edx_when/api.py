@@ -14,7 +14,7 @@ from opaque_keys.edx.keys import CourseKey, UsageKey
 
 from edx_when import models
 
-log = logging.getLogger('edx-when')
+log = logging.getLogger(__name__)
 
 FIELDS_TO_EXTRACT = ('due', 'start', 'end')
 
