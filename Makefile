@@ -77,6 +77,11 @@ validate: quality pii_check test ## run tests and quality checks
 selfcheck: ## check that the Makefile is well-formed
 	@echo "The Makefile is well-formed."
 
+## Migrations
+
+makemigrations: ## Generate migrations for any modified database fields
+	./manage.py makemigrations
+
 ## Localization targets
 
 extract_translations: ## extract strings to be translated, outputting .mo files
