@@ -74,7 +74,7 @@ def get_dates_for_course(course_id, user=None, use_cached=True):
     """
     log.debug("Getting dates for %s as %s", course_id, user)
 
-    cache_key = 'course_dates.%s'
+    cache_key = 'course_dates.%s' % course_id
     if user:
         if isinstance(user, int):
             user_id = user

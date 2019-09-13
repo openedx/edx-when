@@ -42,6 +42,15 @@ class ApiTests(TestCase):
         # second time is cached
         retrieved = api.get_dates_for_course(items[0][0].course_key)
         assert len(retrieved) == 3
+
+        # third time with new course_id
+        new_items = make_items('testX+tt202+2019')
+        api.set_dates_for_course(new_items[0][0].course_key, new_items)
+        new_retrieved = api.get_dates_for_course(new_items[0][0].course_key)
+        assert len(new_retrieved) == 3
+        first_id = list(new_retrieved.keys())[0][0]
+        last_id = list(retrieved.keys())[0][0]
+        assert first_id.course_key != last_id.course_key
         return items
 
     def test_clear_dates_for_course(self):
