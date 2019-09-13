@@ -19,14 +19,14 @@ def make_block_id(course_id='testX+tt101+2019', block_type='sequential+block'):
     return UsageKey.from_string(block_id)
 
 
-def make_items():
+def make_items(course_id='testX+tt101+2019'):
     """
     Return item list for set_dates_for_course.
     """
     items = [
-        (make_block_id(), {'due': datetime(2019, 3, 22)}),
-        (make_block_id(), {'due': datetime(2019, 3, 23), 'test': '1'}),
-        (make_block_id(), {'start': datetime(2019, 3, 21), 'test': '1'}),
-        (make_block_id(), {'start': None, 'test': '1'}),
+        (make_block_id(course_id), {'due': datetime(2019, 3, 22)}),
+        (make_block_id(course_id), {'due': datetime(2019, 3, 23), 'test': '1'}),
+        (make_block_id(course_id), {'start': datetime(2019, 3, 21), 'test': '1'}),
+        (make_block_id(course_id), {'start': None, 'test': '1'}),
     ]
     return items
