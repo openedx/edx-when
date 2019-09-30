@@ -36,7 +36,7 @@ mock==3.0.5
 more-itertools==5.0.0     # via pytest, zipp
 newrelic==5.0.2.126
 packaging==19.2           # via pytest
-pathlib2==2.3.4           # via importlib-metadata, pytest, pytest-django
+pathlib2==2.3.5           # via importlib-metadata, pytest, pytest-django
 pbr==5.4.3
 pluggy==0.13.0            # via pytest
 psutil==1.2.1

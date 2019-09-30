@@ -44,7 +44,7 @@ mock==3.0.5
 more-itertools==5.0.0
 newrelic==5.0.2.126
 packaging==19.2
-pathlib2==2.3.4
+pathlib2==2.3.5
 pbr==5.4.3
 pluggy==0.13.0
 psutil==1.2.1
