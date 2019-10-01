@@ -15,7 +15,7 @@ except ImportError:
     INHERITABLE_FIELDS = set(('due', 'start', 'end'))
 
 
-log = logging.getLogger('edx-when')
+log = logging.getLogger(__name__)
 
 NOT_FOUND = object()
 

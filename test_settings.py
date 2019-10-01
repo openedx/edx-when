@@ -42,3 +42,5 @@ LOCALE_PATHS = [
 ROOT_URLCONF = 'edx_when.urls'
 
 SECRET_KEY = 'insecure-secret-key'
+
+COURSE_ID_PATTERN = ''

@@ -12,6 +12,8 @@ from django.test import TestCase
 from edx_when import api, field_data
 from test_utils import make_items
 
+NUM_OVERRIDES = 6
+
 
 class MockBlock(object):
     """
@@ -123,7 +125,7 @@ class TransformerTests(XblockTests):
         block_structure = mock.MagicMock()
         transformer = field_data.DateOverrideTransformer(self.user)
         transformer.transform(usage_info, block_structure)
-        assert block_structure.override_xblock_field.call_count == 3
+        assert block_structure.override_xblock_field.call_count == NUM_OVERRIDES
         args = block_structure.override_xblock_field.call_args_list
         for arg in args:
             call_args = arg[0]

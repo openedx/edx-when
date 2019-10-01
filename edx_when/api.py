@@ -4,17 +4,16 @@ API for retrieving and setting dates.
 from __future__ import absolute_import, unicode_literals
 
 import logging
+from datetime import timedelta
 
-import six
 from django.core.exceptions import ValidationError
-from django.utils.dateparse import parse_datetime
 from edx_django_utils.cache.utils import DEFAULT_REQUEST_CACHE
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey, UsageKey
 
-from edx_when import models
+from . import models
 
-log = logging.getLogger('edx-when')
+log = logging.getLogger(__name__)
 
 FIELDS_TO_EXTRACT = ('due', 'start', 'end')
 
@@ -46,8 +45,7 @@ def set_dates_for_course(course_key, items):
 
     items is an iterator of (location, field metadata dictionary)
     """
-    course_key = _ensure_key(CourseKey, course_key)
-    models.ContentDate.objects.filter(course_id=course_key, active=True).update(active=False)
+    clear_dates_for_course(course_key)
     for location, fields in items:
         for field in FIELDS_TO_EXTRACT:
             if field in fields:
@@ -65,6 +63,8 @@ def clear_dates_for_course(course_key):
     models.ContentDate.objects.filter(course_id=course_key, active=True).update(active=False)
 
 
+# TODO: Record dates for every block in the course, not just the ones where the block
+# has an explicitly set date.
 def get_dates_for_course(course_id, user=None, use_cached=True):
     """
     Return dictionary of dates for the given course_id and optional user.
@@ -92,7 +92,7 @@ def get_dates_for_course(course_id, user=None, use_cached=True):
     policies = {}
     for cdate in qset:
         key = (cdate.location, cdate.field)
-        dates[key] = cdate.policy.abs_date
+        dates[key] = cdate.policy.actual_date
         policies[cdate.id] = key
     if user_id:
         for userdate in models.UserDate.objects.filter(
@@ -167,20 +167,23 @@ def get_overrides_for_user(course_id, user):
         yield {'location': udate.content_date.location, 'actual_date': udate.actual_date}
 
 
-def set_date_for_block(course_id, block_id, field, abs_date, rel_date=None, user=None, reason='', actor=None):
+def set_date_for_block(course_id, block_id, field, date_or_timedelta, user=None, reason='', actor=None):
     """
     Save the date for a particular field in a block.
 
-    abs_date: datetime object
-    rel_date: a relative date integer (in days?)
+    date_or_timedelta: The absolute or relative date to set for the block
     user: user object to override date
     reason: explanation for override
     actor: user object of person making the override
     """
     course_id = _ensure_key(CourseKey, course_id)
     block_id = _ensure_key(UsageKey, block_id)
-    if abs_date and isinstance(abs_date, six.string_types):
-        abs_date = parse_datetime(abs_date)
+
+    if isinstance(date_or_timedelta, timedelta):
+        date_kwargs = {'rel_date': date_or_timedelta}
+    else:
+        date_kwargs = {'abs_date': date_or_timedelta}
+
     try:
         existing_date = models.ContentDate.objects.get(course_id=course_id, location=block_id, field=field)
         existing_date.active = True
@@ -188,10 +191,10 @@ def set_date_for_block(course_id, block_id, field, abs_date, rel_date=None, user
         if user:
             raise MissingDateError(block_id)
         existing_date = models.ContentDate(course_id=course_id, location=block_id, field=field)
-        existing_date.policy, __ = models.DatePolicy.objects.get_or_create(abs_date=abs_date)
+        existing_date.policy, __ = models.DatePolicy.objects.get_or_create(**date_kwargs)
 
     if user and not user.is_anonymous:
-        userd = models.UserDate(user=user, abs_date=abs_date, rel_date=rel_date)
+        userd = models.UserDate(user=user, **date_kwargs)
         userd.actor = actor
         userd.reason = reason or ''
         userd.content_date = existing_date
@@ -202,9 +205,14 @@ def set_date_for_block(course_id, block_id, field, abs_date, rel_date=None, user
         userd.save()
         log.info('Saved override for user=%d loc=%s date=%s', userd.user_id, userd.location, userd.actual_date)
     else:
-        if existing_date.policy.abs_date != abs_date:
-            log.info('updating policy %r %r -> %r', existing_date, existing_date.policy.abs_date, abs_date)
-            existing_date.policy = models.DatePolicy.objects.get_or_create(abs_date=abs_date)[0]
+        if existing_date.policy.abs_date != date_or_timedelta and existing_date.policy.rel_date != date_or_timedelta:
+            log.info(
+                'updating policy %r %r -> %r',
+                existing_date,
+                existing_date.policy.abs_date or existing_date.policy.rel_date,
+                date_or_timedelta
+            )
+            existing_date.policy = models.DatePolicy.objects.get_or_create(**date_kwargs)[0]
     existing_date.save()
 
 
