@@ -179,7 +179,9 @@ def set_date_for_block(course_id, block_id, field, date_or_timedelta, user=None,
     course_id = _ensure_key(CourseKey, course_id)
     block_id = _ensure_key(UsageKey, block_id)
 
-    if isinstance(date_or_timedelta, timedelta):
+    if date_or_timedelta is None:
+        date_kwargs = {'rel_date': None, 'abs_date': None}
+    elif isinstance(date_or_timedelta, timedelta):
         date_kwargs = {'rel_date': date_or_timedelta}
     else:
         date_kwargs = {'abs_date': date_or_timedelta}
@@ -194,10 +196,13 @@ def set_date_for_block(course_id, block_id, field, date_or_timedelta, user=None,
         existing_date.policy, __ = models.DatePolicy.objects.get_or_create(**date_kwargs)
 
     if user and not user.is_anonymous:
-        userd = models.UserDate(user=user, **date_kwargs)
-        userd.actor = actor
-        userd.reason = reason or ''
-        userd.content_date = existing_date
+        userd = models.UserDate(
+            user=user,
+            actor=actor,
+            reason=reason or '',
+            content_date=existing_date,
+            **date_kwargs
+        )
         try:
             userd.full_clean()
         except ValidationError:
