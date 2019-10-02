@@ -106,6 +106,7 @@ class ApiTests(TestCase):
         api.set_dates_for_course(six.text_type(block_id.course_key), items)
 
         api.set_date_for_block(block_id.course_key, block_id, 'due', override_date, user=self.user)
+        DEFAULT_REQUEST_CACHE.clear()
         retrieved = api.get_dates_for_course(block_id.course_key, user=self.user.id)
         assert len(retrieved) == NUM_OVERRIDES
         assert retrieved[block_id, 'due'] == expected_date
@@ -117,6 +118,33 @@ class ApiTests(TestCase):
         overrides = list(api.get_overrides_for_user(block_id.course_key, self.user))
         assert len(overrides) == 1
         assert overrides[0] == {'location': block_id, 'actual_date': expected_date}
+
+    @ddt.data(
+        (datetime(2019, 4, 6), datetime(2019, 4, 10), datetime(2019, 4, 10)),
+        (datetime(2019, 4, 6), timedelta(days=3), datetime(2019, 4, 9)),
+        (timedelta(days=3), datetime(2019, 4, 10), datetime(2019, 4, 10)),
+        (timedelta(days=3), timedelta(days=2), timedelta(days=5)),
+    )
+    @ddt.unpack
+    def test_remove_user_override(self, initial_date, override_date, expected_date):
+        items = make_items()
+        first = items[0]
+        block_id = first[0]
+        items[0][1]['due'] = initial_date
+
+        api.set_dates_for_course(six.text_type(block_id.course_key), items)
+
+        api.set_date_for_block(block_id.course_key, block_id, 'due', override_date, user=self.user)
+        DEFAULT_REQUEST_CACHE.clear()
+        retrieved = api.get_dates_for_course(block_id.course_key, user=self.user.id)
+        assert len(retrieved) == NUM_OVERRIDES
+        assert retrieved[block_id, 'due'] == expected_date
+
+        api.set_date_for_block(block_id.course_key, block_id, 'due', None, user=self.user)
+        DEFAULT_REQUEST_CACHE.clear()
+        retrieved = api.get_dates_for_course(block_id.course_key, user=self.user.id)
+        assert len(retrieved) == NUM_OVERRIDES
+        assert retrieved[block_id, 'due'] == initial_date
 
     def test_get_date_for_block(self):
         items = make_items()

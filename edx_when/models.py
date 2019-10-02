@@ -98,8 +98,10 @@ class UserDate(TimeStampedModel):
         """
         if self.abs_date:
             return self.abs_date
-        else:
+        elif self.rel_date:
             return self.content_date.policy.actual_date + self.rel_date
+        else:
+            return self.content_date.policy.actual_date
 
     @property
     def location(self):
