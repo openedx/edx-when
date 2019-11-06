@@ -58,7 +58,7 @@ class ContentDate(models.Model):
     """
 
     course_id = CourseKeyField(db_index=True, max_length=255)
-    policy = models.ForeignKey(DatePolicy)
+    policy = models.ForeignKey(DatePolicy, on_delete=models.CASCADE)
     location = UsageKeyField(null=True, default=None, db_index=True, max_length=255)
     field = models.CharField(max_length=255, default='')
     active = models.BooleanField(default=True, db_index=True)
@@ -84,12 +84,14 @@ class UserDate(TimeStampedModel):
     .. no_pii:
     """
 
-    user = models.ForeignKey(get_user_model())
-    content_date = models.ForeignKey(ContentDate)
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
+    content_date = models.ForeignKey(ContentDate, on_delete=models.CASCADE)
     abs_date = models.DateTimeField(null=True, blank=True)
     rel_date = models.DurationField(null=True, blank=True, db_index=True)
     reason = models.TextField(default='', blank=True)
-    actor = models.ForeignKey(get_user_model(), null=True, default=None, blank=True, related_name="actor")
+    actor = models.ForeignKey(
+        get_user_model(), null=True, default=None, blank=True, related_name="actor", on_delete=models.CASCADE
+    )
 
     @property
     def actual_date(self):
