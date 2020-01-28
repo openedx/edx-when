@@ -65,7 +65,7 @@ def clear_dates_for_course(course_key):
 
 # TODO: Record dates for every block in the course, not just the ones where the block
 # has an explicitly set date.
-def get_dates_for_course(course_id, user=None, use_cached=True):
+def get_dates_for_course(course_id, user=None, use_cached=True, schedule=None):
     """
     Return dictionary of dates for the given course_id and optional user.
 
@@ -83,6 +83,7 @@ def get_dates_for_course(course_id, user=None, use_cached=True):
         cache_key += '.%s' % user_id
     else:
         user_id = None
+
     dates = DEFAULT_REQUEST_CACHE.data.get(cache_key, None)
     if use_cached and dates is not None:
         return dates
@@ -91,16 +92,20 @@ def get_dates_for_course(course_id, user=None, use_cached=True):
     dates = {}
     policies = {}
     for cdate in qset:
+        if schedule is None:
+            schedule = cdate.schedule_for_user(user)
+
         key = (cdate.location, cdate.field)
-        dates[key] = cdate.policy.actual_date
+        dates[key] = cdate.policy.actual_date(schedule)
         policies[cdate.id] = key
     if user_id:
         for userdate in models.UserDate.objects.filter(
-                user_id=user_id,
-                content_date__course_id=course_id,
-                content_date__active=True).select_related(
-                    'content_date', 'content_date__policy'
-                ).order_by('modified'):
+            user_id=user_id,
+            content_date__course_id=course_id,
+            content_date__active=True
+        ).select_related(
+            'content_date', 'content_date__policy'
+        ).order_by('modified'):
             dates[policies[userdate.content_date_id]] = userdate.actual_date
     DEFAULT_REQUEST_CACHE.data[cache_key] = dates
     return dates

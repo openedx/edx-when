@@ -19,7 +19,7 @@ def make_block_id(course_id='testX+tt101+2019', block_type='sequential+block'):
     return UsageKey.from_string(block_id)
 
 
-def make_items(course_id='testX+tt101+2019'):
+def make_items(course_id='testX+tt101+2019', with_relative=False):
     """
     Return item list for set_dates_for_course.
     """
@@ -27,9 +27,12 @@ def make_items(course_id='testX+tt101+2019'):
         (make_block_id(course_id), {'due': datetime(2019, 3, 22)}),
         (make_block_id(course_id), {'due': datetime(2019, 3, 23), 'test': '1'}),
         (make_block_id(course_id), {'start': datetime(2019, 3, 21), 'test': '1'}),
-        (make_block_id(course_id), {'due': timedelta(days=1)}),
-        (make_block_id(course_id), {'due': timedelta(days=7), 'test': '1'}),
-        (make_block_id(course_id), {'start': timedelta(hours=12), 'test': '1'}),
         (make_block_id(course_id), {'start': None, 'test': '1'}),
     ]
+    if with_relative:
+        items.extend([
+            (make_block_id(course_id), {'due': timedelta(days=1)}),
+            (make_block_id(course_id), {'due': timedelta(days=7), 'test': '1'}),
+            (make_block_id(course_id), {'start': timedelta(hours=12), 'test': '1'}),
+        ])
     return items

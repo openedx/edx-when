@@ -10,11 +10,12 @@ import six
 from django.contrib.auth.models import User
 from django.test import TestCase
 from edx_django_utils.cache.utils import DEFAULT_REQUEST_CACHE
+from mock import patch
 
 from edx_when import api, models
 from test_utils import make_block_id, make_items
 
-NUM_OVERRIDES = 6
+NUM_OVERRIDES = 3
 
 
 @ddt.ddt
@@ -26,6 +27,18 @@ class ApiTests(TestCase):
         super(ApiTests, self).setUp()
         self.user = User(username='tester', email='tester@test.com')
         self.user.save()
+        self.schedule = Mock(name="schedule", start=datetime(2019, 4, 1))
+
+        User.enrollments = Mock(name="enrollments")
+        User.enrollments.find_one.return_value.schedule = self.schedule
+        self.addCleanup(delattr, User, 'enrollments')
+
+        mock_Schedule = Mock(name="Schedule")
+        mock_Schedule.objects.find_one.return_value = self.schedule
+        schedule_patcher = patch('edx_when.models.Schedule', mock_Schedule)
+        schedule_patcher.start()
+        self.addCleanup(schedule_patcher.stop)
+
         DEFAULT_REQUEST_CACHE.clear()
 
     def test_set_dates_for_course(self):
@@ -94,7 +107,7 @@ class ApiTests(TestCase):
         (datetime(2019, 4, 6), datetime(2019, 4, 10), datetime(2019, 4, 10)),
         (datetime(2019, 4, 6), timedelta(days=3), datetime(2019, 4, 9)),
         (timedelta(days=3), datetime(2019, 4, 10), datetime(2019, 4, 10)),
-        (timedelta(days=3), timedelta(days=2), timedelta(days=5)),
+        (timedelta(days=3), timedelta(days=2), datetime(2019, 4, 6)),
     )
     @ddt.unpack
     def test_set_user_override(self, initial_date, override_date, expected_date):
@@ -123,7 +136,7 @@ class ApiTests(TestCase):
         (datetime(2019, 4, 6), datetime(2019, 4, 10), datetime(2019, 4, 10)),
         (datetime(2019, 4, 6), timedelta(days=3), datetime(2019, 4, 9)),
         (timedelta(days=3), datetime(2019, 4, 10), datetime(2019, 4, 10)),
-        (timedelta(days=3), timedelta(days=2), timedelta(days=5)),
+        (timedelta(days=3), timedelta(days=2), datetime(2019, 4, 6)),
     )
     @ddt.unpack
     def test_remove_user_override(self, initial_date, override_date, expected_date):
@@ -144,7 +157,11 @@ class ApiTests(TestCase):
         DEFAULT_REQUEST_CACHE.clear()
         retrieved = api.get_dates_for_course(block_id.course_key, user=self.user.id)
         assert len(retrieved) == NUM_OVERRIDES
-        assert retrieved[block_id, 'due'] == initial_date
+        if isinstance(initial_date, timedelta):
+            user_initial_date = self.schedule.start + initial_date
+        else:
+            user_initial_date = initial_date
+        assert retrieved[block_id, 'due'] == user_initial_date
 
     def test_get_date_for_block(self):
         items = make_items()

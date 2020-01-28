@@ -15,6 +15,12 @@ from django.utils.translation import gettext_lazy as _
 from model_utils.models import TimeStampedModel
 from opaque_keys.edx.django.models import CourseKeyField, UsageKeyField
 
+try:
+    from openedx.core.djangoapps.schedule import Schedule
+# TODO: Move schedules into edx-when
+except ImportError:
+    Schedule = None
+
 
 @python_2_unicode_compatible
 class DatePolicy(TimeStampedModel):
@@ -34,12 +40,21 @@ class DatePolicy(TimeStampedModel):
         # TODO: return a string appropriate for the data fields
         return '<DatePolicy, ID: {}>'.format(self.id)
 
-    @property
-    def actual_date(self):
+    def actual_date(self, schedule=None):
         """
         Return the normalized date.
         """
-        return self.rel_date or self.abs_date
+        if self.rel_date is not None:
+            if schedule is None:
+                raise ValueError(
+                    "Can't interpret relative date {} for {!r} without a user schedule".format(
+                        self.rel_date,
+                        self
+                    )
+                )
+            return schedule.start + self.rel_date
+        else:
+            return self.abs_date
 
     def clean(self):
         """
@@ -75,6 +90,22 @@ class ContentDate(models.Model):
         # TODO: return a string appropriate for the data fields
         return '<ContentDate, ID: {}>'.format(self.id)
 
+    def schedule_for_user(self, user):
+        """
+        Return the schedule for the supplied user that applies to this piece of content.
+        """
+        if isinstance(user, int):
+            if Schedule is None:
+                return None
+
+            return Schedule.objects.find_one(enrollment__user__id=user, enrollment__course__id=self.course_id)
+        else:
+            if not hasattr(user, 'enrollments'):
+                return None
+
+            # TODO: This will break prefetching, if the user object already had enrollments/schedules prefetched
+            return user.enrollments.find_one(course__id=self.course_id).schedule
+
 
 @python_2_unicode_compatible
 class UserDate(TimeStampedModel):
@@ -100,10 +131,12 @@ class UserDate(TimeStampedModel):
         """
         if self.abs_date:
             return self.abs_date
-        elif self.rel_date:
-            return self.content_date.policy.actual_date + self.rel_date
+
+        policy_date = self.content_date.policy.actual_date(self.content_date.schedule_for_user(self.user))
+        if self.rel_date:
+            return policy_date + self.rel_date
         else:
-            return self.content_date.policy.actual_date
+            return policy_date
 
     @property
     def location(self):
@@ -119,7 +152,7 @@ class UserDate(TimeStampedModel):
         if self.abs_date and self.rel_date:
             raise ValidationError(_("Absolute and relative dates cannot both be used"))
 
-        policy_date = self.content_date.policy.actual_date
+        policy_date = self.content_date.policy.actual_date(self.content_date.schedule_for_user(self.user))
         if self.rel_date is not None and self.rel_date.total_seconds() < 0:
             raise ValidationError(_("Override date must be later than policy date"))
         if self.abs_date is not None and isinstance(policy_date, datetime) and self.abs_date < policy_date:
