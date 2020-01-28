@@ -52,7 +52,7 @@ class DatePolicy(TimeStampedModel):
                         self
                     )
                 )
-            return schedule.start + self.rel_date
+            return schedule.start_date + self.rel_date
         else:
             return self.abs_date
 
@@ -98,13 +98,13 @@ class ContentDate(models.Model):
             if Schedule is None:
                 return None
 
-            return Schedule.objects.find_one(enrollment__user__id=user, enrollment__course__id=self.course_id)
+            return Schedule.objects.get(enrollment__user__id=user, enrollment__course__id=self.course_id)
         else:
             if not hasattr(user, 'enrollments'):
                 return None
 
             # TODO: This will break prefetching, if the user object already had enrollments/schedules prefetched
-            return user.enrollments.find_one(course__id=self.course_id).schedule
+            return user.enrollments.get(course__id=self.course_id).schedule
 
 
 @python_2_unicode_compatible

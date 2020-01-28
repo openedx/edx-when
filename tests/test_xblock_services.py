@@ -44,13 +44,13 @@ class XblockTests(TestCase):
         self.user = User(username='tester', email='tester@test.com')
         self.user.save()
 
-        schedule = mock.Mock(name="schedule", start=datetime.datetime(2019, 4, 1))
+        schedule = mock.Mock(name="schedule", start_date=datetime.datetime(2019, 4, 1))
         User.enrollments = mock.Mock(name="enrollments")
-        User.enrollments.find_one.return_value.schedule = schedule
+        User.enrollments.get.return_value.schedule = schedule
         self.addCleanup(delattr, User, 'enrollments')
 
         mock_Schedule = mock.Mock(name="Schedule")
-        mock_Schedule.objects.find_one.return_value.schedule = schedule
+        mock_Schedule.objects.get.return_value.schedule = schedule
         schedule_patcher = mock.patch('edx_when.models.Schedule', mock_Schedule)
         schedule_patcher.start()
         self.addCleanup(schedule_patcher.stop)

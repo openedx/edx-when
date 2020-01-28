@@ -14,6 +14,7 @@ from mock import patch
 
 from edx_when import api, models
 from test_utils import make_block_id, make_items
+from tests.test_models_app.models import DummyCourse, DummyEnrollment, DummySchedule
 
 NUM_OVERRIDES = 3
 
@@ -25,19 +26,21 @@ class ApiTests(TestCase):
     """
     def setUp(self):
         super(ApiTests, self).setUp()
+        self.course = DummyCourse(id='course-v1:testX+tt101+2019')
+        self.course.save()
+
         self.user = User(username='tester', email='tester@test.com')
         self.user.save()
-        self.schedule = Mock(name="schedule", start=datetime(2019, 4, 1))
 
-        User.enrollments = Mock(name="enrollments")
-        User.enrollments.find_one.return_value.schedule = self.schedule
-        self.addCleanup(delattr, User, 'enrollments')
+        self.enrollment = DummyEnrollment(user=self.user, course=self.course)
+        self.enrollment.save()
 
-        mock_Schedule = Mock(name="Schedule")
-        mock_Schedule.objects.find_one.return_value = self.schedule
-        schedule_patcher = patch('edx_when.models.Schedule', mock_Schedule)
-        schedule_patcher.start()
-        self.addCleanup(schedule_patcher.stop)
+        self.schedule = DummySchedule(enrollment=self.enrollment, start_date=datetime(2019, 4, 1))
+        self.schedule.save()
+
+        dummy_schedule_patcher = patch('edx_when.models.Schedule', DummySchedule)
+        dummy_schedule_patcher.start()
+        self.addCleanup(dummy_schedule_patcher.stop)
 
         DEFAULT_REQUEST_CACHE.clear()
 
@@ -61,7 +64,17 @@ class ApiTests(TestCase):
         assert len(retrieved) == NUM_OVERRIDES
 
         # third time with new course_id
-        new_items = make_items('testX+tt202+2019')
+
+        course2 = DummyCourse(id='course-v1:testX+tt202+2019')
+        course2.save()
+        new_items = make_items(course2.id)
+
+        enrollment2 = DummyEnrollment(user=self.user, course=course2)
+        enrollment2.save()
+
+        schedule2 = DummySchedule(enrollment=enrollment2, start_date=datetime(2019, 4, 1))
+        schedule2.save()
+
         api.set_dates_for_course(new_items[0][0].course_key, new_items)
         new_retrieved = api.get_dates_for_course(new_items[0][0].course_key)
         assert len(new_retrieved) == NUM_OVERRIDES
@@ -158,7 +171,7 @@ class ApiTests(TestCase):
         retrieved = api.get_dates_for_course(block_id.course_key, user=self.user.id)
         assert len(retrieved) == NUM_OVERRIDES
         if isinstance(initial_date, timedelta):
-            user_initial_date = self.schedule.start + initial_date
+            user_initial_date = self.schedule.start_date + initial_date
         else:
             user_initial_date = initial_date
         assert retrieved[block_id, 'due'] == user_initial_date

@@ -10,16 +10,15 @@ from __future__ import absolute_import, unicode_literals
 import uuid
 from datetime import datetime, timedelta
 
-from opaque_keys.edx.keys import UsageKey
+from opaque_keys.edx.locator import BlockUsageLocator, CourseLocator
 
 
-def make_block_id(course_id='testX+tt101+2019', block_type='sequential+block'):
+def make_block_id(course_id=CourseLocator('testX', 'tt101', '2019'), block_type='sequential'):
     guid = uuid.uuid4().hex
-    block_id = 'block-v1:%s+type@%s@%s' % (course_id, block_type, guid)
-    return UsageKey.from_string(block_id)
+    return BlockUsageLocator(course_key=course_id, block_type=block_type, block_id=guid)
 
 
-def make_items(course_id='testX+tt101+2019', with_relative=False):
+def make_items(course_id=CourseLocator('testX', 'tt101', '2019'), with_relative=False):
     """
     Return item list for set_dates_for_course.
     """
