@@ -24,8 +24,6 @@ matrix:
     env: TOXENV=pii_check
 cache:
 - pip
-before_install:
-- pip install --upgrade pip
 install:
 - pip install -r requirements/travis.txt
 script:
