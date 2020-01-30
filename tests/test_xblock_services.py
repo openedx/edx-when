@@ -38,11 +38,22 @@ class XblockTests(TestCase):
 
     def setUp(self):
         super(XblockTests, self).setUp()
-        self.items = make_items()
+        self.items = make_items(with_relative=True)
         self.course_id = self.items[0][0].course_key
         api.set_dates_for_course(self.course_id, self.items)
         self.user = User(username='tester', email='tester@test.com')
         self.user.save()
+
+        schedule = mock.Mock(name="schedule", start_date=datetime.datetime(2019, 4, 1))
+        User.enrollments = mock.Mock(name="enrollments")
+        User.enrollments.get.return_value.schedule = schedule
+        self.addCleanup(delattr, User, 'enrollments')
+
+        mock_Schedule = mock.Mock(name="Schedule")
+        mock_Schedule.objects.get.return_value.schedule = schedule
+        schedule_patcher = mock.patch('edx_when.models.Schedule', mock_Schedule)
+        schedule_patcher.start()
+        self.addCleanup(schedule_patcher.stop)
 
 
 class TestFieldData(XblockTests):
@@ -53,7 +64,7 @@ class TestFieldData(XblockTests):
     @api.override_enabled()
     def test_field_data_get(self):
         defaults = mock.MagicMock()
-        dfd = field_data.DateLookupFieldData(defaults, course_id=self.course_id, use_cached=False)
+        dfd = field_data.DateLookupFieldData(defaults, course_id=self.course_id, use_cached=False, user=self.user)
         block = MockBlock(self.items[0][0])
 
         date = dfd.get(block, 'due')
@@ -78,7 +89,7 @@ class TestFieldData(XblockTests):
 
     def test_field_data_has(self):
         defaults = mock.MagicMock()
-        dfd = field_data.DateLookupFieldData(defaults, course_id=self.course_id, use_cached=False)
+        dfd = field_data.DateLookupFieldData(defaults, course_id=self.course_id, use_cached=False, user=self.user)
         block = MockBlock(self.items[0][0])
 
         assert dfd.has(block, 'due') is True
@@ -91,7 +102,7 @@ class TestFieldData(XblockTests):
 
     def test_field_data_set_delete(self):
         defaults = mock.MagicMock()
-        dfd = field_data.DateLookupFieldData(defaults, course_id=self.course_id, use_cached=False)
+        dfd = field_data.DateLookupFieldData(defaults, course_id=self.course_id, use_cached=False, user=self.user)
         dfd.set('foo', 'bar', 'x')
         assert defaults.called_once_with('foo', 'bar', 'x')
         dfd.delete('baz', 'boing')
@@ -99,8 +110,8 @@ class TestFieldData(XblockTests):
 
     def test_wrapped_fielddata(self):
         defaults = mock.MagicMock()
-        dfd1 = field_data.DateLookupFieldData(defaults, course_id=self.course_id, use_cached=False)
-        dfd2 = field_data.DateLookupFieldData(dfd1, course_id=self.course_id)
+        dfd1 = field_data.DateLookupFieldData(defaults, course_id=self.course_id, use_cached=False, user=self.user)
+        dfd2 = field_data.DateLookupFieldData(dfd1, course_id=self.course_id, user=self.user)
         assert dfd1._defaults == dfd2._defaults  # pylint: disable=protected-access
 
 

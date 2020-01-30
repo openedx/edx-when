@@ -33,6 +33,7 @@ INSTALLED_APPS = (
     'django.contrib.contenttypes',
     'edx_when',
     'waffle',
+    'tests.test_models_app',
 )
 
 LOCALE_PATHS = [
