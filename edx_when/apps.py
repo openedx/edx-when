@@ -21,15 +21,5 @@ class EdxWhenConfig(AppConfig):
                 'regex': u'^api/',
                 'relative_path': u'urls',
             },
-        },
-        'signals_config': {
-            'cms.djangoapp': {
-                'receivers': [
-                    {
-                        'receiver_func_name': 'extract_dates',
-                        'signal_path': 'xmodule.modulestore.django.COURSE_PUBLISHED'
-                    }
-                ]
-            }
         }
     }
