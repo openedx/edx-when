@@ -7,6 +7,7 @@ import logging
 from datetime import timedelta
 
 from django.core.exceptions import ValidationError
+from django.db.models import ObjectDoesNotExist
 from edx_django_utils.cache.utils import DEFAULT_REQUEST_CACHE
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey, UsageKey
@@ -87,16 +88,23 @@ def get_dates_for_course(course_id, user=None, use_cached=True, schedule=None):
     dates = DEFAULT_REQUEST_CACHE.data.get(cache_key, None)
     if use_cached and dates is not None:
         return dates
+
     course_id = _ensure_key(CourseKey, course_id)
     qset = models.ContentDate.objects.filter(course_id=course_id, active=True).select_related('policy')
     dates = {}
     policies = {}
     for cdate in qset:
-        if schedule is None:
-            schedule = cdate.schedule_for_user(user)
+        if schedule is None and user is not None:
+            try:
+                schedule = cdate.schedule_for_user(user)
+            except ObjectDoesNotExist:
+                schedule = None
 
         key = (cdate.location, cdate.field)
-        dates[key] = cdate.policy.actual_date(schedule)
+        try:
+            dates[key] = cdate.policy.actual_date(schedule)
+        except ValueError:
+            log.warning("Unable to read date for %s", cdate.location, exc_info=True)
         policies[cdate.id] = key
     if user_id:
         for userdate in models.UserDate.objects.filter(
@@ -106,7 +114,12 @@ def get_dates_for_course(course_id, user=None, use_cached=True, schedule=None):
         ).select_related(
             'content_date', 'content_date__policy'
         ).order_by('modified'):
-            dates[policies[userdate.content_date_id]] = userdate.actual_date
+
+            try:
+                dates[policies[userdate.content_date_id]] = userdate.actual_date
+            except (ValueError, ObjectDoesNotExist):
+                log.warning("Unable to read date for %s", userdate.content_date, exc_info=True)
+
     DEFAULT_REQUEST_CACHE.data[cache_key] = dates
     return dates
 

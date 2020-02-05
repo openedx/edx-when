@@ -24,7 +24,7 @@ class DummyEnrollment(models.Model):
     .. no_pii:
     """
 
-    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name="enrollments")
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name="courseenrollment_set")
 
     course = models.ForeignKey(
         DummyCourse,

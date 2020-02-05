@@ -100,11 +100,11 @@ class ContentDate(models.Model):
 
             return Schedule.objects.get(enrollment__user__id=user, enrollment__course__id=self.course_id)
         else:
-            if not hasattr(user, 'enrollments'):
+            if not hasattr(user, 'courseenrollment_set'):
                 return None
 
             # TODO: This will break prefetching, if the user object already had enrollments/schedules prefetched
-            return user.enrollments.get(course__id=self.course_id).schedule
+            return user.courseenrollment_set.get(course__id=self.course_id).schedule
 
 
 @python_2_unicode_compatible

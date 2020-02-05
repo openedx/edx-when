@@ -87,7 +87,7 @@ class TestContentDate(TestCase):
 
     def test_schedule_for_user_obj_no_enrollments(self):
         mock_user = Mock(wraps=self.user)
-        del mock_user.enrollments
+        del mock_user.courseenrollment_set
         assert self.content_date.schedule_for_user(mock_user) is None
 
 

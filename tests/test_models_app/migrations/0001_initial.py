@@ -28,7 +28,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('course', models.ForeignKey(db_constraint=False, on_delete=django.db.models.deletion.DO_NOTHING, to='test_models_app.DummyCourse')),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='enrollments', to=settings.AUTH_USER_MODEL)),
+                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='courseenrollment_set', to=settings.AUTH_USER_MODEL)),
             ],
         ),
         migrations.CreateModel(
