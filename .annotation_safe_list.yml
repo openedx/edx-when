@@ -17,10 +17,3 @@ auth.User:
   ".. pii_retirement:" : consumer_api
 contenttypes.ContentType:
   ".. no_pii:": "This model has no PII"
-# Via waffle
-waffle.Flag:
-  ".. no_pii:": "No PII"
-waffle.Sample:
-  ".. no_pii:": "No PII"
-waffle.Switch:
-  ".. no_pii:": "No PII"
