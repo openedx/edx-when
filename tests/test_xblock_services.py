@@ -61,7 +61,6 @@ class TestFieldData(XblockTests):
     Tests for the FieldData subclass.
     """
 
-    @api.override_enabled()
     def test_field_data_get(self):
         defaults = mock.MagicMock()
         dfd = field_data.DateLookupFieldData(defaults, course_id=self.course_id, use_cached=False, user=self.user)
@@ -128,7 +127,8 @@ class TransformerTests(XblockTests):
         field_data.DateOverrideTransformer.collect(block_structure)
         assert block_structure.request_xblock_fields.called_once_with('due', 'start')
 
-    def test_transform(self):
+    @mock.patch('edx_when.api._are_relative_dates_enabled', return_value=True)
+    def test_transform(self, _mock):
         override = datetime.datetime(2020, 1, 1)
         api.set_date_for_block(self.items[0][0].course_key, self.items[0][0], 'due', override, user=self.user)
         usage_info = mock.MagicMock()

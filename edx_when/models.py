@@ -25,7 +25,7 @@ except ImportError:
 @python_2_unicode_compatible
 class DatePolicy(TimeStampedModel):
     """
-    TODO: replace with a brief description of the model.
+    Stores a date (either absolute or relative).
 
     .. no_pii:
     """
@@ -67,7 +67,7 @@ class DatePolicy(TimeStampedModel):
 @python_2_unicode_compatible
 class ContentDate(models.Model):
     """
-    TODO: replace with a brief description of the model.
+    Ties a DatePolicy to a specific piece of course content. (e.g. a due date for a homework).
 
     .. no_pii:
     """
@@ -110,7 +110,7 @@ class ContentDate(models.Model):
 @python_2_unicode_compatible
 class UserDate(TimeStampedModel):
     """
-    TODO: replace with a brief description of the model.
+    Stores a user-specific date override for a given ContentDate.
 
     .. no_pii:
     """

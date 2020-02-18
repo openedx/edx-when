@@ -3,6 +3,7 @@ Tests for edx_when.api
 """
 from __future__ import absolute_import, unicode_literals
 
+import sys
 from datetime import datetime, timedelta
 
 import ddt
@@ -10,7 +11,8 @@ import six
 from django.contrib.auth.models import User
 from django.test import TestCase
 from edx_django_utils.cache.utils import DEFAULT_REQUEST_CACHE
-from mock import patch
+from mock import Mock, patch
+from opaque_keys.edx.locator import CourseLocator
 
 from edx_when import api, models
 from test_utils import make_block_id, make_items
@@ -41,6 +43,10 @@ class ApiTests(TestCase):
         dummy_schedule_patcher = patch('edx_when.models.Schedule', DummySchedule)
         dummy_schedule_patcher.start()
         self.addCleanup(dummy_schedule_patcher.stop)
+
+        relative_dates_patcher = patch('edx_when.api._are_relative_dates_enabled', return_value=True)
+        relative_dates_patcher.start()
+        self.addCleanup(relative_dates_patcher.stop)
 
         DEFAULT_REQUEST_CACHE.clear()
 
@@ -213,3 +219,89 @@ class ApiTests(TestCase):
         assert not api.is_enabled_for_course(course_id)
         api.set_dates_for_course(course_id, items)
         assert api.is_enabled_for_course(course_id)
+
+    def test_allow_relative_dates(self):
+        course_key = CourseLocator('testX', 'tt101', '2019')
+        block1 = make_block_id(course_key)
+        date1 = datetime(2019, 3, 22)
+        block2 = make_block_id(course_key)
+        date2 = datetime(2019, 3, 23)
+        date2_override_delta = timedelta(days=10)
+        date2_override = date2 + date2_override_delta
+        block3 = make_block_id(course_key)
+        date3_delta = timedelta(days=1)
+        date3 = self.schedule.start_date + date3_delta
+        block4 = make_block_id(course_key)
+        date4_delta = timedelta(days=2)
+        date4 = self.schedule.start_date + date4_delta
+        date4_override = datetime(2019, 4, 24)
+        items = [
+            (block1, {'due': date1}),  # absolute
+            (block2, {'due': date2}),  # absolute, to be overwritten by relative date
+            (block3, {'due': date3_delta}),  # relative
+            (block4, {'due': date4_delta}),  # relative, to be overwritten by absolute date
+        ]
+        api.set_dates_for_course(course_key, items)
+        api.set_date_for_block(course_key, block2, 'due', date2_override_delta, user=self.user)
+        api.set_date_for_block(course_key, block4, 'due', date4_override, user=self.user)
+
+        # get_dates_for_course
+        dates = [
+            ((block1, 'due'), date1),
+            ((block2, 'due'), date2),
+            ((block3, 'due'), date3),
+            ((block4, 'due'), date4),
+        ]
+        assert api.get_dates_for_course(course_key, schedule=self.schedule) == dict(dates)
+        with patch('edx_when.api._are_relative_dates_enabled', return_value=False):
+            assert api.get_dates_for_course(course_key, schedule=self.schedule) == dict(dates[0:2])
+            assert api.get_dates_for_course(course_key, schedule=self.schedule, user=self.user) == dict(dates[0:2])
+
+        # get_date_for_block
+        assert api.get_date_for_block(course_key, block2) == date2
+        assert api.get_date_for_block(course_key, block4, user=self.user) == date4_override
+        with patch('edx_when.api._are_relative_dates_enabled', return_value=False):
+            assert api.get_date_for_block(course_key, block2) == date2
+            assert api.get_date_for_block(course_key, block1, user=self.user) == date1
+            assert api.get_date_for_block(course_key, block2, user=self.user) == date2
+            assert api.get_date_for_block(course_key, block4, user=self.user) is None
+
+        # get_overrides_for_block
+        block2_overrides = [(self.user.username, 'unknown', date2_override)]
+        assert api.get_overrides_for_block(course_key, block2) == block2_overrides
+        with patch('edx_when.api._are_relative_dates_enabled', return_value=False):
+            assert api.get_overrides_for_block(course_key, block2) == []
+
+        # get_overrides_for_user
+        user_overrides = [
+            {'location': block4, 'actual_date': date4_override},
+            {'location': block2, 'actual_date': date2_override},
+        ]
+        assert list(api.get_overrides_for_user(course_key, self.user)) == user_overrides
+        with patch('edx_when.api._are_relative_dates_enabled', return_value=False):
+            assert list(api.get_overrides_for_user(course_key, self.user)) == [user_overrides[0]]
+
+
+class ApiWaffleTests(TestCase):
+    """
+    Tests for edx_when.api waffle usage.
+
+    These are isolated because they have pretty different patch requirements.
+    """
+    @patch.dict(sys.modules, {'openedx.features.course_experience': Mock()})
+    def test_relative_dates_enabled(self):
+        from openedx.features.course_experience import RELATIVE_DATES_FLAG as mock_flag  # pylint: disable=import-error
+        mock_flag.is_enabled.return_value = True
+        assert api._are_relative_dates_enabled()  # pylint: disable=protected-access
+        assert mock_flag.is_enabled.called
+
+    @patch.dict(sys.modules, {'openedx.features.course_experience': Mock()})
+    def test_relative_dates_disabled(self):
+        from openedx.features.course_experience import RELATIVE_DATES_FLAG as mock_flag  # pylint: disable=import-error
+        mock_flag.is_enabled.return_value = False
+        assert not api._are_relative_dates_enabled()  # pylint: disable=protected-access
+        assert mock_flag.is_enabled.called
+
+    @patch.dict(sys.modules, {'openedx.features.course_experience': None})
+    def test_relative_dates_import_error(self):
+        assert not api._are_relative_dates_enabled()  # pylint: disable=protected-access

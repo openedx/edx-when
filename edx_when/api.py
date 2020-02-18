@@ -25,19 +25,25 @@ def _ensure_key(key_class, key_obj):
     return key_obj
 
 
+def _are_relative_dates_enabled(course_key=None):
+    """
+    Return whether it's OK to consider relative dates. If not, pretend those database entries don't exist.
+    """
+    try:
+        # It's bad form to depend on LMS code from inside a plugin like this. But we gracefully fail, and this is
+        # temporary code anyway, while we develop this feature.
+        from openedx.features.course_experience import RELATIVE_DATES_FLAG
+    except ImportError:
+        return False
+
+    return RELATIVE_DATES_FLAG.is_enabled(course_key)
+
+
 def is_enabled_for_course(course_key):
     """
     Return whether edx-when is enabled for this course.
     """
     return models.ContentDate.objects.filter(course_id=course_key, active=True).exists()
-
-
-def override_enabled():
-    """
-    Return decorator that enables edx-when.
-    """
-    from waffle.testutils import override_flag
-    return override_flag('edx-when-enabled', active=True)
 
 
 def set_dates_for_course(course_key, items):
@@ -72,8 +78,16 @@ def get_dates_for_course(course_id, user=None, use_cached=True, schedule=None):
 
         key: block location, field name
         value: datetime object
+
+    Arguments:
+        course_id: either a CourseKey or string representation of same
+        user: None, an int, or a User object
+        use_cached: will skip cache lookups (but not saves) if False
+        schedule: optional override for a user's enrollment Schedule, used for relative date calculations
     """
+    course_id = _ensure_key(CourseKey, course_id)
     log.debug("Getting dates for %s as %s", course_id, user)
+    allow_relative_dates = _are_relative_dates_enabled(course_id)
 
     cache_key = 'course_dates.%s' % course_id
     if user:
@@ -84,13 +98,18 @@ def get_dates_for_course(course_id, user=None, use_cached=True, schedule=None):
         cache_key += '.%s' % user_id
     else:
         user_id = None
+    if schedule:
+        cache_key += '.schedule-%s' % schedule.start_date
+    if allow_relative_dates:
+        cache_key += '.with-rel-dates'
 
     dates = DEFAULT_REQUEST_CACHE.data.get(cache_key, None)
     if use_cached and dates is not None:
         return dates
 
-    course_id = _ensure_key(CourseKey, course_id)
-    qset = models.ContentDate.objects.filter(course_id=course_id, active=True).select_related('policy')
+    rel_lookup = {} if allow_relative_dates else {'policy__rel_date': None}
+    qset = models.ContentDate.objects.filter(course_id=course_id, active=True, **rel_lookup).select_related('policy')
+
     dates = {}
     policies = {}
     for cdate in qset:
@@ -106,11 +125,14 @@ def get_dates_for_course(course_id, user=None, use_cached=True, schedule=None):
         except ValueError:
             log.warning("Unable to read date for %s", cdate.location, exc_info=True)
         policies[cdate.id] = key
+
     if user_id:
+        rel_lookup = {} if allow_relative_dates else {'content_date__policy__rel_date': None, 'rel_date': None}
         for userdate in models.UserDate.objects.filter(
             user_id=user_id,
             content_date__course_id=course_id,
-            content_date__active=True
+            content_date__active=True,
+            **rel_lookup,
         ).select_related(
             'content_date', 'content_date__policy'
         ).order_by('modified'):
@@ -127,6 +149,11 @@ def get_dates_for_course(course_id, user=None, use_cached=True, schedule=None):
 def get_date_for_block(course_id, block_id, name='due', user=None):
     """
     Return the date for block in the course for the (optional) user.
+
+    Arguments:
+        course_id: either a CourseKey or string representation of same
+        block_id: either a UsageKey or string representation of same
+        user: None, an int, or a User object
     """
     try:
         return get_dates_for_course(course_id, user).get((_ensure_key(UsageKey, block_id), name), None)
@@ -138,15 +165,24 @@ def get_overrides_for_block(course_id, block_id):
     """
     Return list of date overrides for a block.
 
-    list of (username, full_name, date)
+    Arguments:
+        course_id: either a CourseKey or string representation of same
+        block_id: either a UsageKey or string representation of same
+
+    Returns:
+        list of (username, full_name, date)
     """
     course_id = _ensure_key(CourseKey, course_id)
     block_id = _ensure_key(UsageKey, block_id)
 
+    allow_relative_dates = _are_relative_dates_enabled(course_id)
+    rel_lookup = {} if allow_relative_dates else {'content_date__policy__rel_date': None, 'rel_date': None}
     query = models.UserDate.objects.filter(
-                content_date__course_id=course_id,
-                content_date__location=block_id,
-                content_date__active=True).order_by('-modified')
+        content_date__course_id=course_id,
+        content_date__location=block_id,
+        content_date__active=True,
+        **rel_lookup,
+    ).order_by('-modified')
     dates = []
     users = set()
     for udate in query:
@@ -168,14 +204,23 @@ def get_overrides_for_user(course_id, user):
     """
     Return all user date overrides for a particular course.
 
-    iterator of {'location': location, 'actual_date': date}
+    Arguments:
+        course_id: either a CourseKey or string representation of same
+        user: a User object
+
+    Returns:
+        iterator of {'location': location, 'actual_date': date}
     """
     course_id = _ensure_key(CourseKey, course_id)
 
+    allow_relative_dates = _are_relative_dates_enabled(course_id)
+    rel_lookup = {} if allow_relative_dates else {'abs_date__isnull': False}
     query = models.UserDate.objects.filter(
-                content_date__course_id=course_id,
-                user=user,
-                content_date__active=True).order_by('-modified')
+        content_date__course_id=course_id,
+        user=user,
+        content_date__active=True,
+        **rel_lookup,
+    ).order_by('-modified')
     blocks = set()
     for udate in query:
         if udate.content_date.location in blocks:
