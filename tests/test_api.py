@@ -252,10 +252,14 @@ class ApiTests(TestCase):
             ((block3, 'due'), date3),
             ((block4, 'due'), date4),
         ]
+        user_dates = [
+            ((block1, 'due'), date1),
+            ((block2, 'due'), date2_override),
+        ]
         assert api.get_dates_for_course(course_key, schedule=self.schedule) == dict(dates)
         with patch('edx_when.api._are_relative_dates_enabled', return_value=False):
             assert api.get_dates_for_course(course_key, schedule=self.schedule) == dict(dates[0:2])
-            assert api.get_dates_for_course(course_key, schedule=self.schedule, user=self.user) == dict(dates[0:2])
+            assert api.get_dates_for_course(course_key, schedule=self.schedule, user=self.user) == dict(user_dates)
 
         # get_date_for_block
         assert api.get_date_for_block(course_key, block2) == date2
@@ -263,14 +267,14 @@ class ApiTests(TestCase):
         with patch('edx_when.api._are_relative_dates_enabled', return_value=False):
             assert api.get_date_for_block(course_key, block2) == date2
             assert api.get_date_for_block(course_key, block1, user=self.user) == date1
-            assert api.get_date_for_block(course_key, block2, user=self.user) == date2
+            assert api.get_date_for_block(course_key, block2, user=self.user) == date2_override
             assert api.get_date_for_block(course_key, block4, user=self.user) is None
 
         # get_overrides_for_block
         block2_overrides = [(self.user.username, 'unknown', date2_override)]
         assert api.get_overrides_for_block(course_key, block2) == block2_overrides
         with patch('edx_when.api._are_relative_dates_enabled', return_value=False):
-            assert api.get_overrides_for_block(course_key, block2) == []
+            assert api.get_overrides_for_block(course_key, block2) == [(self.user.username, 'unknown', date2_override)]
 
         # get_overrides_for_user
         user_overrides = [
@@ -279,7 +283,7 @@ class ApiTests(TestCase):
         ]
         assert list(api.get_overrides_for_user(course_key, self.user)) == user_overrides
         with patch('edx_when.api._are_relative_dates_enabled', return_value=False):
-            assert list(api.get_overrides_for_user(course_key, self.user)) == [user_overrides[0]]
+            assert list(api.get_overrides_for_user(course_key, self.user)) == user_overrides
 
 
 class ApiWaffleTests(TestCase):

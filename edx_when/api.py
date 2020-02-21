@@ -127,19 +127,16 @@ def get_dates_for_course(course_id, user=None, use_cached=True, schedule=None):
         policies[cdate.id] = key
 
     if user_id:
-        rel_lookup = {} if allow_relative_dates else {'content_date__policy__rel_date': None, 'rel_date': None}
         for userdate in models.UserDate.objects.filter(
             user_id=user_id,
             content_date__course_id=course_id,
             content_date__active=True,
-            **rel_lookup,
         ).select_related(
             'content_date', 'content_date__policy'
         ).order_by('modified'):
-
             try:
                 dates[policies[userdate.content_date_id]] = userdate.actual_date
-            except (ValueError, ObjectDoesNotExist):
+            except (ValueError, ObjectDoesNotExist, KeyError):
                 log.warning("Unable to read date for %s", userdate.content_date, exc_info=True)
 
     DEFAULT_REQUEST_CACHE.data[cache_key] = dates
@@ -175,13 +172,10 @@ def get_overrides_for_block(course_id, block_id):
     course_id = _ensure_key(CourseKey, course_id)
     block_id = _ensure_key(UsageKey, block_id)
 
-    allow_relative_dates = _are_relative_dates_enabled(course_id)
-    rel_lookup = {} if allow_relative_dates else {'content_date__policy__rel_date': None, 'rel_date': None}
     query = models.UserDate.objects.filter(
         content_date__course_id=course_id,
         content_date__location=block_id,
         content_date__active=True,
-        **rel_lookup,
     ).order_by('-modified')
     dates = []
     users = set()
@@ -213,13 +207,10 @@ def get_overrides_for_user(course_id, user):
     """
     course_id = _ensure_key(CourseKey, course_id)
 
-    allow_relative_dates = _are_relative_dates_enabled(course_id)
-    rel_lookup = {} if allow_relative_dates else {'abs_date__isnull': False}
     query = models.UserDate.objects.filter(
         content_date__course_id=course_id,
         user=user,
         content_date__active=True,
-        **rel_lookup,
     ).order_by('-modified')
     blocks = set()
     for udate in query:
