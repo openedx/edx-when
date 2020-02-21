@@ -163,4 +163,4 @@ class DateOverrideTransformer(object):
                     field,
                     date)
             except AttributeError:
-                log.warning('Missing block %s %s', location, field)
+                log.debug('Missing block %s %s', location, field)
