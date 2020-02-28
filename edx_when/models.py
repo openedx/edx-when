@@ -8,7 +8,7 @@ from __future__ import absolute_import, unicode_literals
 from datetime import datetime
 
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import gettext_lazy as _
@@ -16,7 +16,7 @@ from model_utils.models import TimeStampedModel
 from opaque_keys.edx.django.models import CourseKeyField, UsageKeyField
 
 try:
-    from openedx.core.djangoapps.schedule import Schedule
+    from openedx.core.djangoapps.schedules.models import Schedule
 # TODO: Move schedules into edx-when
 except ImportError:
     Schedule = None
@@ -92,19 +92,25 @@ class ContentDate(models.Model):
 
     def schedule_for_user(self, user):
         """
-        Return the schedule for the supplied user that applies to this piece of content.
+        Return the schedule for the supplied user that applies to this piece of content or None.
         """
+        no_schedules_found = None
         if isinstance(user, int):
             if Schedule is None:
-                return None
-
-            return Schedule.objects.get(enrollment__user__id=user, enrollment__course__id=self.course_id)
+                return no_schedules_found
+            try:
+                return Schedule.objects.get(enrollment__user__id=user, enrollment__course__id=self.course_id)
+            except Schedule.DoesNotExist:
+                return no_schedules_found
         else:
             if not hasattr(user, 'courseenrollment_set'):
-                return None
+                return no_schedules_found
 
-            # TODO: This will break prefetching, if the user object already had enrollments/schedules prefetched
-            return user.courseenrollment_set.get(course__id=self.course_id).schedule
+            try:
+                # TODO: This will break prefetching, if the user object already had enrollments/schedules prefetched
+                return user.courseenrollment_set.get(course__id=self.course_id).schedule
+            except ObjectDoesNotExist:
+                return no_schedules_found
 
 
 @python_2_unicode_compatible
@@ -132,8 +138,9 @@ class UserDate(TimeStampedModel):
         if self.abs_date:
             return self.abs_date
 
-        policy_date = self.content_date.policy.actual_date(self.content_date.schedule_for_user(self.user))
-        if self.rel_date:
+        schedule_for_user = self.content_date.schedule_for_user(self.user)
+        policy_date = self.content_date.policy.actual_date(schedule_for_user)
+        if schedule_for_user and self.rel_date:
             return policy_date + self.rel_date
         else:
             return policy_date
@@ -152,7 +159,8 @@ class UserDate(TimeStampedModel):
         if self.abs_date and self.rel_date:
             raise ValidationError(_("Absolute and relative dates cannot both be used"))
 
-        policy_date = self.content_date.policy.actual_date(self.content_date.schedule_for_user(self.user))
+        user_schedule = self.content_date.schedule_for_user(self.user)
+        policy_date = self.content_date.policy.actual_date(schedule=user_schedule)
         if self.rel_date is not None and self.rel_date.total_seconds() < 0:
             raise ValidationError(_("Override date must be later than policy date"))
         if self.abs_date is not None and isinstance(policy_date, datetime) and self.abs_date < policy_date:
