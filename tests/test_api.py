@@ -91,25 +91,27 @@ class ApiTests(TestCase):
 
     def test_get_dates_no_schedule(self):
         items = make_items(with_relative=True)
-        api.set_dates_for_course(items[0][0].course_key, items)
-        retrieved = api.get_dates_for_course(items[0][0].course_key, user=self.user)
+        course_key = items[0][0].course_key
+        api.set_dates_for_course(course_key, items)
+        retrieved = api.get_dates_for_course(course_key, user=self.user)
         assert len(retrieved) == 6
         self.schedule.delete()
-        retrieved = api.get_dates_for_course(items[0][0].course_key, user=self.user, use_cached=False)
+        retrieved = api.get_dates_for_course(course_key, user=self.user, use_cached=False)
         assert len(retrieved) == 3
 
     def test_get_user_date_no_schedule(self):
         items = make_items()
-        api.set_dates_for_course(items[0][0].course_key, items)
-        before_override = api.get_dates_for_course(items[0][0].course_key, user=self.user)
+        course_key = items[0][0].course_key
+        api.set_dates_for_course(course_key, items)
+        before_override = api.get_dates_for_course(course_key, user=self.user)
         assert len(before_override) == 3
 
         # Override a date for the user with a relative date, but remove the schedule
         # so that the override can't be applied
-        api.set_date_for_block(items[0][0].course_key, items[0][0], 'due', timedelta(days=2), user=self.user)
+        api.set_date_for_block(course_key, items[0][0], 'due', timedelta(days=2), user=self.user)
         self.schedule.delete()
 
-        after_override = api.get_dates_for_course(items[0][0].course_key, user=self.user, use_cached=False)
+        after_override = api.get_dates_for_course(course_key, user=self.user, use_cached=False)
         assert before_override == after_override
 
     def test_clear_dates_for_course(self):

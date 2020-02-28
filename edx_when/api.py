@@ -114,10 +114,7 @@ def get_dates_for_course(course_id, user=None, use_cached=True, schedule=None):
     policies = {}
     for cdate in qset:
         if schedule is None and user is not None:
-            try:
-                schedule = cdate.schedule_for_user(user)
-            except ObjectDoesNotExist:
-                schedule = None
+            schedule = cdate.schedule_for_user(user)
 
         key = (cdate.location, cdate.field)
         try:

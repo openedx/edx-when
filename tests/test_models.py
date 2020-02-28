@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 
 import ddt
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.test import TestCase
 from mock import Mock, patch
 
@@ -77,6 +77,13 @@ class TestContentDate(TestCase):
     @patch('edx_when.models.Schedule', DummySchedule)
     def test_schedule_for_user_id(self):
         assert self.content_date.schedule_for_user(self.user.id) == self.schedule
+
+    @patch('edx_when.models.Schedule', DummySchedule)
+    def test_schedule_for_user_with_object_does_not_exist(self):
+        """Test that None is returned when schedules are fetched for user."""
+        mock_user = Mock(wraps=self.user)
+        mock_user.courseenrollment_set.get.side_effect = ObjectDoesNotExist()
+        assert self.content_date.schedule_for_user(mock_user) is None
 
     @patch('edx_when.models.Schedule', None)
     def test_schedule_for_user_id_no_schedule_installed(self):
