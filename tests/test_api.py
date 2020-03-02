@@ -287,6 +287,37 @@ class ApiTests(TestCase):
         with patch('edx_when.api._are_relative_dates_enabled', return_value=False):
             assert list(api.get_overrides_for_user(course_key, self.user)) == user_overrides
 
+    @ddt.data(*[
+        (has_schedule, pass_user_object, item_count)
+        for has_schedule in (True, False)
+        for pass_user_object in (True, False)
+        for item_count in (1, 5, 25, 100)
+    ])
+    @ddt.unpack
+    def test_get_dates_for_course_query_counts(self, has_schedule, pass_user_object, item_count):
+        if not has_schedule:
+            self.schedule.delete()
+        items = [
+            (make_block_id(self.course.id), {'due': datetime(2020, 1, 1) + timedelta(days=i)})
+            for i in range(item_count)
+        ]
+        api.set_dates_for_course(self.course.id, items)
+
+        if pass_user_object:
+            user = self.user
+        else:
+            user = self.user.id
+
+        if has_schedule:
+            query_count = 4
+        else:
+            if pass_user_object:
+                query_count = item_count * 2 + 2
+            else:
+                query_count = item_count + 2
+        with self.assertNumQueries(query_count):
+            api.get_dates_for_course(course_id=self.course.id, user=user)
+
 
 class ApiWaffleTests(TestCase):
     """
