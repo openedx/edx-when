@@ -112,8 +112,10 @@ def get_dates_for_course(course_id, user=None, use_cached=True, schedule=None):
 
     dates = {}
     policies = {}
+    need_schedule = schedule is None and user is not None
     for cdate in qset:
-        if schedule is None and user is not None:
+        if need_schedule:
+            need_schedule = False
             schedule = cdate.schedule_for_user(user)
 
         key = (cdate.location, cdate.field)

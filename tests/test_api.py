@@ -288,13 +288,14 @@ class ApiTests(TestCase):
             assert list(api.get_overrides_for_user(course_key, self.user)) == user_overrides
 
     @ddt.data(*[
-        (has_schedule, pass_user_object, item_count)
+        (has_schedule, pass_user_object, pass_schedule, item_count)
         for has_schedule in (True, False)
         for pass_user_object in (True, False)
+        for pass_schedule in (True, False)
         for item_count in (1, 5, 25, 100)
     ])
     @ddt.unpack
-    def test_get_dates_for_course_query_counts(self, has_schedule, pass_user_object, item_count):
+    def test_get_dates_for_course_query_counts(self, has_schedule, pass_user_object, pass_schedule, item_count):
         if not has_schedule:
             self.schedule.delete()
         items = [
@@ -303,17 +304,15 @@ class ApiTests(TestCase):
         ]
         api.set_dates_for_course(self.course.id, items)
 
-        if pass_user_object:
-            user = self.user
-        else:
-            user = self.user.id
+        user = self.user if pass_user_object else self.user.id
+        schedule = self.schedule if pass_schedule and has_schedule else None
 
-        if has_schedule:
-            query_count = 3
+        if has_schedule and pass_schedule:
+            query_count = 2
         else:
-            query_count = item_count + 2
+            query_count = 3
         with self.assertNumQueries(query_count):
-            api.get_dates_for_course(course_id=self.course.id, user=user)
+            api.get_dates_for_course(course_id=self.course.id, user=user, schedule=schedule)
 
 
 class ApiWaffleTests(TestCase):
