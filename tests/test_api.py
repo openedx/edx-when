@@ -309,12 +309,9 @@ class ApiTests(TestCase):
             user = self.user.id
 
         if has_schedule:
-            query_count = 4
+            query_count = 3
         else:
-            if pass_user_object:
-                query_count = item_count * 2 + 2
-            else:
-                query_count = item_count + 2
+            query_count = item_count + 2
         with self.assertNumQueries(query_count):
             api.get_dates_for_course(course_id=self.course.id, user=user)
 

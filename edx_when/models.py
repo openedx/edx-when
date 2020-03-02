@@ -95,20 +95,18 @@ class ContentDate(models.Model):
         Return the schedule for the supplied user that applies to this piece of content or None.
         """
         no_schedules_found = None
+        if Schedule is None:
+            return no_schedules_found
         if isinstance(user, int):
-            if Schedule is None:
-                return no_schedules_found
             try:
                 return Schedule.objects.get(enrollment__user__id=user, enrollment__course__id=self.course_id)
-            except Schedule.DoesNotExist:
+            except ObjectDoesNotExist:
                 return no_schedules_found
         else:
-            if not hasattr(user, 'courseenrollment_set'):
-                return no_schedules_found
-
+            # TODO: We could contemplate using pre-fetched enrollments/schedules,
+            # but for the moment, just use the fastests non-prefetchable query
             try:
-                # TODO: This will break prefetching, if the user object already had enrollments/schedules prefetched
-                return user.courseenrollment_set.get(course__id=self.course_id).schedule
+                return Schedule.objects.get(enrollment__user__id=user.id, enrollment__course__id=self.course_id)
             except ObjectDoesNotExist:
                 return no_schedules_found
 
