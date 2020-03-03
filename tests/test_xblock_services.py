@@ -45,12 +45,9 @@ class XblockTests(TestCase):
         self.user.save()
 
         schedule = mock.Mock(name="schedule", start_date=datetime.datetime(2019, 4, 1))
-        User.courseenrollment_set = mock.Mock(name="courseenrollment_set")
-        User.courseenrollment_set.get.return_value.schedule = schedule
-        self.addCleanup(delattr, User, 'courseenrollment_set')
 
         mock_Schedule = mock.Mock(name="Schedule")
-        mock_Schedule.objects.get.return_value.schedule = schedule
+        mock_Schedule.objects.get.return_value = schedule
         schedule_patcher = mock.patch('edx_when.models.Schedule', mock_Schedule)
         schedule_patcher.start()
         self.addCleanup(schedule_patcher.stop)
