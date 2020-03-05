@@ -287,6 +287,35 @@ class ApiTests(TestCase):
         with patch('edx_when.api._are_relative_dates_enabled', return_value=False):
             assert list(api.get_overrides_for_user(course_key, self.user)) == user_overrides
 
+    def test_relative_date_past_end_date(self):
+        course_key = CourseLocator('testX', 'tt101', '2019')
+        start_block = make_block_id(course_key, block_type='course')
+        start_date = datetime(2019, 3, 15)
+        before_end_date_block = make_block_id(course_key)
+        before_end_date_delta = timedelta(days=1)
+        before_end_date = self.schedule.start_date + before_end_date_delta
+        after_end_date_block = make_block_id(course_key)
+        after_end_date_delta = timedelta(days=10)
+        end_block = make_block_id(course_key, block_type='course')
+        end_date = datetime(2019, 4, 4)
+        items = [
+            (start_block, {'start': start_date}),  # start dates are always absolute
+            (before_end_date_block, {'due': before_end_date_delta}),  # relative
+            (after_end_date_block, {'due': after_end_date_delta}),  # relative
+            (end_block, {'end': end_date}),  # end dates are always absolute
+        ]
+        api.set_dates_for_course(course_key, items)
+
+        dates = [
+            ((start_block, 'start'), start_date),
+            ((before_end_date_block, 'due'), before_end_date),
+            # Because the end date for this block would have been after the course end date,
+            # the block will have an end date of the course end date
+            ((after_end_date_block, 'due'), end_date),
+            ((end_block, 'end'), end_date),
+        ]
+        assert api.get_dates_for_course(course_key, schedule=self.schedule) == dict(dates)
+
     @ddt.data(*[
         (has_schedule, pass_user_object, pass_schedule, item_count)
         for has_schedule in (True, False)

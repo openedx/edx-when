@@ -40,7 +40,7 @@ class DatePolicy(TimeStampedModel):
         # TODO: return a string appropriate for the data fields
         return '<DatePolicy, ID: {}>'.format(self.id)
 
-    def actual_date(self, schedule=None):
+    def actual_date(self, schedule=None, end_datetime=None):
         """
         Return the normalized date.
         """
@@ -52,6 +52,11 @@ class DatePolicy(TimeStampedModel):
                         self
                     )
                 )
+            # If the course has an end date defined, we will prefer the course end date
+            # if the relative date is later than the course end date.
+            # Note: This can result in several dates being listed the same as the course end date
+            if end_datetime:
+                return min(schedule.start_date + self.rel_date, end_datetime)
             return schedule.start_date + self.rel_date
         else:
             return self.abs_date
