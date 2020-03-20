@@ -7,6 +7,7 @@ import logging
 from datetime import timedelta
 
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.db.models import ObjectDoesNotExist
 from edx_django_utils.cache.utils import DEFAULT_REQUEST_CACHE
 from opaque_keys import InvalidKeyError
@@ -52,14 +53,15 @@ def set_dates_for_course(course_key, items):
 
     items is an iterator of (location, field metadata dictionary)
     """
-    clear_dates_for_course(course_key)
-    for location, fields in items:
-        for field in FIELDS_TO_EXTRACT:
-            if field in fields:
-                val = fields[field]
-                if val:
-                    log.info('Setting date for %r, %s, %r', location, field, val)
-                    set_date_for_block(course_key, location, field, val)
+    with transaction.atomic():
+        clear_dates_for_course(course_key)
+        for location, fields in items:
+            for field in FIELDS_TO_EXTRACT:
+                if field in fields:
+                    val = fields[field]
+                    if val:
+                        log.info('Setting date for %r, %s, %r', location, field, val)
+                        set_date_for_block(course_key, location, field, val)
 
 
 def clear_dates_for_course(course_key):
@@ -243,39 +245,43 @@ def set_date_for_block(course_id, block_id, field, date_or_timedelta, user=None,
     else:
         date_kwargs = {'abs_date': date_or_timedelta}
 
-    try:
-        existing_date = models.ContentDate.objects.get(course_id=course_id, location=block_id, field=field)
-        existing_date.active = True
-    except models.ContentDate.DoesNotExist:
-        if user:
-            raise MissingDateError(block_id)
-        existing_date = models.ContentDate(course_id=course_id, location=block_id, field=field)
-        existing_date.policy, __ = models.DatePolicy.objects.get_or_create(**date_kwargs)
-
-    if user and not user.is_anonymous:
-        userd = models.UserDate(
-            user=user,
-            actor=actor,
-            reason=reason or '',
-            content_date=existing_date,
-            **date_kwargs
-        )
+    with transaction.atomic():
         try:
-            userd.full_clean()
-        except ValidationError:
-            raise InvalidDateError(userd.actual_date)
-        userd.save()
-        log.info('Saved override for user=%d loc=%s date=%s', userd.user_id, userd.location, userd.actual_date)
-    else:
-        if existing_date.policy.abs_date != date_or_timedelta and existing_date.policy.rel_date != date_or_timedelta:
-            log.info(
-                'updating policy %r %r -> %r',
-                existing_date,
-                existing_date.policy.abs_date or existing_date.policy.rel_date,
-                date_or_timedelta
+            existing_date = models.ContentDate.objects.get(course_id=course_id, location=block_id, field=field)
+            existing_date.active = True
+        except models.ContentDate.DoesNotExist:
+            if user:
+                raise MissingDateError(block_id)
+            existing_date = models.ContentDate(course_id=course_id, location=block_id, field=field)
+            existing_date.policy, __ = models.DatePolicy.objects.get_or_create(**date_kwargs)
+
+        if user and not user.is_anonymous:
+            userd = models.UserDate(
+                user=user,
+                actor=actor,
+                reason=reason or '',
+                content_date=existing_date,
+                **date_kwargs
             )
-            existing_date.policy = models.DatePolicy.objects.get_or_create(**date_kwargs)[0]
-    existing_date.save()
+            try:
+                userd.full_clean()
+            except ValidationError:
+                raise InvalidDateError(userd.actual_date)
+            userd.save()
+            log.info('Saved override for user=%d loc=%s date=%s', userd.user_id, userd.location, userd.actual_date)
+        else:
+            if (
+                existing_date.policy.abs_date != date_or_timedelta and
+                existing_date.policy.rel_date != date_or_timedelta
+            ):
+                log.info(
+                    'updating policy %r %r -> %r',
+                    existing_date,
+                    existing_date.policy.abs_date or existing_date.policy.rel_date,
+                    date_or_timedelta
+                )
+                existing_date.policy = models.DatePolicy.objects.get_or_create(**date_kwargs)[0]
+        existing_date.save()
 
 
 class BaseWhenException(Exception):

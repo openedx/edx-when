@@ -178,6 +178,33 @@ class ApiTests(TestCase):
 
     @ddt.data(
         (datetime(2019, 4, 6), datetime(2019, 4, 10), datetime(2019, 4, 10)),
+        # The expected date shifts from 4/6 to 4/4 because once it converts to a relative date,
+        # it is based off the schedule start and the users schedule start is 4/1
+        (datetime(2019, 4, 6), timedelta(days=3), datetime(2019, 4, 4)),
+        (timedelta(days=3), datetime(2019, 4, 10), datetime(2019, 4, 10)),
+        # Because the relative date is changed for the entire course, the user's date goes
+        # from 4/4 to 4/3 because it is based off the schedule start and the users
+        # schedule start is 4/1. This is different from when you call set_date_for_block
+        # and pass in a user as that will adjust it from the old due date (see test_set_user_override)
+        (timedelta(days=3), timedelta(days=2), datetime(2019, 4, 3)),
+    )
+    @ddt.unpack
+    def test_set_date_for_block(self, initial_date, override_date, expected_date):
+        items = make_items()
+        first = items[0]
+        block_id = first[0]
+        items[0][1]['due'] = initial_date
+
+        api.set_dates_for_course(six.text_type(block_id.course_key), items)
+
+        api.set_date_for_block(block_id.course_key, block_id, 'due', override_date)
+        DEFAULT_REQUEST_CACHE.clear()
+        retrieved = api.get_dates_for_course(block_id.course_key, user=self.user.id)
+        assert len(retrieved) == NUM_OVERRIDES
+        assert retrieved[block_id, 'due'] == expected_date
+
+    @ddt.data(
+        (datetime(2019, 4, 6), datetime(2019, 4, 10), datetime(2019, 4, 10)),
         (datetime(2019, 4, 6), timedelta(days=3), datetime(2019, 4, 9)),
         (timedelta(days=3), datetime(2019, 4, 10), datetime(2019, 4, 10)),
         (timedelta(days=3), timedelta(days=2), datetime(2019, 4, 6)),
