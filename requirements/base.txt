@@ -5,43 +5,41 @@
 #    make upgrade
 #
 appdirs==1.4.3            # via fs
-backports.os==0.1.1       # via fs
-certifi==2019.9.11        # via requests
+certifi==2019.11.28       # via requests
 chardet==3.0.4            # via requests
-django-model-utils==3.2.0
-django-waffle==0.18.0     # via edx-django-utils, edx-drf-extensions
-django==1.11.26
-djangorestframework-jwt==1.11.0  # via edx-drf-extensions
-djangorestframework==3.9.4  # via edx-drf-extensions, rest-condition
-edx-django-utils==2.0.2   # via edx-drf-extensions
-edx-drf-extensions==2.4.5
-edx-opaque-keys==2.0.1
-enum34==1.1.6             # via fs
+django-model-utils==4.0.0  # via -r requirements/base.in
+django-waffle==0.20.0     # via edx-django-utils, edx-drf-extensions
+django==2.2.11            # via -c requirements/constraints.txt, -r requirements/base.in, django-model-utils, djangorestframework, drf-jwt, edx-django-utils, edx-drf-extensions, rest-condition
+djangorestframework==3.11.0  # via drf-jwt, edx-drf-extensions, rest-condition
+drf-jwt==1.14.0           # via edx-drf-extensions
+edx-django-utils==3.1     # via -r requirements/base.in, edx-drf-extensions
+edx-drf-extensions==5.0.2  # via -r requirements/base.in
+edx-opaque-keys==2.0.1    # via -r requirements/base.in, edx-drf-extensions
 fs==2.4.11                # via xblock
-future==0.18.2            # via backports.os, pyjwkest
-idna==2.8                 # via requests
-lxml==4.4.1               # via xblock
+future==0.18.2            # via pyjwkest
+idna==2.9                 # via requests
+lxml==4.5.0               # via xblock
 markupsafe==1.1.1         # via xblock
-newrelic==5.2.3.131       # via edx-django-utils
-pbr==5.4.3                # via stevedore
-psutil==1.2.1             # via edx-django-utils, edx-drf-extensions
-pycryptodomex==3.9.4      # via pyjwkest
-pyjwkest==1.3.2           # via edx-drf-extensions
-pyjwt==1.7.1              # via djangorestframework-jwt
-pymongo==3.9.0            # via edx-opaque-keys
+newrelic==5.10.0.138      # via edx-django-utils
+pbr==5.4.4                # via stevedore
+psutil==1.2.1             # via edx-django-utils
+pycryptodomex==3.9.7      # via pyjwkest
+pyjwkest==1.4.2           # via edx-drf-extensions
+pyjwt==1.7.1              # via drf-jwt
+pymongo==3.10.1           # via edx-opaque-keys
 python-dateutil==2.8.1    # via edx-drf-extensions, xblock
 pytz==2019.3              # via django, fs, xblock
-pyyaml==5.1.2             # via xblock
-requests==2.22.0          # via edx-drf-extensions, pyjwkest
+pyyaml==5.3.1             # via xblock
+requests==2.23.0          # via edx-drf-extensions, pyjwkest
 rest-condition==1.0.3     # via edx-drf-extensions
-semantic-version==2.8.2   # via edx-drf-extensions
-six==1.13.0               # via edx-drf-extensions, edx-opaque-keys, fs, pyjwkest, python-dateutil, stevedore, xblock
-stevedore==1.31.0         # via edx-opaque-keys
-typing==3.7.4.1           # via fs
-urllib3==1.25.7           # via requests
+semantic-version==2.8.4   # via edx-drf-extensions
+six==1.14.0               # via django-waffle, edx-drf-extensions, edx-opaque-keys, fs, pyjwkest, python-dateutil, stevedore, xblock
+sqlparse==0.3.1           # via django
+stevedore==1.32.0         # via edx-opaque-keys
+urllib3==1.25.8           # via requests
 web-fragments==0.3.1      # via xblock
-webob==1.8.5              # via xblock
-xblock==1.2.9
+webob==1.8.6              # via xblock
+xblock==1.2.9             # via -r requirements/base.in
 
 # The following packages are considered to be unsafe in a requirements file:
-# setuptools==41.6.0        # via fs
+# setuptools
