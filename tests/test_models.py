@@ -96,13 +96,3 @@ class TestContentDate(TestCase):
     def test_schedule_for_user_obj_no_enrollments(self, mock_schedule):
         mock_schedule.objects.get.side_effect = ObjectDoesNotExist()
         assert self.content_date.schedule_for_user(self.user) is None
-
-
-class TestUserDate(TestCase):
-    """
-    Tests of the UserDate model.
-    """
-
-    def test_something(self):
-        """TODO: Write real test cases."""
-        pass

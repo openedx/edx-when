@@ -15,7 +15,7 @@ from test_utils import make_items
 NUM_OVERRIDES = 6
 
 
-class MockBlock(object):
+class MockBlock:
     """
     Fake Xblock
     """

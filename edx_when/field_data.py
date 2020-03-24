@@ -3,9 +3,9 @@ from __future__ import absolute_import, unicode_literals
 
 import logging
 
+from edx_django_utils.db.read_replica import read_queries_only
 from six import text_type
 from xblock.field_data import FieldData
-from edx_django_utils.db.read_replica import read_queries_only
 
 from . import api
 
@@ -48,7 +48,7 @@ class DateLookupFieldData(FieldData):
         """
         super(DateLookupFieldData, self).__init__()
         if isinstance(defaults, DateLookupFieldData):
-            defaults = defaults._defaults  # pylint: disable=protected-access
+            defaults = defaults._defaults
         self._defaults = defaults
         self._load_dates(course_id, user, use_cached=use_cached)
 
@@ -123,7 +123,7 @@ class DateLookupFieldData(FieldData):
         return self._defaults.delete(block, name)
 
 
-class DateOverrideTransformer(object):
+class DateOverrideTransformer:
     """
     A transformer that loads date data in xblock.
     """

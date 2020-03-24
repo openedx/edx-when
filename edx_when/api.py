@@ -166,6 +166,7 @@ def get_date_for_block(course_id, block_id, name='due', user=None):
     Arguments:
         course_id: either a CourseKey or string representation of same
         block_id: either a UsageKey or string representation of same
+        name (optional): the name of the date field to read
         user: None, an int, or a User object
     """
     try:
@@ -198,8 +199,8 @@ def get_overrides_for_block(course_id, block_id):
     for udate in query:
         if udate.user_id in users:
             continue
-        else:
-            users.add(udate.user_id)
+
+        users.add(udate.user_id)
         username = udate.user.username
         try:
             full_name = udate.user.profile.name
@@ -232,8 +233,8 @@ def get_overrides_for_user(course_id, user):
     for udate in query:
         if udate.content_date.location in blocks:
             continue
-        else:
-            blocks.add(udate.content_date.location)
+
+        blocks.add(udate.content_date.location)
         yield {'location': udate.content_date.location, 'actual_date': udate.actual_date}
 
 
@@ -288,10 +289,7 @@ def set_date_for_block(course_id, block_id, field, date_or_timedelta, user=None,
             userd.save()
             log.info('Saved override for user=%d loc=%s date=%s', userd.user_id, userd.location, userd.actual_date)
         else:
-            if (
-                existing_date.policy.abs_date != date_or_timedelta and
-                existing_date.policy.rel_date != date_or_timedelta
-            ):
+            if date_or_timedelta not in (existing_date.policy.abs_date, existing_date.policy.rel_date):
                 log.info(
                     'updating policy %r %r -> %r',
                     existing_date,
