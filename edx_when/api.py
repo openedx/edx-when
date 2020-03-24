@@ -49,27 +49,38 @@ def is_enabled_for_course(course_key):
 
 def set_dates_for_course(course_key, items):
     """
-    Extract dates from blocks.
+    Set dates for blocks.
 
     items is an iterator of (location, field metadata dictionary)
     """
     with transaction.atomic():
-        clear_dates_for_course(course_key)
+        active_date_ids = []
+
         for location, fields in items:
             for field in FIELDS_TO_EXTRACT:
                 if field in fields:
                     val = fields[field]
                     if val:
                         log.info('Setting date for %r, %s, %r', location, field, val)
-                        set_date_for_block(course_key, location, field, val)
+                        active_date_ids.append(set_date_for_block(course_key, location, field, val))
+
+        # Now clear out old dates that we didn't touch
+        clear_dates_for_course(course_key, keep=active_date_ids)
 
 
-def clear_dates_for_course(course_key):
+def clear_dates_for_course(course_key, keep=None):
     """
     Set all dates to inactive.
+
+    Arguments:
+        course_key: either a CourseKey or string representation of same
+        keep: an iterable of ContentDate ids to keep active
     """
     course_key = _ensure_key(CourseKey, course_key)
-    models.ContentDate.objects.filter(course_id=course_key, active=True).update(active=False)
+    dates = models.ContentDate.objects.filter(course_id=course_key, active=True)
+    if keep:
+        dates = dates.exclude(id__in=keep)
+    dates.update(active=False)
 
 
 # TODO: Record dates for every block in the course, not just the ones where the block
@@ -234,6 +245,9 @@ def set_date_for_block(course_id, block_id, field, date_or_timedelta, user=None,
     user: user object to override date
     reason: explanation for override
     actor: user object of person making the override
+
+    Returns:
+        a unique id for this block date
     """
     course_id = _ensure_key(CourseKey, course_id)
     block_id = _ensure_key(UsageKey, block_id)
@@ -245,15 +259,19 @@ def set_date_for_block(course_id, block_id, field, date_or_timedelta, user=None,
     else:
         date_kwargs = {'abs_date': date_or_timedelta}
 
-    with transaction.atomic():
+    with transaction.atomic(savepoint=False):  # this is frequently called in a loop, let's avoid the savepoints
         try:
-            existing_date = models.ContentDate.objects.get(course_id=course_id, location=block_id, field=field)
+            existing_date = models.ContentDate.objects.select_related('policy').get(
+                course_id=course_id, location=block_id, field=field
+            )
+            needs_save = not existing_date.active
             existing_date.active = True
         except models.ContentDate.DoesNotExist:
             if user:
                 raise MissingDateError(block_id)
             existing_date = models.ContentDate(course_id=course_id, location=block_id, field=field)
             existing_date.policy, __ = models.DatePolicy.objects.get_or_create(**date_kwargs)
+            needs_save = True
 
         if user and not user.is_anonymous:
             userd = models.UserDate(
@@ -281,7 +299,11 @@ def set_date_for_block(course_id, block_id, field, date_or_timedelta, user=None,
                     date_or_timedelta
                 )
                 existing_date.policy = models.DatePolicy.objects.get_or_create(**date_kwargs)[0]
-        existing_date.save()
+                needs_save = True
+
+        if needs_save:
+            existing_date.save()
+        return existing_date.id
 
 
 class BaseWhenException(Exception):

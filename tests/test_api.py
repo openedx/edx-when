@@ -11,7 +11,7 @@ import six
 from django.contrib.auth.models import User
 from django.test import TestCase
 from edx_django_utils.cache.utils import DEFAULT_REQUEST_CACHE
-from mock import Mock, patch
+from mock import Mock, call, patch
 from opaque_keys.edx.locator import CourseLocator
 
 from edx_when import api, models
@@ -116,9 +116,18 @@ class ApiTests(TestCase):
 
     def test_clear_dates_for_course(self):
         items = self.test_get_dates_for_course()
-        api.clear_dates_for_course(items[0][0].course_key)
+        keep_date = models.ContentDate.objects.get(location=items[1][0])
+
+        with self.assertNumQueries(1):
+            api.clear_dates_for_course(items[0][0].course_key, keep=[keep_date.id])
+
         retrieved = api.get_dates_for_course(items[0][0].course_key, use_cached=False)
-        assert not retrieved
+        self.assertEqual(len(retrieved), 1)
+        self.assertEqual(list(retrieved.keys())[0][0], items[1][0])
+
+        with self.assertNumQueries(1):
+            api.clear_dates_for_course(items[0][0].course_key)
+        self.assertEqual(api.get_dates_for_course(items[0][0].course_key, use_cached=False), {})
 
     def test_set_user_override_invalid_block(self):
         items = make_items()
@@ -369,6 +378,30 @@ class ApiTests(TestCase):
             query_count = 3
         with self.assertNumQueries(query_count):
             api.get_dates_for_course(course_id=self.course.id, user=user, schedule=schedule)
+
+    def test_set_dates_for_course_query_counts(self):
+        items = make_items()
+
+        with self.assertNumQueries(2):  # two for transaction wrappers
+            with patch('edx_when.api.set_date_for_block', return_value=1) as mock_set:
+                with patch('edx_when.api.clear_dates_for_course') as mock_clear:
+                    api.set_dates_for_course(self.course.id, items)
+
+        self.assertEqual(mock_set.call_count, NUM_OVERRIDES)
+        self.assertEqual(mock_clear.call_args_list, [call(self.course.id, keep=[1] * NUM_OVERRIDES)])
+
+    def test_set_date_for_block_query_counts(self):
+        args = (self.course.id, make_block_id(self.course.id), 'due', datetime(2019, 3, 22))
+
+        # Each date we make has:
+        #  1 get & 1 create for the date itself
+        #  1 get & 1 create for the sub-policy (plus 2 for starting/stopping transactions)
+        with self.assertNumQueries(2 + 4):
+            api.set_date_for_block(*args)
+
+        # When setting same items, we should only do initial read
+        with self.assertNumQueries(1):
+            api.set_date_for_block(*args)
 
 
 class ApiWaffleTests(TestCase):
