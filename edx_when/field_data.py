@@ -5,6 +5,7 @@ import logging
 
 from six import text_type
 from xblock.field_data import FieldData
+from edx_django_utils.db.read_replica import read_queries_only
 
 from . import api
 
@@ -55,9 +56,10 @@ class DateLookupFieldData(FieldData):
         """
         Load the dates from the database.
         """
-        dates = {}
-        for (location, field), date in api.get_dates_for_course(course_id, user, use_cached=use_cached).items():
-            dates[text_type(location), field] = date
+        with read_queries_only():
+            dates = {}
+            for (location, field), date in api.get_dates_for_course(course_id, user, use_cached=use_cached).items():
+                dates[text_type(location), field] = date
 
         self._course_dates = dates
 
