@@ -121,7 +121,9 @@ def get_dates_for_course(course_id, user=None, use_cached=True, schedule=None):
         return dates
 
     rel_lookup = {} if allow_relative_dates else {'policy__rel_date': None}
-    qset = models.ContentDate.objects.filter(course_id=course_id, active=True, **rel_lookup).select_related('policy')
+    qset = models.ContentDate.objects.filter(
+        course_id=course_id, active=True, **rel_lookup
+    ).select_related('policy').only("course_id", "policy__rel_date", "policy__abs_date", "location", "field")
 
     dates = {}
     policies = {}
