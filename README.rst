@@ -4,24 +4,15 @@ edx-when
 |pypi-badge| |travis-badge| |codecov-badge| |doc-badge| |pyversions-badge|
 |license-badge|
 
-The ``README.rst`` file should start with a brief description of the repository,
-which sets it in the context of other repositories under the ``edx``
-organization. It should make clear where this fits in to the overall edX
-codebase.
+Overview
+--------
 
-Your project description goes here
-
-Overview (please modify)
-------------------------
-
-The ``README.rst`` file should then provide an overview of the code in this
-repository, including the main components and useful entry points for starting
-to understand the code in more detail.
-
-Documentation
--------------
-
-The full documentation is at https://edx-when.readthedocs.org.
+edx-when is designed to be the central source of dates for the LMS.
+It is written to by Studio when a Course is published
+(via https://github.com/edx/edx-platform/blob/master/openedx/core/djangoapps/course_date_signals/handlers.py)
+and then the LMS reads from it in several locations.
+This repo contains start, end, and due dates for Courses and offers the
+functionality to have both absolute and relative dates.
 
 License
 -------
