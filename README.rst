@@ -8,6 +8,8 @@ Overview
 --------
 
 edx-when is designed to be the central source of dates for the LMS.
+This repository is deployed to PyPI and designed to be installed and imported by an installation of edx-platform.
+As part of being integrated into edx-platform, edx-when shares the **same** database as the rest of the platform.
 It is written to by Studio when a Course is published
 (via https://github.com/edx/edx-platform/blob/master/openedx/core/djangoapps/course_date_signals/handlers.py)
 and then the LMS reads from it in several locations.
