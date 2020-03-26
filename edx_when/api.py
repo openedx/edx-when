@@ -6,6 +6,7 @@ from __future__ import absolute_import, unicode_literals
 import logging
 from datetime import timedelta
 
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import ObjectDoesNotExist
@@ -18,6 +19,17 @@ from . import models
 log = logging.getLogger(__name__)
 
 FIELDS_TO_EXTRACT = ('due', 'start', 'end')
+
+
+def _content_dates_cache_key(course_key, query_dict):
+    """Memcached key for ContentDates given course_key and filter args."""
+    query_dict_str = ".".join(
+        sorted(
+            "{},{}".format(key, value or "")
+            for key, value in query_dict.items()
+        )
+    )
+    return "edx-when.content_dates:{}:{}".format(course_key, query_dict_str)
 
 
 def _ensure_key(key_class, key_obj):
@@ -82,6 +94,10 @@ def clear_dates_for_course(course_key, keep=None):
         dates = dates.exclude(id__in=keep)
     dates.update(active=False)
 
+    for query_dict in [{}, {'policy__rel_date': None}]:
+        cache_key = _content_dates_cache_key(course_key, query_dict)
+        cache.delete(cache_key)
+
 
 # TODO: Record dates for every block in the course, not just the ones where the block
 # has an explicitly set date.
@@ -117,13 +133,29 @@ def get_dates_for_course(course_id, user=None, use_cached=True, schedule=None):
         cache_key += '.with-rel-dates'
 
     dates = DEFAULT_REQUEST_CACHE.data.get(cache_key, None)
+
     if use_cached and dates is not None:
         return dates
 
     rel_lookup = {} if allow_relative_dates else {'policy__rel_date': None}
-    qset = models.ContentDate.objects.filter(
-        course_id=course_id, active=True, **rel_lookup
-    ).select_related('policy').only("course_id", "policy__rel_date", "policy__abs_date", "location", "field")
+
+    # If more possible permutations are added to rel_lookup, be sure to also add
+    # to cache invalidation in clear_dates_for_course. This is only safe to do
+    # because a) we serialize to cache with pickle; b) we don't write to
+    # ContentDate in this function; This is not a great long-term solution.
+    external_cache_key = _content_dates_cache_key(course_id, rel_lookup)
+    qset = cache.get(external_cache_key) if use_cached else None
+    if qset is None:
+        qset = list(
+            models.ContentDate.objects
+                              .filter(course_id=course_id, active=True, **rel_lookup)
+                              .select_related('policy')
+                              .only(
+                                  "course_id", "policy__rel_date",
+                                  "policy__abs_date", "location", "field"
+                              )
+        )
+        cache.set(external_cache_key, qset)
 
     dates = {}
     policies = {}
@@ -158,6 +190,7 @@ def get_dates_for_course(course_id, user=None, use_cached=True, schedule=None):
                 log.warning("Unable to read date for %s", userdate.content_date, exc_info=True)
 
     DEFAULT_REQUEST_CACHE.data[cache_key] = dates
+
     return dates
 
 
