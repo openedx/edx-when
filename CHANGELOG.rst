@@ -14,6 +14,15 @@ Change Log
 Unreleased
 ~~~~~~~~~~
 
+[1.1.4] - 2019-03-30
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Drop the active index from ContentDate. It has low cardinality and Aurora was
+  doing a lot of extra work to try to do an intersect query with that and
+  the course_id index, when using the latter by itself would be far more
+  efficient.
+
+
 [1.1.3] - 2019-03-25
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
