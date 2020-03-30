@@ -81,7 +81,7 @@ class ContentDate(models.Model):
     policy = models.ForeignKey(DatePolicy, on_delete=models.CASCADE)
     location = UsageKeyField(null=True, default=None, db_index=True, max_length=255)
     field = models.CharField(max_length=255, default='')
-    active = models.BooleanField(default=True, db_index=True)
+    active = models.BooleanField(default=True)
 
     class Meta:
         """Django Metadata."""
