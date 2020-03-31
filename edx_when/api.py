@@ -306,7 +306,16 @@ def set_date_for_block(course_id, block_id, field, date_or_timedelta, user=None,
             if user:
                 raise MissingDateError(block_id)
             existing_date = models.ContentDate(course_id=course_id, location=block_id, field=field)
-            existing_date.policy, __ = models.DatePolicy.objects.get_or_create(**date_kwargs)
+
+            # We had race-conditions create multiple DatePolicies w/ the same values. Handle that case.
+            try:
+                existing_policies = list(models.DatePolicy.objects.filter(**date_kwargs).order_by('id'))
+            except models.DatePolicy.DoesNotExist:
+                existing_policies = []
+            if existing_policies:
+                existing_date.policy = existing_policies[0]
+            else:
+                existing_date.policy = models.DatePolicy.objects.create(**date_kwargs)
             needs_save = True
 
         if user and not user.is_anonymous:
@@ -331,7 +340,16 @@ def set_date_for_block(course_id, block_id, field, date_or_timedelta, user=None,
                     existing_date.policy.abs_date or existing_date.policy.rel_date,
                     date_or_timedelta
                 )
-                existing_date.policy = models.DatePolicy.objects.get_or_create(**date_kwargs)[0]
+                # We had race-conditions create multiple DatePolicies w/ the same values. Handle that case.
+                try:
+                    existing_policies = list(models.DatePolicy.objects.filter(**date_kwargs).order_by('id'))
+                except models.DatePolicy.DoesNotExist:
+                    existing_policies = []
+                if existing_policies:
+                    existing_date.policy = existing_policies[0]
+                else:
+                    existing_date.policy = models.DatePolicy.objects.create(**date_kwargs)
+
                 needs_save = True
 
         if needs_save:

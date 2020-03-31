@@ -430,8 +430,8 @@ class ApiTests(TestCase):
 
         # Each date we make has:
         #  1 get & 1 create for the date itself
-        #  1 get & 1 create for the sub-policy (plus 2 for starting/stopping transactions)
-        with self.assertNumQueries(2 + 4):
+        #  1 get & 1 create for the sub-policy
+        with self.assertNumQueries(4):
             api.set_date_for_block(*args)
 
         # When setting same items, we should only do initial read
