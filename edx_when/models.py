@@ -33,12 +33,16 @@ class DatePolicy(TimeStampedModel):
     abs_date = models.DateTimeField(null=True, blank=True, db_index=True)
     rel_date = models.DurationField(null=True, blank=True, db_index=True)
 
+    class Meta:
+        """Django Metadata."""
+
+        verbose_name_plural = 'Date policies'
+
     def __str__(self):
         """
         Get a string representation of this model instance.
         """
-        # TODO: return a string appropriate for the data fields
-        return '<DatePolicy, ID: {}>'.format(self.id)
+        return str(self.abs_date) if self.abs_date else str(self.rel_date)
 
     def actual_date(self, schedule=None, end_datetime=None):
         """
@@ -92,8 +96,8 @@ class ContentDate(models.Model):
         """
         Get a string representation of this model instance.
         """
-        # TODO: return a string appropriate for the data fields
-        return '<ContentDate, ID: {}>'.format(self.id)
+        # Location already holds course id
+        return '{}, {}'.format(self.location, self.field)
 
     def schedule_for_user(self, user):
         """
@@ -173,5 +177,6 @@ class UserDate(TimeStampedModel):
         """
         Get a string representation of this model instance.
         """
-        # TODO: return a string appropriate for the data fields
-        return '<UserDate, ID: {}>'.format(self.id)
+        # Location already holds course id
+        # pylint: disable=no-member
+        return '{}, {}, {}'.format(self.user.username, self.content_date.location, self.content_date.field)

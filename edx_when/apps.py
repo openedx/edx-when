@@ -14,6 +14,7 @@ class EdxWhenConfig(AppConfig):
     """
 
     name = 'edx_when'
+    verbose_name = "edX When"
     plugin_app = {
         'url_config': {
             'lms.djangoapp': {
