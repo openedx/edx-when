@@ -54,6 +54,65 @@ class ApiTests(TestCase):
         cache.clear()
         DEFAULT_REQUEST_CACHE.clear()
 
+    @patch('edx_when.api.Schedule', DummySchedule)
+    def test_get_schedules_with_due_date_for_abs_date(self):
+        items = make_items(with_relative=False)
+        api.set_dates_for_course(items[0][0].course_key, items)
+        assignment_date = items[0][1].get('due')
+        api.set_date_for_block(items[0][0].course_key, items[0][0], 'due', assignment_date, user=self.user)
+        # Specify the actual assignment due date so this will return true
+        schedules = api.get_schedules_with_due_date(items[0][0].course_key, datetime.date(assignment_date))
+        for schedule in schedules:
+            assert schedule.enrollment.course_id == items[0][0].course_key
+            assert schedule.enrollment.user.id == self.user.id
+
+    @patch('edx_when.api.Schedule', DummySchedule)
+    def test_get_schedules_with_due_date_for_rel_date(self):
+        items = make_items(with_relative=True)
+        api.set_dates_for_course(items[0][0].course_key, items)
+        relative_date = timedelta(days=2)
+        api.set_date_for_block(items[0][0].course_key, items[0][0], 'due', relative_date, user=self.user)
+        assignment_date = items[0][1].get('due') + relative_date
+        # Specify the actual assignment due date so this will return true
+        schedules = api.get_schedules_with_due_date(items[0][0].course_key, assignment_date.date())
+        for schedule in schedules:
+            assert schedule.enrollment.course_id == items[0][0].course_key
+            assert schedule.enrollment.user.id == self.user.id
+
+    @patch('edx_when.api.Schedule', DummySchedule)
+    def test_get_schedules_with_due_date_for_abs_user_dates(self):
+        items = make_items(with_relative=True)
+        api.set_dates_for_course(items[0][0].course_key, items)
+        assignment_date = items[0][1].get('due')
+        api.set_date_for_block(items[0][0].course_key, items[0][0], 'due', assignment_date, user=self.user)
+        models.UserDate.objects.create(
+            abs_date=assignment_date,
+            user=self.user,
+            content_date=models.ContentDate.objects.first(),
+        )
+        # Specify the actual assignment due date so this will return true
+        schedules = api.get_schedules_with_due_date(items[0][0].course_key, assignment_date.date())
+        assert len(schedules) == 1  # Make sure there's only one schedule, we should not have duplicates
+        assert schedules[0].enrollment.course_id == items[0][0].course_key
+        assert schedules[0].enrollment.user.id == self.user.id
+
+    @patch('edx_when.api.Schedule', DummySchedule)
+    def test_get_schedules_with_due_date_for_rel_user_dates(self):
+        items = make_items(with_relative=True)
+        api.set_dates_for_course(items[0][0].course_key, items)
+        assignment_date = items[0][1].get('due')
+        api.set_date_for_block(items[0][0].course_key, items[0][0], 'due', assignment_date, user=self.user)
+        models.UserDate.objects.create(
+            rel_date=timedelta(days=2),
+            user=self.user,
+            content_date=models.ContentDate.objects.first(),
+        )
+        # Specify the actual assignment due date so this will return true
+        schedules = api.get_schedules_with_due_date(items[0][0].course_key, assignment_date.date())
+        assert len(schedules) == 1  # Make sure there's only one schedule, we should not have duplicates
+        assert schedules[0].enrollment.course_id == items[0][0].course_key
+        assert schedules[0].enrollment.user.id == self.user.id
+
     def test_set_dates_for_course(self):
         items = make_items()
         api.set_dates_for_course(items[0][0].course_key, items)
