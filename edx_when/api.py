@@ -9,12 +9,18 @@ from datetime import timedelta
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import ObjectDoesNotExist
+from django.db.models import DateTimeField, ExpressionWrapper, F, ObjectDoesNotExist, Q
 from edx_django_utils.cache.utils import DEFAULT_REQUEST_CACHE
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey, UsageKey
 
 from . import models
+
+try:
+    from openedx.core.djangoapps.schedules.models import Schedule
+# TODO: Move schedules into edx-when
+except ImportError:
+    Schedule = None
 
 log = logging.getLogger(__name__)
 
@@ -355,6 +361,48 @@ def set_date_for_block(course_id, block_id, field, date_or_timedelta, user=None,
         if needs_save:
             existing_date.save()
         return existing_date.id
+
+
+def get_schedules_with_due_date(course_id, assignment_date):
+    """
+    Get all Schedules with assignments due on a specific date for a Course.
+
+    Arguments:
+        course_id: either a CourseKey or string representation of same
+        assignment_date: a date object
+
+    Returns:
+        a QuerySet of Schedule objects for Users who have content due on the specified assignment_date
+    """
+    user_ids = models.UserDate.objects.select_related('content_date', 'content_date__policy').annotate(
+        computed_date=ExpressionWrapper(
+            F('content_date__policy__abs_date') + F('rel_date'),
+            output_field=DateTimeField()
+        ),
+    ).filter(
+        Q(computed_date__date=assignment_date, abs_date__isnull=True) |
+        Q(content_date__policy__abs_date__date=assignment_date, rel_date__isnull=True)
+    ).values_list('user_id', flat=True).distinct()
+
+    user_date_overridden_schedules = Schedule.objects.filter(
+        enrollment__course_id=course_id,
+        enrollment__user_id__in=user_ids,
+    )
+
+    # Get all relative dates for a course, we want them distinct, it doesn't matter how many of each due date there is
+    rel_dates = models.ContentDate.objects.filter(
+        course_id=course_id,
+        policy__rel_date__isnull=False,
+    ).select_related('policy').values_list('policy__rel_date', flat=True).distinct()
+
+    # Using those relative dates, get all Schedules that have a "hit" by working backwards to the start_date
+    rel_start_dates = [assignment_date - rel_date for rel_date in rel_dates]
+
+    # Exclude any user that has an overridden date for a course on the specified day so there aren't duplicates
+    return Schedule.objects.filter(
+        enrollment__course_id=course_id,
+        start_date__date__in=rel_start_dates,
+    ).exclude(enrollment__user_id__in=user_ids).select_related('enrollment') | user_date_overridden_schedules
 
 
 class BaseWhenException(Exception):
