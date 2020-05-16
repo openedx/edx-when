@@ -107,7 +107,7 @@ def clear_dates_for_course(course_key, keep=None):
 
 # TODO: Record dates for every block in the course, not just the ones where the block
 # has an explicitly set date.
-def get_dates_for_course(course_id, user=None, use_cached=True, schedule=None):
+def get_dates_for_course(course_id, user=None, use_cached=True, schedule=None, outline_only=False):
     """
     Return dictionary of dates for the given course_id and optional user.
 
@@ -137,6 +137,8 @@ def get_dates_for_course(course_id, user=None, use_cached=True, schedule=None):
         cache_key += '.schedule-%s' % schedule.start_date
     if allow_relative_dates:
         cache_key += '.with-rel-dates'
+    if outline_only:
+        cache_key += '.outline_only'
 
     dates = DEFAULT_REQUEST_CACHE.data.get(cache_key, None)
 
@@ -152,14 +154,26 @@ def get_dates_for_course(course_id, user=None, use_cached=True, schedule=None):
     external_cache_key = _content_dates_cache_key(course_id, rel_lookup)
     qset = cache.get(external_cache_key) if use_cached else None
     if qset is None:
+        if outline_only:
+            section_usage_key_prefix = str(course_id.make_usage_key('chapter', '_'))[:-1]
+            sequence_usage_key_prefix = str(course_id.make_usage_key('sequential', '_'))[:-1]
+            course_usage_key = course_id.make_usage_key('course', 'course')
+            outline_filter = (
+                Q(location__startswith=section_usage_key_prefix) |
+                Q(location__startswith=sequence_usage_key_prefix) |
+                Q(location=course_usage_key)
+            )
+
+        qset = models.ContentDate.objects.filter(course_id=course_id, active=True, **rel_lookup)
+        if outline_only:
+            qset = qset.filter(outline_filter)
+
         qset = list(
-            models.ContentDate.objects
-                              .filter(course_id=course_id, active=True, **rel_lookup)
-                              .select_related('policy')
-                              .only(
-                                  "course_id", "policy__rel_date",
-                                  "policy__abs_date", "location", "field"
-                              )
+            qset.select_related('policy')
+                .only(
+                    "course_id", "policy__rel_date",
+                    "policy__abs_date", "location", "field"
+                )
         )
         cache.set(external_cache_key, qset)
 

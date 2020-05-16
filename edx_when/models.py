@@ -91,6 +91,9 @@ class ContentDate(models.Model):
         """Django Metadata."""
 
         unique_together = ('policy', 'location', 'field')
+        index_together = (
+            ('course_id', 'location'),
+        )
 
     def __str__(self):
         """
