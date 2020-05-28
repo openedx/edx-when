@@ -10,7 +10,6 @@ from datetime import datetime
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models
-from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import gettext_lazy as _
 from model_utils.models import TimeStampedModel
 from opaque_keys.edx.django.models import CourseKeyField, UsageKeyField
@@ -22,7 +21,6 @@ except ImportError:
     Schedule = None
 
 
-@python_2_unicode_compatible
 class DatePolicy(TimeStampedModel):
     """
     Stores a date (either absolute or relative).
@@ -73,7 +71,6 @@ class DatePolicy(TimeStampedModel):
             raise ValidationError(_("Absolute and relative dates cannot both be used"))
 
 
-@python_2_unicode_compatible
 class ContentDate(models.Model):
     """
     Ties a DatePolicy to a specific piece of course content. (e.g. a due date for a homework).
@@ -120,7 +117,6 @@ class ContentDate(models.Model):
                 return no_schedules_found
 
 
-@python_2_unicode_compatible
 class UserDate(TimeStampedModel):
     """
     Stores a user-specific date override for a given ContentDate.
