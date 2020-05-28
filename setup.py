@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# pylint: disable=W6005,W6100,useless-suppression
+# pylint: disable=useless-suppression
 """
 Package metadata for edx_when.
 """
