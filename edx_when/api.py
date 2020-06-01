@@ -384,7 +384,7 @@ def get_schedules_with_due_date(course_id, assignment_date):
         Q(content_date__policy__abs_date__date=assignment_date, rel_date__isnull=True)
     ).values_list('user_id', flat=True).distinct()
 
-    user_date_overridden_schedules = Schedule.objects.filter(
+    schedules = Schedule.objects.filter(
         enrollment__course_id=course_id,
         enrollment__user_id__in=user_ids,
     )
@@ -392,17 +392,39 @@ def get_schedules_with_due_date(course_id, assignment_date):
     # Get all relative dates for a course, we want them distinct, it doesn't matter how many of each due date there is
     rel_dates = models.ContentDate.objects.filter(
         course_id=course_id,
+        active=True,
         policy__rel_date__isnull=False,
     ).select_related('policy').values_list('policy__rel_date', flat=True).distinct()
 
     # Using those relative dates, get all Schedules that have a "hit" by working backwards to the start_date
     rel_start_dates = [assignment_date - rel_date for rel_date in rel_dates]
 
-    # Exclude any user that has an overridden date for a course on the specified day so there aren't duplicates
-    return Schedule.objects.filter(
-        enrollment__course_id=course_id,
-        start_date__date__in=rel_start_dates,
-    ).exclude(enrollment__user_id__in=user_ids).select_related('enrollment') | user_date_overridden_schedules
+    if rel_start_dates:
+        # Exclude any user that has an overridden date for a course on the specified day so there aren't duplicates
+        schedules = Schedule.objects.filter(
+            enrollment__course_id=course_id,
+            enrollment__is_active=True,
+            start_date__date__in=rel_start_dates,
+        ).exclude(enrollment__user_id__in=user_ids).select_related('enrollment') | schedules
+
+    # Add in all users with relative dates to exclude from the absolute dates query to prevent duplicates
+    user_ids = schedules.all().values_list('enrollment__user_id', flat=True).distinct()
+
+    has_abs_date_on_day = models.ContentDate.objects.filter(
+        course_id=course_id,
+        active=True,
+        policy__abs_date__date=assignment_date,
+    ).first()
+
+    # If there is an absolute day for this specified date for this
+    # course, we want all active schedules to receive an email
+    if has_abs_date_on_day:
+        schedules = Schedule.objects.filter(
+            enrollment__course_id=course_id,
+            enrollment__is_active=True,
+        ).exclude(enrollment__user_id__in=user_ids).select_related('enrollment') | schedules
+
+    return schedules
 
 
 class BaseWhenException(Exception):
