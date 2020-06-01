@@ -56,25 +56,30 @@ class ApiTests(TestCase):
 
     @patch('edx_when.api.Schedule', DummySchedule)
     def test_get_schedules_with_due_date_for_abs_date(self):
+        self.schedule.start_date = datetime(2019, 3, 22)
         items = make_items(with_relative=False)
-        api.set_dates_for_course(items[0][0].course_key, items)
         assignment_date = items[0][1].get('due')
-        api.set_date_for_block(items[0][0].course_key, items[0][0], 'due', assignment_date, user=self.user)
+        api.set_date_for_block(items[0][0].course_key, items[0][0], 'due', assignment_date)
         # Specify the actual assignment due date so this will return true
         schedules = api.get_schedules_with_due_date(items[0][0].course_key, datetime.date(assignment_date))
+        assert len(schedules) > 0
         for schedule in schedules:
             assert schedule.enrollment.course_id == items[0][0].course_key
             assert schedule.enrollment.user.id == self.user.id
 
     @patch('edx_when.api.Schedule', DummySchedule)
     def test_get_schedules_with_due_date_for_rel_date(self):
-        items = make_items(with_relative=True)
+        items = make_items(with_relative=False)
         api.set_dates_for_course(items[0][0].course_key, items)
         relative_date = timedelta(days=2)
-        api.set_date_for_block(items[0][0].course_key, items[0][0], 'due', relative_date, user=self.user)
+        api.set_date_for_block(items[0][0].course_key, items[0][0], 'due', relative_date)
         assignment_date = items[0][1].get('due') + relative_date
+        # Move the schedule's start to the first assignment's original due since it's now offset
+        self.schedule.start_date = items[0][1].get('due')
+        self.schedule.save()
         # Specify the actual assignment due date so this will return true
         schedules = api.get_schedules_with_due_date(items[0][0].course_key, assignment_date.date())
+        assert len(schedules) > 0
         for schedule in schedules:
             assert schedule.enrollment.course_id == items[0][0].course_key
             assert schedule.enrollment.user.id == self.user.id

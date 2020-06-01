@@ -32,6 +32,8 @@ class DummyEnrollment(models.Model):
         on_delete=models.DO_NOTHING,
     )
 
+    is_active = models.BooleanField(default=True)
+
 
 class DummySchedule(models.Model):
     """
