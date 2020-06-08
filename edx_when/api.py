@@ -175,7 +175,7 @@ def get_dates_for_course(course_id, user=None, use_cached=True, schedule=None):
             need_schedule = False
             schedule = cdate.schedule_for_user(user)
 
-        key = (cdate.location, cdate.field)
+        key = (cdate.location.replace(course_key=course_id), cdate.field)
         try:
             dates[key] = cdate.policy.actual_date(schedule, end_datetime)
         except ValueError:
