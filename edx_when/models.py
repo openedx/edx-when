@@ -54,6 +54,11 @@ class DatePolicy(TimeStampedModel):
                         self
                     )
                 )
+
+            # If the user enrolled after the course ended, we don't want to return any dates.
+            if end_datetime and schedule.start_date > end_datetime:
+                return None
+
             # If the course has an end date defined, we will prefer the course end date
             # if the relative date is later than the course end date.
             # Note: This can result in several dates being listed the same as the course end date
