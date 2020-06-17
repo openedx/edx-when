@@ -48,6 +48,12 @@ class TestDatePolicy(TestCase):
         with self.assertRaises(ValueError):
             policy.actual_date(schedule)
 
+    def test_actual_date_schedule_after_end(self):
+        # This only applies for relative dates so we are not testing abs date.
+        policy = DatePolicy(rel_date=timedelta(days=1))
+        schedule = DummySchedule(start_date=datetime(2020, 4, 1))
+        self.assertIsNone(policy.actual_date(schedule, end_datetime=datetime(2020, 1, 1)))
+
     def test_mixed_dates(self):
         with self.assertRaises(ValidationError):
             DatePolicy(abs_date=datetime(2020, 1, 1), rel_date=timedelta(days=1)).full_clean()
