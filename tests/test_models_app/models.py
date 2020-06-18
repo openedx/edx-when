@@ -4,8 +4,6 @@
 Dummy models for use when testing edx-when
 """
 
-from __future__ import unicode_literals
-
 from django.contrib.auth import get_user_model
 from django.db import models
 from opaque_keys.edx.django.models import CourseKeyField

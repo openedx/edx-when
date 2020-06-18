@@ -3,8 +3,6 @@
 Database models for edx_when.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 from datetime import datetime
 
 from django.contrib.auth import get_user_model
