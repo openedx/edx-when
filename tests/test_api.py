@@ -1,7 +1,6 @@
 """
 Tests for edx_when.api
 """
-from __future__ import absolute_import, unicode_literals
 
 import sys
 from datetime import datetime, timedelta
