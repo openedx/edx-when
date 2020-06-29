@@ -104,6 +104,24 @@ def clear_dates_for_course(course_key, keep=None):
         cache.delete(cache_key)
 
 
+def _get_end_dates_from_content_dates(qset):
+    """
+    Get end and cutoff dates from a queryset of ContentDates.
+    """
+    end_content_date = list(filter(lambda cd: cd.location.block_type == 'course' and cd.field == 'end', qset))
+    if not end_content_date:
+        return None, None
+
+    end_datetime = end_content_date[0].policy.abs_date
+
+    # Note the date where a learner has just enough time to hit every due date before the course ends on them.
+    # (this is to prevent a learner starting a course a week from end date and having 8 weeks of homework due in 1)
+    last_date = max((cd.policy.rel_date for cd in qset if cd.field == 'due' and cd.policy.rel_date), default=None)
+    cutoff_datetime = end_datetime - last_date if last_date else end_datetime
+
+    return end_datetime, cutoff_datetime
+
+
 # TODO: Record dates for every block in the course, not just the ones where the block
 # has an explicitly set date.
 def get_dates_for_course(course_id, user=None, use_cached=True, schedule=None):
@@ -165,10 +183,8 @@ def get_dates_for_course(course_id, user=None, use_cached=True, schedule=None):
     dates = {}
     policies = {}
     need_schedule = schedule is None and user is not None
-    end_content_date = list(filter(lambda cd: cd.location.block_type == 'course' and cd.field == 'end', qset))
-    end_datetime = None
-    if end_content_date:
-        end_datetime = end_content_date[0].policy.abs_date
+    end_datetime, cutoff_datetime = _get_end_dates_from_content_dates(qset)
+
     for cdate in qset:
         if need_schedule:
             need_schedule = False
@@ -176,7 +192,7 @@ def get_dates_for_course(course_id, user=None, use_cached=True, schedule=None):
 
         key = (cdate.location.map_into_course(course_id), cdate.field)
         try:
-            dates[key] = cdate.policy.actual_date(schedule, end_datetime)
+            dates[key] = cdate.policy.actual_date(schedule, end_datetime, cutoff_datetime)
         except ValueError:
             log.warning("Unable to read date for %s", cdate.location, exc_info=True)
         policies[cdate.id] = key

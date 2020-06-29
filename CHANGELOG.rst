@@ -14,6 +14,24 @@ Change Log
 Unreleased
 ~~~~~~~~~~
 
+[1.2.9] - 2020-06-30
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Don't return due dates for enrollments originally created too close to the
+course end to allow for finishing the course in time.
+
+[1.2.8] - 2020-06-17
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Don't return due dates for enrollments created after course end
+
+[1.2.4] - 2020-06-01
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Updates function in API for finding learners with a specific Schedule
+that has an assignment on a given day, to also be inclusive of absolute
+date schedules (everyone active in the course without an override).
+
 [1.2.3] - 2020-04-30
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

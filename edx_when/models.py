@@ -40,9 +40,14 @@ class DatePolicy(TimeStampedModel):
         """
         return str(self.abs_date) if self.abs_date else str(self.rel_date)
 
-    def actual_date(self, schedule=None, end_datetime=None):
+    def actual_date(self, schedule=None, end_datetime=None, cutoff_datetime=None):
         """
         Return the normalized date.
+
+        Arguments:
+            schedule (Schedule): user schedule, only used for relative dates
+            end_datetime (datetime): no relative dates will be given after this date
+            cutoff_datetime (datetime): no relative dates will be given if user originally started past this date
         """
         if self.rel_date is not None:
             if schedule is None:
@@ -53,8 +58,10 @@ class DatePolicy(TimeStampedModel):
                     )
                 )
 
-            # If the user enrolled after the course ended, we don't want to return any dates.
-            if end_datetime and schedule.start_date > end_datetime:
+            # If the user first enrolled after the cutoff date (or reset their schedule after the course end), we
+            # don't want to return any dates.
+            if ((cutoff_datetime and schedule.created > cutoff_datetime) or
+                    (end_datetime and schedule.start_date > end_datetime)):
                 return None
 
             # If the course has an end date defined, we will prefer the course end date

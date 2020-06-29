@@ -36,6 +36,7 @@ class Migration(migrations.Migration):
             name='DummySchedule',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('created', models.DateTimeField()),
                 ('start_date', models.DateTimeField(db_index=True, help_text='Date this schedule went into effect')),
                 ('enrollment', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, to='test_models_app.DummyEnrollment')),
             ],
