@@ -6,7 +6,6 @@ import sys
 from datetime import datetime, timedelta
 
 import ddt
-import six
 from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.test import TestCase
@@ -200,7 +199,7 @@ class ApiTests(TestCase):
         items = make_items()
         first = items[0]
         block_id = first[0]
-        api.set_dates_for_course(six.text_type(block_id.course_key), items)
+        api.set_dates_for_course(str(block_id.course_key), items)
 
         with self.assertRaises(api.MissingDateError):
             # can't set a user override for content without a date
@@ -218,7 +217,7 @@ class ApiTests(TestCase):
         first = items[0]
         block_id = first[0]
         items[0][1]['due'] = initial_date
-        api.set_dates_for_course(six.text_type(block_id.course_key), items)
+        api.set_dates_for_course(str(block_id.course_key), items)
 
         with self.assertRaises(api.InvalidDateError):
             api.set_date_for_block(block_id.course_key, block_id, 'due', override_date, user=self.user)
@@ -236,7 +235,7 @@ class ApiTests(TestCase):
         block_id = first[0]
         items[0][1]['due'] = initial_date
 
-        api.set_dates_for_course(six.text_type(block_id.course_key), items)
+        api.set_dates_for_course(str(block_id.course_key), items)
 
         api.set_date_for_block(block_id.course_key, block_id, 'due', override_date, user=self.user)
         DEFAULT_REQUEST_CACHE.clear()
@@ -272,7 +271,7 @@ class ApiTests(TestCase):
         block_id = first[0]
         items[0][1]['due'] = initial_date
 
-        api.set_dates_for_course(six.text_type(block_id.course_key), items)
+        api.set_dates_for_course(str(block_id.course_key), items)
 
         api.set_date_for_block(block_id.course_key, block_id, 'due', override_date)
         DEFAULT_REQUEST_CACHE.clear()
@@ -294,7 +293,7 @@ class ApiTests(TestCase):
         block_id = first[0]
         items[0][1]['due'] = initial_date
 
-        api.set_dates_for_course(six.text_type(block_id.course_key), items)
+        api.set_dates_for_course(str(block_id.course_key), items)
 
         api.set_date_for_block(block_id.course_key, block_id, 'due', override_date, user=self.user)
         DEFAULT_REQUEST_CACHE.clear()

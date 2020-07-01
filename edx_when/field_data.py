@@ -3,7 +3,6 @@
 import logging
 
 from edx_django_utils.db.read_replica import read_queries_only
-from six import text_type
 from xblock.field_data import FieldData
 
 from . import api
@@ -58,7 +57,7 @@ class DateLookupFieldData(FieldData):
         with read_queries_only():
             dates = {}
             for (location, field), date in api.get_dates_for_course(course_id, user, use_cached=use_cached).items():
-                dates[text_type(location), field] = date
+                dates[str(location), field] = date
 
         self._course_dates = dates
 
@@ -81,10 +80,10 @@ class DateLookupFieldData(FieldData):
 
         Otherwise, return NOT_FOUND
         """
-        if not isinstance(name, text_type):
-            name = text_type(name)
+        if not isinstance(name, str):
+            name = str(name)
         if name in api.FIELDS_TO_EXTRACT:
-            val = self._course_dates.get((text_type(block.location), name), NOT_FOUND)
+            val = self._course_dates.get((str(block.location), name), NOT_FOUND)
         else:
             val = NOT_FOUND
         return val
