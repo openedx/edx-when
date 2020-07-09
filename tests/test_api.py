@@ -404,6 +404,8 @@ class ApiTests(TestCase):
         after_end_date_delta = timedelta(days=10)
         end_block = make_block_id(course_key, block_type='course')
         end_date = datetime(2019, 4, 4)
+        self.schedule.created = datetime(2019, 3, 20)  # set a while back, before the 4/1 start_date
+        self.schedule.save()
         items = [
             (start_block, {'start': start_date}),  # start dates are always absolute
             (before_end_date_block, {'due': before_end_date_delta}),  # relative
@@ -418,6 +420,49 @@ class ApiTests(TestCase):
             # Because the end date for this block would have been after the course end date,
             # the block will have an end date of the course end date
             ((after_end_date_block, 'due'), end_date),
+            ((end_block, 'end'), end_date),
+        ]
+        assert api.get_dates_for_course(course_key, schedule=self.schedule) == dict(dates)
+
+    def test_relative_date_past_cutoff_date(self):
+        course_key = CourseLocator('testX', 'tt101', '2019')
+        start_block = make_block_id(course_key, block_type='course')
+        start_date = datetime(2019, 3, 15)
+        first_block = make_block_id(course_key)
+        first_delta = timedelta(days=1)
+        second_block = make_block_id(course_key)
+        second_delta = timedelta(days=10)
+        end_block = make_block_id(course_key, block_type='course')
+        end_date = datetime(2019, 4, 20)
+        items = [
+            (start_block, {'start': start_date}),  # start dates are always absolute
+            (first_block, {'due': first_delta}),  # relative
+            (second_block, {'due': second_delta}),  # relative
+            (end_block, {'end': end_date}),  # end dates are always absolute
+        ]
+        api.set_dates_for_course(course_key, items)
+
+        # Try one with just enough as a sanity check
+        self.schedule.created = end_date - second_delta
+        self.schedule.save()
+        dates = [
+            ((start_block, 'start'), start_date),
+            ((first_block, 'due'), self.schedule.start_date + first_delta),
+            ((second_block, 'due'), self.schedule.start_date + second_delta),
+            ((end_block, 'end'), end_date),
+        ]
+        assert api.get_dates_for_course(course_key, schedule=self.schedule) == dict(dates)
+
+        cache.clear()
+        DEFAULT_REQUEST_CACHE.clear()
+
+        # Now set schedule start date too close to the end date and verify that we no longer get due dates
+        self.schedule.created = datetime(2019, 4, 15)
+        self.schedule.save()
+        dates = [
+            ((start_block, 'start'), start_date),
+            ((first_block, 'due'), None),
+            ((second_block, 'due'), None),
             ((end_block, 'end'), end_date),
         ]
         assert api.get_dates_for_course(course_key, schedule=self.schedule) == dict(dates)
