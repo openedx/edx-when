@@ -341,6 +341,7 @@ disable =
 	using-cmp-argument,
 	xrange-builtin,
 	zip-builtin-not-iterating,
+	import-outside-toplevel
 
 [REPORTS]
 output-format = text
