@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Dummy models for use when testing edx-when
 """

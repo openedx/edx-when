@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Database models for edx_when.
 """
@@ -108,7 +107,7 @@ class ContentDate(models.Model):
         Get a string representation of this model instance.
         """
         # Location already holds course id
-        return '{}, {}'.format(self.location, self.field)
+        return f'{self.location}, {self.field}'
 
     def schedule_for_user(self, user):
         """
@@ -189,4 +188,4 @@ class UserDate(TimeStampedModel):
         """
         # Location already holds course id
         # pylint: disable=no-member
-        return '{}, {}, {}'.format(self.user.username, self.content_date.location, self.content_date.field)
+        return f'{self.user.username}, {self.content_date.location}, {self.content_date.field}'

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 edx_when Django application initialization.
 """
@@ -16,9 +15,9 @@ class EdxWhenConfig(AppConfig):
     plugin_app = {
         'url_config': {
             'lms.djangoapp': {
-                'namespace': u'edx_when',
-                'regex': u'^api/',
-                'relative_path': u'urls',
+                'namespace': 'edx_when',
+                'regex': '^api/',
+                'relative_path': 'urls',
             },
         }
     }

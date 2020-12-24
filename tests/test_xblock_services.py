@@ -3,15 +3,17 @@ Tests for XBlock related stuff.
 """
 
 import datetime
+from unittest import mock
 
-import mock
-from django.contrib.auth.models import User
+from django.contrib import auth
 from django.test import TestCase
 
 from edx_when import api, field_data
 from test_utils import make_items
 
 NUM_OVERRIDES = 6
+
+User = auth.get_user_model()
 
 
 class MockBlock:
@@ -36,7 +38,7 @@ class XblockTests(TestCase):
     """
 
     def setUp(self):
-        super(XblockTests, self).setUp()
+        super().setUp()
         self.items = make_items(with_relative=True)
         self.course_id = self.items[0][0].course_key
         api.set_dates_for_course(self.course_id, self.items)

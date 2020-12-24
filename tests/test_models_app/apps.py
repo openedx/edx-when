@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 App declaration for the test_models_app
 """

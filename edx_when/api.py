@@ -34,7 +34,7 @@ def _content_dates_cache_key(course_key, query_dict):
             for key, value in query_dict.items()
         )
     )
-    return "edx-when.content_dates:{}:{}".format(course_key, query_dict_str)
+    return f"edx-when.content_dates:{course_key}:{query_dict_str}"
 
 
 def _ensure_key(key_class, key_obj):
@@ -325,9 +325,9 @@ def set_date_for_block(course_id, block_id, field, date_or_timedelta, user=None,
             )
             needs_save = not existing_date.active
             existing_date.active = True
-        except models.ContentDate.DoesNotExist:
+        except models.ContentDate.DoesNotExist as error:
             if user:
-                raise MissingDateError(block_id)
+                raise MissingDateError(block_id) from error
             existing_date = models.ContentDate(course_id=course_id, location=block_id, field=field)
 
             # We had race-conditions create multiple DatePolicies w/ the same values. Handle that case.
@@ -351,8 +351,8 @@ def set_date_for_block(course_id, block_id, field, date_or_timedelta, user=None,
             )
             try:
                 userd.full_clean()
-            except ValidationError:
-                raise InvalidDateError(userd.actual_date)
+            except ValidationError as error:
+                raise InvalidDateError(userd.actual_date) from error
             userd.save()
             log.info('Saved override for user=%d loc=%s date=%s', userd.user_id, userd.location, userd.actual_date)
         else:

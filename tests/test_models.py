@@ -1,16 +1,15 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 Tests for the `edx-when` models module.
 """
 
 from datetime import datetime, timedelta
+from unittest.mock import patch
 
 import ddt
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.test import TestCase
-from mock import patch
 
 from edx_when.models import ContentDate, DatePolicy, MissingScheduleError
 from tests.test_models_app.models import DummyCourse, DummyEnrollment, DummySchedule
@@ -70,7 +69,7 @@ class TestContentDate(TestCase):
     Tests of the ContentDate model.
     """
     def setUp(self):
-        super(TestContentDate, self).setUp()
+        super().setUp()
         self.course = DummyCourse(id='course-v1:edX+Test+Course')
         self.course.save()
 
