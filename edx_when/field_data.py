@@ -158,9 +158,10 @@ class DateOverrideTransformer:
         dates = api.get_dates_for_course(usage_info.course_key, self.user)
         for (location, field), date in dates.items():
             try:
-                block_structure.override_xblock_field(
-                    location,
-                    field,
-                    date)
+                if not block_structure.get_xblock_field(location, 'contains_gated_content'):
+                    block_structure.override_xblock_field(
+                        location,
+                        field,
+                        date)
             except AttributeError:
                 log.debug('Missing block %s %s', location, field)
