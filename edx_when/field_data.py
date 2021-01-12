@@ -158,7 +158,15 @@ class DateOverrideTransformer:
         dates = api.get_dates_for_course(usage_info.course_key, self.user)
         for (location, field), date in dates.items():
             try:
-                if not block_structure.get_xblock_field(location, 'contains_gated_content'):
+                # A problem needs a score and a nonzero weight
+                # in addition to the graded attribute in order to count as graded
+                is_graded = (
+                             block_structure.get_xblock_field(location, 'graded') and
+                             block_structure.get_xblock_field(location, 'has_score') and
+                             block_structure.get_xblock_field(location, 'weight') != 0
+                            )
+                # We don't want due dates to show up for ungraded assignments
+                if is_graded:
                     block_structure.override_xblock_field(
                         location,
                         field,

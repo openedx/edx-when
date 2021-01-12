@@ -23,7 +23,7 @@ except ImportError:
 
 log = logging.getLogger(__name__)
 
-FIELDS_TO_EXTRACT = ('due', 'start', 'end', 'contains_gated_content')
+FIELDS_TO_EXTRACT = ('due', 'start', 'end', 'graded', 'has_score', 'weight',)
 
 
 def _content_dates_cache_key(course_key, query_dict):
