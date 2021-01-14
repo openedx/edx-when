@@ -193,8 +193,10 @@ def get_dates_for_course(course_id, user=None, use_cached=True, schedule=None):
         key = (cdate.location.map_into_course(course_id), cdate.field)
         try:
             dates[key] = cdate.policy.actual_date(schedule, end_datetime, cutoff_datetime)
-        except ValueError:
-            log.warning("Unable to read date for %s", cdate.location, exc_info=True)
+        except models.MissingScheduleError:
+            # We had a relative date but no schedule. This is permissible in some cases (staff users viewing a course
+            # they are not enrolled in, for example). Just let it go by.
+            pass
         policies[cdate.id] = key
 
     if user_id:

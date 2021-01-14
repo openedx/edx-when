@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ~~~~~~~~~~
 
+[1.3.2] - 2021-01-15
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Don't warn about missing schedules for relative dates.
+It happens for legitimate reasons, and the layer above can check instead.
+
 [1.3.1] - 2020-11-19
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Updated travis badge in README.rst to point to travis-ci.com instead of travis-ci.org
