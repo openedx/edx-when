@@ -12,7 +12,7 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.test import TestCase
 from mock import patch
 
-from edx_when.models import ContentDate, DatePolicy
+from edx_when.models import ContentDate, DatePolicy, MissingScheduleError
 from tests.test_models_app.models import DummyCourse, DummyEnrollment, DummySchedule
 
 User = get_user_model()
@@ -43,7 +43,7 @@ class TestDatePolicy(TestCase):
     @ddt.unpack
     def test_actual_date_failure(self, abs_date, rel_date, schedule):
         policy = DatePolicy(abs_date=abs_date, rel_date=rel_date)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(MissingScheduleError):
             policy.actual_date(schedule)
 
     def test_actual_date_schedule_after_end(self):

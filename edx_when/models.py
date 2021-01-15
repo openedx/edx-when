@@ -19,6 +19,10 @@ except ImportError:
     Schedule = None
 
 
+class MissingScheduleError(ValueError):
+    pass
+
+
 class DatePolicy(TimeStampedModel):
     """
     Stores a date (either absolute or relative).
@@ -51,7 +55,7 @@ class DatePolicy(TimeStampedModel):
         """
         if self.rel_date is not None:
             if schedule is None:
-                raise ValueError(
+                raise MissingScheduleError(
                     "Can't interpret relative date {} for {!r} without a user schedule".format(
                         self.rel_date,
                         self
