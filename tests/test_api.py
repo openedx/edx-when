@@ -4,13 +4,13 @@ Tests for edx_when.api
 
 import sys
 from datetime import datetime, timedelta
+from unittest.mock import Mock, call, patch
 
 import ddt
-from django.contrib.auth.models import User
+from django.contrib import auth
 from django.core.cache import cache
 from django.test import TestCase
 from edx_django_utils.cache.utils import DEFAULT_REQUEST_CACHE
-from mock import Mock, call, patch
 from opaque_keys.edx.locator import CourseLocator
 
 from edx_when import api, models
@@ -19,14 +19,17 @@ from tests.test_models_app.models import DummyCourse, DummyEnrollment, DummySche
 
 NUM_OVERRIDES = 3
 
+User = auth.get_user_model()
+
 
 @ddt.ddt
 class ApiTests(TestCase):
     """
     Tests for edx_when.api
     """
+
     def setUp(self):
-        super(ApiTests, self).setUp()
+        super().setUp()
 
         self.course = DummyCourse(id='course-v1:testX+tt101+2019')
         self.course.save()
@@ -552,6 +555,7 @@ class ApiWaffleTests(TestCase):
 
     These are isolated because they have pretty different patch requirements.
     """
+
     @patch.dict(sys.modules, {'openedx.features.course_experience': Mock()})
     def test_relative_dates_enabled(self):
         from openedx.features.course_experience import RELATIVE_DATES_FLAG as mock_flag  # pylint: disable=import-error

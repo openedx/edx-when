@@ -11,7 +11,7 @@ try:
     from xmodule.modulestore.inheritance import InheritanceMixin
     INHERITABLE_FIELDS = set(InheritanceMixin.fields.keys())
 except ImportError:
-    INHERITABLE_FIELDS = set(('due', 'start', 'end'))
+    INHERITABLE_FIELDS = {'due', 'start', 'end'}
 
 
 log = logging.getLogger(__name__)
@@ -44,7 +44,7 @@ class DateLookupFieldData(FieldData):
         course_id: CourseKey for course
         user: User object to look for date overrides
         """
-        super(DateLookupFieldData, self).__init__()
+        super().__init__()
         if isinstance(defaults, DateLookupFieldData):
             defaults = defaults._defaults
         self._defaults = defaults
