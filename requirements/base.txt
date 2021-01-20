@@ -16,9 +16,9 @@ django==2.2.17            # via -c requirements/constraints.txt, -r requirements
 djangorestframework==3.12.2  # via drf-jwt, edx-drf-extensions, rest-condition
 drf-jwt==1.17.3           # via edx-drf-extensions
 edx-django-utils==3.13.0  # via -r requirements/base.in, edx-drf-extensions
-edx-drf-extensions==6.2.0  # via -r requirements/base.in
+edx-drf-extensions==6.4.0  # via -r requirements/base.in
 edx-opaque-keys==2.1.1    # via -r requirements/base.in, edx-drf-extensions
-fs==2.4.11                # via xblock
+fs==2.4.12                # via xblock
 future==0.18.2            # via pyjwkest
 idna==2.10                # via requests
 lxml==4.6.2               # via xblock
@@ -32,8 +32,8 @@ pyjwkest==1.4.2           # via edx-drf-extensions
 pyjwt[crypto]==1.7.1      # via drf-jwt
 pymongo==3.11.2           # via edx-opaque-keys
 python-dateutil==2.8.1    # via edx-drf-extensions, xblock
-pytz==2020.4              # via django, fs, xblock
-pyyaml==5.3.1             # via xblock
+pytz==2020.5              # via django, fs, xblock
+pyyaml==5.4               # via xblock
 requests==2.25.1          # via edx-drf-extensions, pyjwkest
 rest-condition==1.0.3     # via edx-drf-extensions
 semantic-version==2.8.5   # via edx-drf-extensions

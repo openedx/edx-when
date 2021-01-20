@@ -26,10 +26,10 @@ doc8==0.8.1               # via -r requirements/doc.in
 docutils==0.16            # via doc8, readme-renderer, restructuredtext-lint, sphinx
 drf-jwt==1.17.3           # via -r requirements/test.txt, edx-drf-extensions
 edx-django-utils==3.13.0  # via -r requirements/test.txt, edx-drf-extensions
-edx-drf-extensions==6.2.0  # via -r requirements/test.txt
+edx-drf-extensions==6.4.0  # via -r requirements/test.txt
 edx-opaque-keys==2.1.1    # via -r requirements/test.txt, edx-drf-extensions
-edx-sphinx-theme==1.6.0   # via -r requirements/doc.in
-fs==2.4.11                # via -r requirements/test.txt, xblock
+edx-sphinx-theme==1.6.1   # via -r requirements/doc.in
+fs==2.4.12                # via -r requirements/test.txt, xblock
 future==0.18.2            # via -r requirements/test.txt, pyjwkest
 idna==2.10                # via -r requirements/test.txt, requests
 imagesize==1.2.0          # via sphinx
@@ -46,18 +46,18 @@ psutil==5.8.0             # via -r requirements/test.txt, edx-django-utils
 py==1.10.0                # via -r requirements/test.txt, pytest
 pycparser==2.20           # via -r requirements/test.txt, cffi
 pycryptodomex==3.9.9      # via -r requirements/test.txt, pyjwkest
-pygments==2.7.3           # via doc8, readme-renderer, sphinx
+pygments==2.7.4           # via doc8, readme-renderer, sphinx
 pyjwkest==1.4.2           # via -r requirements/test.txt, edx-drf-extensions
 pyjwt[crypto]==1.7.1      # via -r requirements/test.txt, drf-jwt
 pymongo==3.11.2           # via -r requirements/test.txt, edx-opaque-keys
 pyparsing==2.4.7          # via -r requirements/test.txt, packaging
-pytest-cov==2.10.1        # via -r requirements/test.txt
+pytest-cov==2.11.1        # via -r requirements/test.txt
 pytest-django==4.1.0      # via -r requirements/test.txt
 pytest==6.2.1             # via -r requirements/test.txt, pytest-cov, pytest-django
 python-dateutil==2.8.1    # via -r requirements/test.txt, edx-drf-extensions, xblock
 python-slugify==4.0.1     # via -r requirements/test.txt, code-annotations
-pytz==2020.4              # via -r requirements/test.txt, babel, django, fs, xblock
-pyyaml==5.3.1             # via -r requirements/test.txt, code-annotations, xblock
+pytz==2020.5              # via -r requirements/test.txt, babel, django, fs, xblock
+pyyaml==5.4               # via -r requirements/test.txt, code-annotations, xblock
 readme-renderer==28.0     # via -r requirements/doc.in
 requests==2.25.1          # via -r requirements/test.txt, edx-drf-extensions, pyjwkest, sphinx
 rest-condition==1.0.3     # via -r requirements/test.txt, edx-drf-extensions
