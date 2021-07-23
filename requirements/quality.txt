@@ -8,7 +8,7 @@ appdirs==1.4.4
     # via
     #   -r requirements/test.txt
     #   fs
-astroid==2.6.2
+astroid==2.6.5
     # via
     #   pylint
     #   pylint-celery
@@ -180,7 +180,7 @@ pyjwt[crypto]==2.1.0
     # via
     #   -r requirements/test.txt
     #   drf-jwt
-pylint==2.9.3
+pylint==2.9.5
     # via
     #   edx-lint
     #   pylint-celery
