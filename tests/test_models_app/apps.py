@@ -6,4 +6,4 @@ from django.apps import AppConfig
 
 
 class TestModelsAppConfig(AppConfig):
-    name = 'test_models_app'
+    name = 'tests.test_models_app'
