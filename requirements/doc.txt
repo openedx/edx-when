@@ -34,7 +34,7 @@ click==8.0.1
     # via
     #   -r requirements/test.txt
     #   code-annotations
-code-annotations==1.1.2
+code-annotations==1.2.0
     # via -r requirements/test.txt
 coverage==5.5
     # via
@@ -293,7 +293,7 @@ webob==1.8.7
     # via
     #   -r requirements/test.txt
     #   xblock
-xblock==1.4.2
+xblock==1.5.0
     # via -r requirements/test.txt
 
 # The following packages are considered to be unsafe in a requirements file:

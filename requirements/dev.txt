@@ -49,7 +49,7 @@ click-log==0.3.2
     # via
     #   -r requirements/quality.txt
     #   edx-lint
-code-annotations==1.1.2
+code-annotations==1.2.0
     # via
     #   -r requirements/quality.txt
     #   edx-lint
@@ -190,7 +190,7 @@ packaging==21.0
     #   -r requirements/travis.txt
     #   pytest
     #   tox
-path==16.1.0
+path==16.2.0
     # via edx-i18n-tools
 path.py==11.5.0
     # via -r requirements/dev.in
@@ -397,7 +397,7 @@ wrapt==1.12.1
     # via
     #   -r requirements/quality.txt
     #   astroid
-xblock==1.4.2
+xblock==1.5.0
     # via -r requirements/quality.txt
 zipp==1.2.0
     # via
