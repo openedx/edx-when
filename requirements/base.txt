@@ -10,7 +10,7 @@ certifi==2021.5.30
     # via requests
 cffi==1.14.6
     # via cryptography
-charset-normalizer==2.0.3
+charset-normalizer==2.0.4
     # via requests
 cryptography==3.4.7
     # via pyjwt
@@ -40,11 +40,11 @@ djangorestframework==3.12.4
     #   rest-condition
 drf-jwt==1.19.1
     # via edx-drf-extensions
-edx-django-utils==4.2.0
+edx-django-utils==4.3.0
     # via
     #   -r requirements/base.in
     #   edx-drf-extensions
-edx-drf-extensions==6.6.0
+edx-drf-extensions==7.0.1
     # via -r requirements/base.in
 edx-opaque-keys==2.2.2
     # via
@@ -60,7 +60,7 @@ lxml==4.6.3
     # via xblock
 markupsafe==2.0.1
     # via xblock
-newrelic==6.4.4.161
+newrelic==6.8.0.163
     # via edx-django-utils
 pbr==5.6.0
     # via stevedore
@@ -73,7 +73,9 @@ pycryptodomex==3.10.1
 pyjwkest==1.4.2
     # via edx-drf-extensions
 pyjwt[crypto]==2.1.0
-    # via drf-jwt
+    # via
+    #   drf-jwt
+    #   edx-drf-extensions
 pymongo==3.12.0
     # via edx-opaque-keys
 python-dateutil==2.8.2
@@ -103,7 +105,7 @@ six==1.16.0
     #   python-dateutil
 sqlparse==0.4.1
     # via django
-stevedore==3.3.0
+stevedore==3.4.0
     # via
     #   edx-django-utils
     #   edx-opaque-keys
