@@ -1,7 +1,7 @@
 """
-Your project description goes here.
+Central source of course block dates for the LMS.
 """
 
-__version__ = '2.1.0'
+__version__ = '2.2.0'
 
 default_app_config = 'edx_when.apps.EdxWhenConfig'  # pylint: disable=invalid-name

@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ~~~~~~~~~~
 
+[2.2.0] - 2021-08-27
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* Added optimization when requesting course block dates for an outline, where block dates below subsections are unneeded.
+* Use current version of the course to improve the cache key, along with using the TieredCache to cache date data.
+
 [2.1.0] - 2021-07-23
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Added Django 3.2 Support

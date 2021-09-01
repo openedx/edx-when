@@ -96,18 +96,22 @@ class ContentDate(models.Model):
     location = UsageKeyField(null=True, default=None, db_index=True, max_length=255)
     field = models.CharField(max_length=255, default='')
     active = models.BooleanField(default=True)
+    block_type = models.CharField(max_length=255, null=True)
 
     class Meta:
         """Django Metadata."""
 
         unique_together = ('policy', 'location', 'field')
+        indexes = [
+            models.Index(fields=('course_id', 'block_type'), name='edx_when_course_block_type_idx'),
+        ]
 
     def __str__(self):
         """
         Get a string representation of this model instance.
         """
         # Location already holds course id
-        return f'{self.location}, {self.field}'
+        return f'ContentDate({self.policy}, {self.location}, {self.field}, {self.block_type})'
 
     def schedule_for_user(self, user):
         """

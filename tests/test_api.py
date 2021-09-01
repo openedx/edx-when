@@ -8,9 +8,8 @@ from unittest.mock import Mock, call, patch
 
 import ddt
 from django.contrib import auth
-from django.core.cache import cache
 from django.test import TestCase
-from edx_django_utils.cache.utils import DEFAULT_REQUEST_CACHE
+from edx_django_utils.cache.utils import TieredCache
 from opaque_keys.edx.locator import CourseLocator
 
 from edx_when import api, models
@@ -34,6 +33,8 @@ class ApiTests(TestCase):
         self.course = DummyCourse(id='course-v1:testX+tt101+2019')
         self.course.save()
 
+        self.course_version = 'TEST_VERSION'
+
         self.user = User(username='tester', email='tester@test.com')
         self.user.save()
 
@@ -50,10 +51,9 @@ class ApiTests(TestCase):
         relative_dates_patcher = patch('edx_when.api._are_relative_dates_enabled', return_value=True)
         relative_dates_patcher.start()
         self.addCleanup(relative_dates_patcher.stop)
-        self.addCleanup(cache.clear)
+        self.addCleanup(TieredCache.dangerous_clear_all_tiers)
 
-        cache.clear()
-        DEFAULT_REQUEST_CACHE.clear()
+        TieredCache.dangerous_clear_all_tiers()
 
     @patch('edx_when.api.Schedule', DummySchedule)
     def test_get_schedules_with_due_date_for_abs_date(self):
@@ -126,6 +126,22 @@ class ApiTests(TestCase):
         cdates = models.ContentDate.objects.all()
         assert len(cdates) == NUM_OVERRIDES
 
+    def test_get_dates_for_course_outline(self):
+        items = make_items()
+        course_key = items[0][0].course_key
+        items.append((make_block_id(course_key, block_type='video'), {'start': datetime(2019, 3, 21), 'test': '1'}))
+        api.set_dates_for_course(course_key, items)
+        # Ensure the video block *was* returned normally.
+        retrieved = api.get_dates_for_course(
+            course_key, subsection_and_higher_only=False, published_version=self.course_version
+        )
+        assert len(retrieved) == NUM_OVERRIDES + 1
+        # Ensure the video block *was not* returned with subsection and higher blocks.
+        retrieved = api.get_dates_for_course(
+            course_key, subsection_and_higher_only=True, published_version=self.course_version
+        )
+        assert len(retrieved) == NUM_OVERRIDES
+
     def test_get_dates_for_course(self):
         items = make_items()
         api.set_dates_for_course(items[0][0].course_key, items)
@@ -188,14 +204,14 @@ class ApiTests(TestCase):
         keep_date = models.ContentDate.objects.get(location=items[1][0])
 
         with self.assertNumQueries(1):
-            api.clear_dates_for_course(items[0][0].course_key, keep=[keep_date.id])
+            api._clear_dates_for_course(items[0][0].course_key, keep=[keep_date.id])  # pylint: disable=protected-access
 
         retrieved = api.get_dates_for_course(items[0][0].course_key, use_cached=False)
         self.assertEqual(len(retrieved), 1)
         self.assertEqual(list(retrieved.keys())[0][0], items[1][0])
 
         with self.assertNumQueries(1):
-            api.clear_dates_for_course(items[0][0].course_key)
+            api._clear_dates_for_course(items[0][0].course_key)  # pylint: disable=protected-access
         self.assertEqual(api.get_dates_for_course(items[0][0].course_key, use_cached=False), {})
 
     def test_set_user_override_invalid_block(self):
@@ -241,8 +257,7 @@ class ApiTests(TestCase):
         api.set_dates_for_course(str(block_id.course_key), items)
 
         api.set_date_for_block(block_id.course_key, block_id, 'due', override_date, user=self.user)
-        DEFAULT_REQUEST_CACHE.clear()
-        cache.clear()
+        TieredCache.dangerous_clear_all_tiers()
         retrieved = api.get_dates_for_course(block_id.course_key, user=self.user.id)
         assert len(retrieved) == NUM_OVERRIDES
         assert retrieved[block_id, 'due'] == expected_date
@@ -275,10 +290,8 @@ class ApiTests(TestCase):
         items[0][1]['due'] = initial_date
 
         api.set_dates_for_course(str(block_id.course_key), items)
-
         api.set_date_for_block(block_id.course_key, block_id, 'due', override_date)
-        DEFAULT_REQUEST_CACHE.clear()
-        cache.clear()
+        TieredCache.dangerous_clear_all_tiers()
         retrieved = api.get_dates_for_course(block_id.course_key, user=self.user.id)
         assert len(retrieved) == NUM_OVERRIDES
         assert retrieved[block_id, 'due'] == expected_date
@@ -299,15 +312,13 @@ class ApiTests(TestCase):
         api.set_dates_for_course(str(block_id.course_key), items)
 
         api.set_date_for_block(block_id.course_key, block_id, 'due', override_date, user=self.user)
-        DEFAULT_REQUEST_CACHE.clear()
-        cache.clear()
+        TieredCache.dangerous_clear_all_tiers()
         retrieved = api.get_dates_for_course(block_id.course_key, user=self.user.id)
         assert len(retrieved) == NUM_OVERRIDES
         assert retrieved[block_id, 'due'] == expected_date
 
         api.set_date_for_block(block_id.course_key, block_id, 'due', None, user=self.user)
-        DEFAULT_REQUEST_CACHE.clear()
-        cache.clear()
+        TieredCache.dangerous_clear_all_tiers()
         retrieved = api.get_dates_for_course(block_id.course_key, user=self.user.id)
         assert len(retrieved) == NUM_OVERRIDES
         if isinstance(initial_date, timedelta):
@@ -456,8 +467,7 @@ class ApiTests(TestCase):
         ]
         assert api.get_dates_for_course(course_key, schedule=self.schedule) == dict(dates)
 
-        cache.clear()
-        DEFAULT_REQUEST_CACHE.clear()
+        TieredCache.dangerous_clear_all_tiers()
 
         # Now set schedule start date too close to the end date and verify that we no longer get due dates
         self.schedule.created = datetime(2019, 4, 15)
@@ -506,12 +516,11 @@ class ApiTests(TestCase):
             )
             assert dates == cached_dates
 
-        # Now wipe the request cache...
-        DEFAULT_REQUEST_CACHE.clear()
+        # Now wipe all cache tiers...
+        TieredCache.dangerous_clear_all_tiers()
 
-        # This time, test the external cache (which eliminates the one large
-        # query to ContentDates).
-        with self.assertNumQueries(query_count - 1):
+        # No cached values - so will do *all* queries again.
+        with self.assertNumQueries(query_count):
             externally_cached_dates = api.get_dates_for_course(
                 course_id=self.course.id, user=user, schedule=schedule
             )
@@ -527,13 +536,16 @@ class ApiTests(TestCase):
     def test_set_dates_for_course_query_counts(self):
         items = make_items()
 
-        with self.assertNumQueries(2):  # two for transaction wrappers
+        with self.assertNumQueries(2):  # two for savepoint wrappers
             with patch('edx_when.api.set_date_for_block', return_value=1) as mock_set:
-                with patch('edx_when.api.clear_dates_for_course') as mock_clear:
+                with patch('edx_when.api._clear_dates_for_course') as mock_clear:
                     api.set_dates_for_course(self.course.id, items)
 
         self.assertEqual(mock_set.call_count, NUM_OVERRIDES)
-        self.assertEqual(mock_clear.call_args_list, [call(self.course.id, keep=[1] * NUM_OVERRIDES)])
+        self.assertEqual(
+            mock_clear.call_args_list,
+            [call(self.course.id, [1] * NUM_OVERRIDES)]
+        )
 
     def test_set_date_for_block_query_counts(self):
         args = (self.course.id, make_block_id(self.course.id), 'due', datetime(2019, 3, 22))
