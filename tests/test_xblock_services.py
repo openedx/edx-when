@@ -92,7 +92,6 @@ class TestFieldData(XblockTests):
         assert dfd.has(block, 'due') is True
         assert dfd.has(block, 'foo') is defaults.has(block, 'foo')
         child = MockBlock('child', block)
-        # import pdb;pdb.set_trace()
         assert dfd.has(child, 'due') is False
         assert dfd.default(child, 'due') == self.items[0][1]['due']
         assert dfd.default(child, 'foo') is defaults.default(child, 'foo')

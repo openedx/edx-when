@@ -5,11 +5,10 @@ API for retrieving and setting dates.
 import logging
 from datetime import timedelta
 
-from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import DateTimeField, ExpressionWrapper, F, ObjectDoesNotExist, Q
-from edx_django_utils.cache.utils import DEFAULT_REQUEST_CACHE
+from edx_django_utils.cache.utils import TieredCache
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey, UsageKey
 
@@ -26,15 +25,28 @@ log = logging.getLogger(__name__)
 FIELDS_TO_EXTRACT = ('due', 'start', 'end')
 
 
-def _content_dates_cache_key(course_key, query_dict):
-    """Memcached key for ContentDates given course_key and filter args."""
+def _content_dates_cache_key(course_key, query_dict, subsection_and_higher_only, published_version):
+    """
+    Memcached key for ContentDates given course_key, filter args, subsection and higher blocks, and published version.
+
+    Adding the course's published version makes cache invalidation unnecessary,
+    as setting new course block dates will always be a new course version.
+    """
     query_dict_str = ".".join(
         sorted(
             "{},{}".format(key, value or "")
             for key, value in query_dict.items()
         )
     )
-    return f"edx-when.content_dates:{course_key}:{query_dict_str}"
+    subsection_and_higher_only_str = ''
+    if subsection_and_higher_only:
+        subsection_and_higher_only_str = 'subsection_and_higher_only'
+    published_version_str = ''
+    if published_version:
+        published_version_str = published_version
+
+    return f'edx-when.content_dates:{course_key}:{query_dict_str}:'\
+           f'{subsection_and_higher_only_str}:{published_version_str}'
 
 
 def _ensure_key(key_class, key_obj):
@@ -68,7 +80,7 @@ def set_dates_for_course(course_key, items):
     """
     Set dates for blocks.
 
-    items is an iterator of (location, field metadata dictionary)
+    items: iterator of (location, field metadata dictionary)
     """
     with transaction.atomic():
         active_date_ids = []
@@ -79,15 +91,21 @@ def set_dates_for_course(course_key, items):
                     val = fields[field]
                     if val:
                         log.info('Setting date for %r, %s, %r', location, field, val)
-                        active_date_ids.append(set_date_for_block(course_key, location, field, val))
+                        active_date_ids.append(
+                            set_date_for_block(course_key, location, field, val)
+                        )
 
         # Now clear out old dates that we didn't touch
-        clear_dates_for_course(course_key, keep=active_date_ids)
+        _clear_dates_for_course(course_key, active_date_ids)
 
 
-def clear_dates_for_course(course_key, keep=None):
+def _clear_dates_for_course(course_key, keep=None):
     """
     Set all dates to inactive.
+
+    This method changes currently-cached rows - but the cache key contains the course's published version.
+    And the calling method is *only* invoked upon course publish, which guarantees that a new course published
+    version will be used to get course dates after this call is made, invalidating existing cache entries.
 
     Arguments:
         course_key: either a CourseKey or string representation of same
@@ -98,10 +116,6 @@ def clear_dates_for_course(course_key, keep=None):
     if keep:
         dates = dates.exclude(id__in=keep)
     dates.update(active=False)
-
-    for query_dict in [{}, {'policy__rel_date': None}]:
-        cache_key = _content_dates_cache_key(course_key, query_dict)
-        cache.delete(cache_key)
 
 
 def _get_end_dates_from_content_dates(qset):
@@ -122,9 +136,33 @@ def _get_end_dates_from_content_dates(qset):
     return end_datetime, cutoff_datetime
 
 
+def _processed_results_cache_key(
+        course_id, user_id, schedule, allow_relative_dates,
+        subsection_and_higher_only, published_version
+        ):
+    """
+    Construct the cache key, incorporating all parameters which would cause a different query set to be returned.
+    """
+    cache_key = 'course_dates.%s' % course_id
+    if user_id:
+        cache_key += '.%s' % user_id
+    if schedule:
+        cache_key += '.schedule-%s' % schedule.start_date
+    if allow_relative_dates:
+        cache_key += '.with-rel-dates'
+    if subsection_and_higher_only:
+        cache_key += '.subsection_and_higher_only'
+    cache_key += '.%s' % published_version if published_version else ''
+    return cache_key
+
+
 # TODO: Record dates for every block in the course, not just the ones where the block
 # has an explicitly set date.
-def get_dates_for_course(course_id, user=None, use_cached=True, schedule=None):
+def get_dates_for_course(
+        course_id,
+        user=None, use_cached=True, schedule=None,
+        subsection_and_higher_only=False, published_version=None
+        ):
     """
     Return dictionary of dates for the given course_id and optional user.
 
@@ -133,29 +171,35 @@ def get_dates_for_course(course_id, user=None, use_cached=True, schedule=None):
 
     Arguments:
         course_id: either a CourseKey or string representation of same
-        user: None, an int, or a User object
-        use_cached: will skip cache lookups (but not saves) if False
-        schedule: optional override for a user's enrollment Schedule, used for relative date calculations
+        user: None, an int (user_id), or a User object
+        use_cached: bool (optional) - skips cache lookups (but not saves) if False
+        schedule: Schedule obj (optional) - override for a user's enrollment Schedule, used
+            for relative date calculations
+        subsection_and_higher_only: bool (optional) - only returns dates for blocks at the subsection
+            level and higher (i.e. course, section (chapter), subsection (sequential)).
+        published_version: (optional) string representing the ID of the course's published version
     """
     course_id = _ensure_key(CourseKey, course_id)
     log.debug("Getting dates for %s as %s", course_id, user)
     allow_relative_dates = _are_relative_dates_enabled(course_id)
 
-    cache_key = 'course_dates.%s' % course_id
+    user_id = None
     if user:
         if isinstance(user, int):
             user_id = user
         else:
             user_id = user.id if not user.is_anonymous else ''
-        cache_key += '.%s' % user_id
-    else:
-        user_id = None
-    if schedule:
-        cache_key += '.schedule-%s' % schedule.start_date
-    if allow_relative_dates:
-        cache_key += '.with-rel-dates'
 
-    dates = DEFAULT_REQUEST_CACHE.data.get(cache_key, None)
+    # Construct the cache key, incorporating all parameters which would cause a different
+    # query set to be returned.
+    processed_results_cache_key = _processed_results_cache_key(
+        course_id, user_id, schedule, allow_relative_dates, subsection_and_higher_only, published_version
+    )
+
+    dates = None
+    cached_response = TieredCache.get_cached_response(processed_results_cache_key)
+    if cached_response.is_found:
+        dates = cached_response.value
 
     if use_cached and dates is not None:
         return dates
@@ -166,19 +210,28 @@ def get_dates_for_course(course_id, user=None, use_cached=True, schedule=None):
     # to cache invalidation in clear_dates_for_course. This is only safe to do
     # because a) we serialize to cache with pickle; b) we don't write to
     # ContentDate in this function; This is not a great long-term solution.
-    external_cache_key = _content_dates_cache_key(course_id, rel_lookup)
-    qset = cache.get(external_cache_key) if use_cached else None
+    raw_results_cache_key = _content_dates_cache_key(
+        course_id, rel_lookup, subsection_and_higher_only, published_version
+    )
+    qset = None
+    if use_cached:
+        cached_response = TieredCache.get_cached_response(raw_results_cache_key)
+        if cached_response.is_found:
+            qset = cached_response.value
     if qset is None:
+        qset = models.ContentDate.objects.filter(course_id=course_id, active=True, **rel_lookup)
+        if subsection_and_higher_only:
+            # Include NULL block_type values as well because of lazy rollout.
+            qset = qset.filter(Q(block_type__in=('course', 'chapter', 'sequential', None)))
+
         qset = list(
-            models.ContentDate.objects
-                              .filter(course_id=course_id, active=True, **rel_lookup)
-                              .select_related('policy')
-                              .only(
-                                  "course_id", "policy__rel_date",
-                                  "policy__abs_date", "location", "field"
-                              )
+            qset.select_related('policy')
+                .only(
+                    "course_id", "policy__rel_date",
+                    "policy__abs_date", "location", "field"
+                )
         )
-        cache.set(external_cache_key, qset)
+        TieredCache.set_all_tiers(raw_results_cache_key, qset)
 
     dates = {}
     policies = {}
@@ -212,12 +265,12 @@ def get_dates_for_course(course_id, user=None, use_cached=True, schedule=None):
             except (ValueError, ObjectDoesNotExist, KeyError):
                 log.warning("Unable to read date for %s", userdate.content_date, exc_info=True)
 
-    DEFAULT_REQUEST_CACHE.data[cache_key] = dates
+    TieredCache.set_all_tiers(processed_results_cache_key, dates)
 
     return dates
 
 
-def get_date_for_block(course_id, block_id, name='due', user=None):
+def get_date_for_block(course_id, block_id, name='due', user=None, published_version=None):
     """
     Return the date for block in the course for the (optional) user.
 
@@ -226,9 +279,15 @@ def get_date_for_block(course_id, block_id, name='due', user=None):
         block_id: either a UsageKey or string representation of same
         name (optional): the name of the date field to read
         user: None, an int, or a User object
+        published_version: (optional) string representing the ID of the course's published version
     """
     try:
-        return get_dates_for_course(course_id, user).get((_ensure_key(UsageKey, block_id), name), None)
+        return get_dates_for_course(
+            course_id, user=user, published_version=published_version
+        ).get(
+            (_ensure_key(UsageKey, block_id), name),
+            None
+        )
     except InvalidKeyError:
         return None
 
@@ -296,7 +355,10 @@ def get_overrides_for_user(course_id, user):
         yield {'location': udate.content_date.location, 'actual_date': udate.actual_date}
 
 
-def set_date_for_block(course_id, block_id, field, date_or_timedelta, user=None, reason='', actor=None):
+def set_date_for_block(
+        course_id, block_id, field, date_or_timedelta,
+        user=None, reason='', actor=None
+        ):
     """
     Save the date for a particular field in a block.
 
@@ -318,6 +380,14 @@ def set_date_for_block(course_id, block_id, field, date_or_timedelta, user=None,
     else:
         date_kwargs = {'abs_date': date_or_timedelta}
 
+    def _set_content_date_policy(date_kwargs, existing_content_date):
+        # Race conditions were creating multiple DatePolicies w/ the same values. Handle that case.
+        existing_policies = list(models.DatePolicy.objects.filter(**date_kwargs).order_by('id'))
+        if existing_policies:
+            existing_content_date.policy = existing_policies[0]
+        else:
+            existing_content_date.policy = models.DatePolicy.objects.create(**date_kwargs)
+
     with transaction.atomic(savepoint=False):  # this is frequently called in a loop, let's avoid the savepoints
         try:
             existing_date = models.ContentDate.objects.select_related('policy').get(
@@ -327,20 +397,13 @@ def set_date_for_block(course_id, block_id, field, date_or_timedelta, user=None,
             existing_date.active = True
         except models.ContentDate.DoesNotExist as error:
             if user:
+                # A UserDate creation below requires an existing ContentDate.
                 raise MissingDateError(block_id) from error
             existing_date = models.ContentDate(course_id=course_id, location=block_id, field=field)
-
-            # We had race-conditions create multiple DatePolicies w/ the same values. Handle that case.
-            try:
-                existing_policies = list(models.DatePolicy.objects.filter(**date_kwargs).order_by('id'))
-            except models.DatePolicy.DoesNotExist:
-                existing_policies = []
-            if existing_policies:
-                existing_date.policy = existing_policies[0]
-            else:
-                existing_date.policy = models.DatePolicy.objects.create(**date_kwargs)
+            _set_content_date_policy(date_kwargs, existing_date)
             needs_save = True
 
+        # Determine if ourse block date is for a particular user -or- for the course in general.
         if user and not user.is_anonymous:
             userd = models.UserDate(
                 user=user,
@@ -363,17 +426,13 @@ def set_date_for_block(course_id, block_id, field, date_or_timedelta, user=None,
                     existing_date.policy.abs_date or existing_date.policy.rel_date,
                     date_or_timedelta
                 )
-                # We had race-conditions create multiple DatePolicies w/ the same values. Handle that case.
-                try:
-                    existing_policies = list(models.DatePolicy.objects.filter(**date_kwargs).order_by('id'))
-                except models.DatePolicy.DoesNotExist:
-                    existing_policies = []
-                if existing_policies:
-                    existing_date.policy = existing_policies[0]
-                else:
-                    existing_date.policy = models.DatePolicy.objects.create(**date_kwargs)
-
+                _set_content_date_policy(date_kwargs, existing_date)
                 needs_save = True
+
+        # Sync the block_type for the ContentDate, if needed.
+        if existing_date.block_type != block_id.block_type:
+            existing_date.block_type = block_id.block_type
+            needs_save = True
 
         if needs_save:
             existing_date.save()
