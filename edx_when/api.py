@@ -62,7 +62,7 @@ def _are_relative_dates_enabled(course_key=None):
     try:
         # It's bad form to depend on LMS code from inside a plugin like this. But we gracefully fail, and this is
         # temporary code anyway, while we develop this feature.
-        from openedx.features.course_experience import RELATIVE_DATES_FLAG
+        from openedx.features.course_experience import RELATIVE_DATES_FLAG  # pylint: disable=import-outside-toplevel
     except ImportError:
         return False
 
