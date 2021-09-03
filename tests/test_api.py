@@ -570,14 +570,16 @@ class ApiWaffleTests(TestCase):
 
     @patch.dict(sys.modules, {'openedx.features.course_experience': Mock()})
     def test_relative_dates_enabled(self):
-        from openedx.features.course_experience import RELATIVE_DATES_FLAG as mock_flag  # pylint: disable=import-error
+        # pylint: disable=import-error,import-outside-toplevel
+        from openedx.features.course_experience import RELATIVE_DATES_FLAG as mock_flag
         mock_flag.is_enabled.return_value = True
         assert api._are_relative_dates_enabled()  # pylint: disable=protected-access
         assert mock_flag.is_enabled.called
 
     @patch.dict(sys.modules, {'openedx.features.course_experience': Mock()})
     def test_relative_dates_disabled(self):
-        from openedx.features.course_experience import RELATIVE_DATES_FLAG as mock_flag  # pylint: disable=import-error
+        # pylint: disable=import-error,import-outside-toplevel
+        from openedx.features.course_experience import RELATIVE_DATES_FLAG as mock_flag
         mock_flag.is_enabled.return_value = False
         assert not api._are_relative_dates_enabled()  # pylint: disable=protected-access
         assert mock_flag.is_enabled.called
