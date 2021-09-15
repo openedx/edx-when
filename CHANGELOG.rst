@@ -14,6 +14,10 @@ Change Log
 Unreleased
 ~~~~~~~~~~
 
+[2.2.1] - 2021-09-15
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* Bug fix for optimization in 2.2.0, to account for missing block_type data.
+
 [2.2.0] - 2021-08-27
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * Added optimization when requesting course block dates for an outline, where block dates below subsections are unneeded.

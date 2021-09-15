@@ -142,6 +142,20 @@ class ApiTests(TestCase):
         )
         assert len(retrieved) == NUM_OVERRIDES
 
+        # Set all the ContentDates for this course's structural blocks to have
+        # None for their block_type to test compatibilty with a half-migrated
+        # state. They should still be returned by get_dates_for_course with
+        # subsection_and_higher_only=True.
+        structural_dates = models.ContentDate.objects.filter(
+            course_id=course_key,
+            block_type__in=['course', 'chapter', 'sequential']
+        )
+        structural_dates.update(block_type=None)
+        retrieved = api.get_dates_for_course(
+            course_key, subsection_and_higher_only=True, published_version=self.course_version, use_cached=False
+        )
+        assert len(retrieved) == NUM_OVERRIDES
+
     def test_get_dates_for_course(self):
         items = make_items()
         api.set_dates_for_course(items[0][0].course_key, items)
