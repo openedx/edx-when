@@ -151,7 +151,8 @@ def _processed_results_cache_key(
     if allow_relative_dates:
         cache_key += '.with-rel-dates'
     if subsection_and_higher_only:
-        cache_key += '.subsection_and_higher_only'
+        # cache key incremented with ".v2" so we don't mix buggy cached data with fixed data
+        cache_key += '.subsection_and_higher_only.v2'
     cache_key += '.%s' % published_version if published_version else ''
     return cache_key
 
@@ -222,7 +223,10 @@ def get_dates_for_course(
         qset = models.ContentDate.objects.filter(course_id=course_id, active=True, **rel_lookup)
         if subsection_and_higher_only:
             # Include NULL block_type values as well because of lazy rollout.
-            qset = qset.filter(Q(block_type__in=('course', 'chapter', 'sequential', None)))
+            qset = qset.filter(
+                Q(block_type__in=('course', 'chapter', 'sequential')) |
+                Q(block_type__isnull=True)
+            )
 
         qset = list(
             qset.select_related('policy')
