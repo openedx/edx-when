@@ -5,17 +5,13 @@ Database models for edx_when.
 from datetime import datetime
 
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from model_utils.models import TimeStampedModel
 from opaque_keys.edx.django.models import CourseKeyField, UsageKeyField
 
-try:
-    from openedx.core.djangoapps.schedules.models import Schedule
-# TODO: Move schedules into edx-when
-except ImportError:
-    Schedule = None
+from .utils import get_schedule_for_user
 
 
 class MissingScheduleError(ValueError):
@@ -113,26 +109,6 @@ class ContentDate(models.Model):
         # Location already holds course id
         return f'ContentDate({self.policy}, {self.location}, {self.field}, {self.block_type})'
 
-    def schedule_for_user(self, user):
-        """
-        Return the schedule for the supplied user that applies to this piece of content or None.
-        """
-        no_schedules_found = None
-        if Schedule is None:
-            return no_schedules_found
-        if isinstance(user, int):
-            try:
-                return Schedule.objects.get(enrollment__user__id=user, enrollment__course__id=self.course_id)
-            except ObjectDoesNotExist:
-                return no_schedules_found
-        else:
-            # TODO: We could contemplate using pre-fetched enrollments/schedules,
-            # but for the moment, just use the fastests non-prefetchable query
-            try:
-                return Schedule.objects.get(enrollment__user__id=user.id, enrollment__course__id=self.course_id)
-            except ObjectDoesNotExist:
-                return no_schedules_found
-
 
 class UserDate(TimeStampedModel):
     """
@@ -158,9 +134,9 @@ class UserDate(TimeStampedModel):
         if self.abs_date:
             return self.abs_date
 
-        schedule_for_user = self.content_date.schedule_for_user(self.user)
-        policy_date = self.content_date.policy.actual_date(schedule_for_user)
-        if schedule_for_user and self.rel_date:
+        schedule = get_schedule_for_user(self.user.id, self.content_date.course_id)  # pylint: disable=no-member
+        policy_date = self.content_date.policy.actual_date(schedule)
+        if schedule and self.rel_date:
             return policy_date + self.rel_date
         else:
             return policy_date
@@ -179,8 +155,8 @@ class UserDate(TimeStampedModel):
         if self.abs_date and self.rel_date:
             raise ValidationError(_("Absolute and relative dates cannot both be used"))
 
-        user_schedule = self.content_date.schedule_for_user(self.user)
-        policy_date = self.content_date.policy.actual_date(schedule=user_schedule)
+        schedule = get_schedule_for_user(self.user.id, self.content_date.course_id)  # pylint: disable=no-member
+        policy_date = self.content_date.policy.actual_date(schedule=schedule)
         if self.rel_date is not None and self.rel_date.total_seconds() < 0:
             raise ValidationError(_("Override date must be later than policy date"))
         if self.abs_date is not None and isinstance(policy_date, datetime) and self.abs_date < policy_date:

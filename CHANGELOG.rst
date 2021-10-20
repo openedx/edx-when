@@ -14,6 +14,10 @@ Change Log
 Unreleased
 ~~~~~~~~~~
 
+[2.2.2] - 2021-10-21
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* Bug fix to bust cache when Personalized Learner Schedules are updated.
+
 [2.2.1] - 2021-09-15
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * Bug fix for optimization in 2.2.0, to account for missing block_type data.

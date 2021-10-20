@@ -13,6 +13,7 @@ from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey, UsageKey
 
 from . import models
+from .utils import get_schedule_for_user
 
 try:
     from openedx.core.djangoapps.schedules.models import Schedule
@@ -191,6 +192,9 @@ def get_dates_for_course(
         else:
             user_id = user.id if not user.is_anonymous else ''
 
+    if schedule is None and user is not None and user_id != '':
+        schedule = get_schedule_for_user(user_id, course_id)
+
     # Construct the cache key, incorporating all parameters which would cause a different
     # query set to be returned.
     processed_results_cache_key = _processed_results_cache_key(
@@ -239,14 +243,9 @@ def get_dates_for_course(
 
     dates = {}
     policies = {}
-    need_schedule = schedule is None and user is not None
     end_datetime, cutoff_datetime = _get_end_dates_from_content_dates(qset)
 
     for cdate in qset:
-        if need_schedule:
-            need_schedule = False
-            schedule = cdate.schedule_for_user(user)
-
         key = (cdate.location.map_into_course(course_id), cdate.field)
         try:
             dates[key] = cdate.policy.actual_date(schedule, end_datetime, cutoff_datetime)
