@@ -44,7 +44,7 @@ class ApiTests(TestCase):
         self.schedule = DummySchedule(enrollment=self.enrollment, start_date=datetime(2019, 4, 1))
         self.schedule.save()
 
-        dummy_schedule_patcher = patch('edx_when.models.Schedule', DummySchedule)
+        dummy_schedule_patcher = patch('edx_when.utils.Schedule', DummySchedule)
         dummy_schedule_patcher.start()
         self.addCleanup(dummy_schedule_patcher.stop)
 
@@ -523,8 +523,9 @@ class ApiTests(TestCase):
                 course_id=self.course.id, user=user, schedule=schedule
             )
 
-        # Second time, the request cache eliminates all querying...
-        with self.assertNumQueries(0):
+        # Second time, the request cache eliminates all querying (sometimes)...
+        # If a schedule is not provided, we will get the schedule to avoid caching outdated dates
+        with self.assertNumQueries(0 if schedule else 1):
             cached_dates = api.get_dates_for_course(
                 course_id=self.course.id, user=user, schedule=schedule
             )

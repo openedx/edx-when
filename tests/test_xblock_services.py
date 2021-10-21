@@ -49,7 +49,7 @@ class XblockTests(TestCase):
 
         mock_Schedule = mock.Mock(name="Schedule")
         mock_Schedule.objects.get.return_value = schedule
-        schedule_patcher = mock.patch('edx_when.models.Schedule', mock_Schedule)
+        schedule_patcher = mock.patch('edx_when.utils.Schedule', mock_Schedule)
         schedule_patcher.start()
         self.addCleanup(schedule_patcher.stop)
 

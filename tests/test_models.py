@@ -4,15 +4,14 @@ Tests for the `edx-when` models module.
 """
 
 from datetime import datetime, timedelta
-from unittest.mock import patch
 
 import ddt
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 
-from edx_when.models import ContentDate, DatePolicy, MissingScheduleError
-from tests.test_models_app.models import DummyCourse, DummyEnrollment, DummySchedule
+from edx_when.models import DatePolicy, MissingScheduleError
+from tests.test_models_app.models import DummySchedule
 
 User = get_user_model()
 
@@ -62,48 +61,3 @@ class TestDatePolicy(TestCase):
     def test_mixed_dates(self):
         with self.assertRaises(ValidationError):
             DatePolicy(abs_date=datetime(2020, 1, 1), rel_date=timedelta(days=1)).full_clean()
-
-
-class TestContentDate(TestCase):
-    """
-    Tests of the ContentDate model.
-    """
-    def setUp(self):
-        super().setUp()
-        self.course = DummyCourse(id='course-v1:edX+Test+Course')
-        self.course.save()
-
-        self.user = User()
-        self.user.save()
-
-        self.enrollment = DummyEnrollment(user=self.user, course=self.course)
-        self.enrollment.save()
-
-        self.schedule = DummySchedule(enrollment=self.enrollment, start_date=datetime(2020, 1, 1))
-        self.schedule.save()
-
-        self.policy = DatePolicy(abs_date=datetime(2020, 1, 1))
-        self.content_date = ContentDate(course_id=self.course.id, policy=self.policy)
-
-    @patch('edx_when.models.Schedule', DummySchedule)
-    def test_schedule_for_user_id(self):
-        assert self.content_date.schedule_for_user(self.user.id) == self.schedule
-
-    @patch('edx_when.models.Schedule', wraps=DummySchedule)
-    def test_schedule_for_user_with_object_does_not_exist(self, dummy_schedule):
-        """Test that None is returned when schedules are fetched for user."""
-        dummy_schedule.objects.get.side_effect = ObjectDoesNotExist()
-        assert self.content_date.schedule_for_user(self.user) is None
-
-    @patch('edx_when.models.Schedule', None)
-    def test_schedule_for_user_id_no_schedule_installed(self):
-        assert self.content_date.schedule_for_user(self.user.id) is None
-
-    @patch('edx_when.models.Schedule', DummySchedule)
-    def test_schedule_for_user_obj(self):
-        assert self.content_date.schedule_for_user(self.user) == self.schedule
-
-    @patch('edx_when.models.Schedule', wraps=DummySchedule)
-    def test_schedule_for_user_obj_no_enrollments(self, mock_schedule):
-        mock_schedule.objects.get.side_effect = ObjectDoesNotExist()
-        assert self.content_date.schedule_for_user(self.user) is None
