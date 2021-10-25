@@ -74,7 +74,7 @@ pyjwt[crypto]==2.3.0
     # via
     #   drf-jwt
     #   edx-drf-extensions
-pymongo==3.12.0
+pymongo==3.12.1
     # via edx-opaque-keys
 python-dateutil==2.8.2
     # via
@@ -101,7 +101,7 @@ six==1.16.0
     #   python-dateutil
 sqlparse==0.4.2
     # via django
-stevedore==3.4.0
+stevedore==3.5.0
     # via
     #   edx-django-utils
     #   edx-opaque-keys

@@ -171,7 +171,7 @@ pbr==5.6.0
     # via
     #   -r requirements/quality.txt
     #   stevedore
-pep517==0.11.1
+pep517==0.12.0
     # via
     #   -r requirements/pip-tools.txt
     #   pip-tools
@@ -239,11 +239,11 @@ pylint-plugin-utils==0.6
     #   -r requirements/quality.txt
     #   pylint-celery
     #   pylint-django
-pymongo==3.12.0
+pymongo==3.12.1
     # via
     #   -r requirements/quality.txt
     #   edx-opaque-keys
-pyparsing==2.4.7
+pyparsing==3.0.1
     # via
     #   -r requirements/quality.txt
     #   packaging
@@ -302,7 +302,7 @@ sqlparse==0.4.2
     # via
     #   -r requirements/quality.txt
     #   django
-stevedore==3.4.0
+stevedore==3.5.0
     # via
     #   -r requirements/quality.txt
     #   code-annotations
