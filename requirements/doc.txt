@@ -30,7 +30,7 @@ cffi==1.15.0
     # via
     #   -r requirements/test.txt
     #   cryptography
-charset-normalizer==2.0.7
+charset-normalizer==2.0.8
     # via
     #   -r requirements/test.txt
     #   requests
@@ -40,7 +40,7 @@ click==8.0.3
     #   code-annotations
 code-annotations==1.2.0
     # via -r requirements/test.txt
-coverage[toml]==6.1.2
+coverage[toml]==6.2
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -78,7 +78,7 @@ djangorestframework==3.12.4
     #   edx-drf-extensions
 doc8==0.10.1
     # via -r requirements/doc.in
-docutils==0.18
+docutils==0.18.1
     # via
     #   doc8
     #   readme-renderer
