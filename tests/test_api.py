@@ -41,7 +41,9 @@ class ApiTests(TestCase):
         self.enrollment = DummyEnrollment(user=self.user, course=self.course)
         self.enrollment.save()
 
-        self.schedule = DummySchedule(enrollment=self.enrollment, start_date=datetime(2019, 4, 1))
+        self.schedule = DummySchedule(
+            enrollment=self.enrollment, created=datetime(2019, 4, 1), start_date=datetime(2019, 4, 1)
+        )
         self.schedule.save()
 
         dummy_schedule_patcher = patch('edx_when.utils.Schedule', DummySchedule)
@@ -177,7 +179,7 @@ class ApiTests(TestCase):
         enrollment2 = DummyEnrollment(user=self.user, course=course2)
         enrollment2.save()
 
-        schedule2 = DummySchedule(enrollment=enrollment2, start_date=datetime(2019, 4, 1))
+        schedule2 = DummySchedule(enrollment=enrollment2, created=datetime(2019, 4, 1), start_date=datetime(2019, 4, 1))
         schedule2.save()
 
         api.set_dates_for_course(new_items[0][0].course_key, new_items)
