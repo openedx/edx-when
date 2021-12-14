@@ -42,9 +42,3 @@ class DummySchedule(models.Model):
         db_index=True,
         help_text='Date this schedule went into effect'
     )
-
-    def __init__(self, *args, created=None, start_date=None, **kwargs):
-        # Ensure we have a created value, if possible
-        if not created and start_date:
-            created = start_date
-        super().__init__(*args, created=created, start_date=start_date, **kwargs)

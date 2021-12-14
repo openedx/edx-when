@@ -25,9 +25,12 @@ class TestDatePolicy(TestCase):
     @ddt.data(
         (None, None, None, None),
         (datetime(2020, 1, 1), None, None, datetime(2020, 1, 1)),
-        (datetime(2020, 1, 1), None, DummySchedule(start_date=datetime(2020, 3, 1)), datetime(2020, 1, 1)),
-        (None, timedelta(days=1), DummySchedule(start_date=datetime(2020, 1, 1)), datetime(2020, 1, 2)),
-        (datetime(2020, 3, 1), timedelta(days=1), DummySchedule(start_date=datetime(2020, 1, 1)), datetime(2020, 1, 2)),
+        (datetime(2020, 1, 1), None,
+            DummySchedule(created=datetime(2020, 3, 1), start_date=datetime(2020, 3, 1)), datetime(2020, 1, 1)),
+        (None, timedelta(days=1),
+            DummySchedule(created=datetime(2020, 1, 1), start_date=datetime(2020, 1, 1)), datetime(2020, 1, 2)),
+        (datetime(2020, 3, 1), timedelta(days=1),
+            DummySchedule(created=datetime(2020, 1, 1), start_date=datetime(2020, 1, 1)), datetime(2020, 1, 2)),
     )
     @ddt.unpack
     def test_actual_date(self, abs_date, rel_date, schedule, expected):
@@ -47,14 +50,14 @@ class TestDatePolicy(TestCase):
     def test_actual_date_schedule_after_end(self):
         # This only applies for relative dates so we are not testing abs date.
         policy = DatePolicy(rel_date=timedelta(days=1))
-        schedule = DummySchedule(start_date=datetime(2020, 4, 1))
+        schedule = DummySchedule(created=datetime(2020, 4, 1), start_date=datetime(2020, 4, 1))
         self.assertIsNone(policy.actual_date(schedule, end_datetime=datetime(2020, 1, 1)))
 
     def test_actual_date_schedule_after_cutoff(self):
         # This only applies for relative dates so we are not testing abs date.
         day = timedelta(days=1)
         policy = DatePolicy(rel_date=day)
-        schedule = DummySchedule(start_date=datetime(2020, 4, 1))
+        schedule = DummySchedule(created=datetime(2020, 4, 1), start_date=datetime(2020, 4, 1))
         self.assertIsNone(policy.actual_date(schedule, cutoff_datetime=(schedule.created - day)))
         self.assertIsNotNone(policy.actual_date(schedule, cutoff_datetime=(schedule.created + day)))
 
