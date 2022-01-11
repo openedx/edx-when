@@ -12,7 +12,7 @@ asgiref==3.4.1
     # via
     #   -r requirements/base.txt
     #   django
-attrs==21.2.0
+attrs==21.4.0
     # via pytest
 certifi==2021.10.8
     # via
@@ -22,7 +22,7 @@ cffi==1.15.0
     # via
     #   -r requirements/base.txt
     #   cryptography
-charset-normalizer==2.0.9
+charset-normalizer==2.0.10
     # via
     #   -r requirements/base.txt
     #   requests
@@ -32,7 +32,7 @@ code-annotations==1.2.0
     # via -r requirements/test.in
 coverage[toml]==6.2
     # via pytest-cov
-cryptography==36.0.0
+cryptography==36.0.1
     # via
     #   -r requirements/base.txt
     #   pyjwt
@@ -58,16 +58,16 @@ django-waffle==2.2.1
     #   -r requirements/base.txt
     #   edx-django-utils
     #   edx-drf-extensions
-djangorestframework==3.12.4
+djangorestframework==3.13.1
     # via
     #   -r requirements/base.txt
     #   drf-jwt
     #   edx-drf-extensions
-drf-jwt==1.19.1
+drf-jwt==1.19.2
     # via
     #   -r requirements/base.txt
     #   edx-drf-extensions
-edx-django-utils==4.4.0
+edx-django-utils==4.4.1
     # via
     #   -r requirements/base.txt
     #   edx-drf-extensions
@@ -93,7 +93,7 @@ iniconfig==1.1.1
     # via pytest
 jinja2==3.0.3
     # via code-annotations
-lxml==4.6.5
+lxml==4.7.1
     # via
     #   -r requirements/base.txt
     #   xblock
@@ -116,7 +116,7 @@ pbr==5.8.0
     #   stevedore
 pluggy==1.0.0
     # via pytest
-psutil==5.8.0
+psutil==5.9.0
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
@@ -164,6 +164,7 @@ pytz==2021.3
     # via
     #   -r requirements/base.txt
     #   django
+    #   djangorestframework
     #   fs
     #   xblock
 pyyaml==6.0
@@ -171,7 +172,7 @@ pyyaml==6.0
     #   -r requirements/base.txt
     #   code-annotations
     #   xblock
-requests==2.26.0
+requests==2.27.1
     # via
     #   -r requirements/base.txt
     #   edx-drf-extensions
@@ -201,13 +202,13 @@ text-unidecode==1.3
     # via python-slugify
 toml==0.10.2
     # via pytest
-tomli==1.2.2
+tomli==2.0.0
     # via coverage
-urllib3==1.26.7
+urllib3==1.26.8
     # via
     #   -r requirements/base.txt
     #   requests
-web-fragments==1.1.0
+web-fragments==2.0.0
     # via
     #   -r requirements/base.txt
     #   xblock
