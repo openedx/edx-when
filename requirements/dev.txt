@@ -80,7 +80,7 @@ django-crum==0.7.9
     #   edx-django-utils
 django-model-utils==4.2.0
     # via -r requirements/quality.txt
-django-waffle==2.2.1
+django-waffle==2.3.0
     # via
     #   -r requirements/quality.txt
     #   edx-django-utils
@@ -120,7 +120,7 @@ idna==3.3
     # via
     #   -r requirements/quality.txt
     #   requests
-importlib-metadata==4.10.0
+importlib-metadata==4.10.1
     # via path.py
 inflect==5.3.0
     # via jinja2-pluralize
