@@ -6,7 +6,7 @@
 #
 appdirs==1.4.4
     # via fs
-asgiref==3.4.1
+asgiref==3.5.0
     # via django
 certifi==2021.10.8
     # via requests
@@ -30,7 +30,7 @@ django-crum==0.7.9
     # via edx-django-utils
 django-model-utils==4.2.0
     # via -r requirements/base.in
-django-waffle==2.2.1
+django-waffle==2.3.0
     # via
     #   edx-django-utils
     #   edx-drf-extensions
@@ -60,7 +60,7 @@ lxml==4.7.1
     # via xblock
 markupsafe==2.0.1
     # via xblock
-newrelic==7.2.4.171
+newrelic==7.4.0.172
     # via edx-django-utils
 pbr==5.8.0
     # via stevedore
@@ -68,7 +68,7 @@ psutil==5.9.0
     # via edx-django-utils
 pycparser==2.21
     # via cffi
-pycryptodomex==3.12.0
+pycryptodomex==3.13.0
     # via pyjwkest
 pyjwkest==1.4.2
     # via edx-drf-extensions
