@@ -28,7 +28,7 @@ cffi==1.15.0
     # via
     #   -r requirements/test.txt
     #   cryptography
-charset-normalizer==2.0.10
+charset-normalizer==2.0.11
     # via
     #   -r requirements/test.txt
     #   requests
@@ -44,7 +44,7 @@ code-annotations==1.2.0
     # via
     #   -r requirements/test.txt
     #   edx-lint
-coverage[toml]==6.2
+coverage[toml]==6.3
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -84,7 +84,7 @@ drf-jwt==1.19.2
     # via
     #   -r requirements/test.txt
     #   edx-drf-extensions
-edx-django-utils==4.4.1
+edx-django-utils==4.4.2
     # via
     #   -r requirements/test.txt
     #   edx-drf-extensions
@@ -92,7 +92,7 @@ edx-drf-extensions==8.0.1
     # via -r requirements/test.txt
 edx-lint==5.2.1
     # via -r requirements/quality.in
-edx-opaque-keys==2.2.2
+edx-opaque-keys==2.3.0
     # via
     #   -r requirements/test.txt
     #   edx-drf-extensions
@@ -167,7 +167,7 @@ pycparser==2.21
     # via
     #   -r requirements/test.txt
     #   cffi
-pycryptodomex==3.13.0
+pycryptodomex==3.14.0
     # via
     #   -r requirements/test.txt
     #   pyjwkest
@@ -196,7 +196,7 @@ pylint-plugin-utils==0.7
     # via
     #   pylint-celery
     #   pylint-django
-pymongo==4.0.1
+pymongo==3.12.3
     # via
     #   -r requirements/test.txt
     #   edx-opaque-keys
