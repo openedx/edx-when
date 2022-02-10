@@ -16,10 +16,10 @@ charset-normalizer==2.0.11
     # via requests
 cryptography==36.0.1
     # via pyjwt
-django==3.2.11
+django==3.2.12
     # via
-    #   -c requirements/common_constraints.txt
-    #   -r requirements/base.in
+    #   -c common_constraints.txt
+    #   -r base.in
     #   django-crum
     #   django-model-utils
     #   djangorestframework
@@ -29,7 +29,7 @@ django==3.2.11
 django-crum==0.7.9
     # via edx-django-utils
 django-model-utils==4.2.0
-    # via -r requirements/base.in
+    # via -r base.in
 django-waffle==2.3.0
     # via
     #   edx-django-utils
@@ -42,13 +42,13 @@ drf-jwt==1.19.2
     # via edx-drf-extensions
 edx-django-utils==4.4.2
     # via
-    #   -r requirements/base.in
+    #   -r base.in
     #   edx-drf-extensions
 edx-drf-extensions==8.0.1
-    # via -r requirements/base.in
+    # via -r base.in
 edx-opaque-keys==2.3.0
     # via
-    #   -r requirements/base.in
+    #   -r base.in
     #   edx-drf-extensions
 fs==2.4.14
     # via xblock
@@ -115,7 +115,7 @@ web-fragments==2.0.0
 webob==1.8.7
     # via xblock
 xblock==1.5.1
-    # via -r requirements/base.in
+    # via -r base.in
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools
