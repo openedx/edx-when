@@ -38,9 +38,9 @@ click==8.0.3
     # via
     #   -r test.txt
     #   code-annotations
-code-annotations==1.2.0
-    # via -r test.txt
-coverage[toml]==6.3
+code-annotations==1.3.0
+    # via -r requirements/test.txt
+coverage[toml]==6.3.1
     # via
     #   -r test.txt
     #   pytest-cov
@@ -49,7 +49,7 @@ cryptography==36.0.1
     #   -r test.txt
     #   pyjwt
 ddt==1.4.4
-    # via -r test.txt
+    # via -r requirements/test.txt
 django==3.2.12
     # via
     #   -c common_constraints.txt
@@ -87,7 +87,7 @@ drf-jwt==1.19.2
     # via
     #   -r test.txt
     #   edx-drf-extensions
-edx-django-utils==4.4.2
+edx-django-utils==4.5.0
     # via
     #   -r test.txt
     #   edx-drf-extensions
@@ -98,8 +98,8 @@ edx-opaque-keys==2.3.0
     #   -r test.txt
     #   edx-drf-extensions
 edx-sphinx-theme==3.0.0
-    # via -r doc.in
-fs==2.4.14
+    # via -r requirements/doc.in
+fs==2.4.15
     # via
     #   -r test.txt
     #   xblock
@@ -143,7 +143,7 @@ packaging==21.3
     #   bleach
     #   pytest
     #   sphinx
-pbr==5.8.0
+pbr==5.8.1
     # via
     #   -r test.txt
     #   stevedore
@@ -163,7 +163,7 @@ pycparser==2.21
     # via
     #   -r test.txt
     #   cffi
-pycryptodomex==3.14.0
+pycryptodomex==3.14.1
     # via
     #   -r test.txt
     #   pyjwkest
@@ -189,7 +189,7 @@ pyparsing==3.0.7
     # via
     #   -r test.txt
     #   packaging
-pytest==6.2.5
+pytest==7.0.0
     # via
     #   -r test.txt
     #   pytest-cov
@@ -230,7 +230,7 @@ requests==2.27.1
     #   sphinx
 restructuredtext-lint==1.3.2
     # via doc8
-semantic-version==2.8.5
+semantic-version==2.9.0
     # via
     #   -r test.txt
     #   edx-drf-extensions
@@ -269,14 +269,11 @@ text-unidecode==1.3
     # via
     #   -r test.txt
     #   python-slugify
-toml==0.10.2
-    # via
-    #   -r test.txt
-    #   pytest
-tomli==2.0.0
+tomli==2.0.1
     # via
     #   -r test.txt
     #   coverage
+    #   pytest
 urllib3==1.26.8
     # via
     #   -r test.txt
@@ -291,8 +288,8 @@ webob==1.8.7
     # via
     #   -r test.txt
     #   xblock
-xblock==1.5.1
-    # via -r test.txt
+xblock==1.6.1
+    # via -r requirements/test.txt
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools

@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ~~~~~~~~~~
 
+[2.3.0] - 2022-02-15
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* Added Django40 support
+* Dropped Django22, 30 and 31 support
+
+
 [2.2.2] - 2021-10-21
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * Bug fix to bust cache when Personalized Learner Schedules are updated.
