@@ -12,14 +12,14 @@ certifi==2021.10.8
     # via requests
 cffi==1.15.0
     # via cryptography
-charset-normalizer==2.0.11
+charset-normalizer==2.0.12
     # via requests
 cryptography==36.0.1
     # via pyjwt
 django==3.2.12
     # via
-    #   -c common_constraints.txt
-    #   -r base.in
+    #   -c requirements/common_constraints.txt
+    #   -r requirements/base.in
     #   django-crum
     #   django-model-utils
     #   djangorestframework
@@ -29,7 +29,7 @@ django==3.2.12
 django-crum==0.7.9
     # via edx-django-utils
 django-model-utils==4.2.0
-    # via -r base.in
+    # via -r requirements/base.in
 django-waffle==2.3.0
     # via
     #   edx-django-utils
@@ -42,13 +42,13 @@ drf-jwt==1.19.2
     # via edx-drf-extensions
 edx-django-utils==4.5.0
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   edx-drf-extensions
 edx-drf-extensions==8.0.1
-    # via -r base.in
+    # via -r requirements/base.in
 edx-opaque-keys==2.3.0
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   edx-drf-extensions
 fs==2.4.15
     # via xblock
@@ -56,9 +56,9 @@ future==0.18.2
     # via pyjwkest
 idna==3.3
     # via requests
-lxml==4.7.1
+lxml==4.8.0
     # via xblock
-markupsafe==2.0.1
+markupsafe==2.1.0
     # via xblock
 newrelic==7.4.0.172
     # via edx-django-utils
