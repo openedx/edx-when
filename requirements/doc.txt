@@ -221,7 +221,7 @@ pyyaml==6.0
     #   -r requirements/test.txt
     #   code-annotations
     #   xblock
-readme-renderer==32.0
+readme-renderer==33.0
     # via -r requirements/doc.in
 requests==2.27.1
     # via
