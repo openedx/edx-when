@@ -190,7 +190,7 @@ pyparsing==3.0.7
     # via
     #   -r requirements/test.txt
     #   packaging
-pytest==7.0.1
+pytest==7.1.0
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -221,7 +221,7 @@ pyyaml==6.0
     #   -r requirements/test.txt
     #   code-annotations
     #   xblock
-readme-renderer==33.0
+readme-renderer==34.0
     # via -r requirements/doc.in
 requests==2.27.1
     # via
