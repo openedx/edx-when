@@ -33,7 +33,7 @@ charset-normalizer==2.0.12
     # via
     #   -r requirements/quality.txt
     #   requests
-click==8.0.4
+click==8.1.2
     # via
     #   -r requirements/pip-tools.txt
     #   -r requirements/quality.txt
@@ -84,7 +84,7 @@ django-crum==0.7.9
     #   edx-django-utils
 django-model-utils==4.2.0
     # via -r requirements/quality.txt
-django-waffle==2.3.0
+django-waffle==2.4.1
     # via
     #   -r requirements/quality.txt
     #   edx-django-utils
@@ -163,7 +163,7 @@ mccabe==0.7.0
     #   pylint
 mock==4.0.3
     # via -r requirements/quality.txt
-newrelic==7.6.0.173
+newrelic==7.8.0.174
     # via
     #   -r requirements/quality.txt
     #   edx-django-utils
@@ -227,7 +227,7 @@ pyjwt[crypto]==2.3.0
     #   -r requirements/quality.txt
     #   drf-jwt
     #   edx-drf-extensions
-pylint==2.13.2
+pylint==2.13.4
     # via
     #   -r requirements/quality.txt
     #   edx-lint
@@ -356,7 +356,7 @@ wrapt==1.14.0
     #   astroid
 xblock==1.6.1
     # via -r requirements/quality.txt
-zipp==3.7.0
+zipp==3.8.0
     # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:

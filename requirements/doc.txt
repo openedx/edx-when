@@ -34,7 +34,7 @@ charset-normalizer==2.0.12
     # via
     #   -r requirements/test.txt
     #   requests
-click==8.0.4
+click==8.1.2
     # via
     #   -r requirements/test.txt
     #   code-annotations
@@ -66,7 +66,7 @@ django-crum==0.7.9
     #   edx-django-utils
 django-model-utils==4.2.0
     # via -r requirements/test.txt
-django-waffle==2.3.0
+django-waffle==2.4.1
     # via
     #   -r requirements/test.txt
     #   edx-django-utils
@@ -76,7 +76,7 @@ djangorestframework==3.13.1
     #   -r requirements/test.txt
     #   drf-jwt
     #   edx-drf-extensions
-doc8==0.10.1
+doc8==0.11.1
     # via -r requirements/doc.in
 docutils==0.17.1
     # via
@@ -136,7 +136,7 @@ markupsafe==2.1.1
     #   xblock
 mock==4.0.3
     # via -r requirements/test.txt
-newrelic==7.6.0.173
+newrelic==7.8.0.174
     # via
     #   -r requirements/test.txt
     #   edx-django-utils
@@ -300,7 +300,7 @@ webob==1.8.7
     #   xblock
 xblock==1.6.1
     # via -r requirements/test.txt
-zipp==3.7.0
+zipp==3.8.0
     # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
