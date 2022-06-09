@@ -49,6 +49,8 @@ upgrade: $(COMMON_CONSTRAINTS_TXT) ## update the requirements/*.txt files with t
 	# Make sure to compile files after any other files they include!
 	pip-compile --rebuild --upgrade --allow-unsafe -o requirements/pip.txt requirements/pip.in
 	pip-compile --rebuild --upgrade -o requirements/pip-tools.txt requirements/pip-tools.in
+	pip install -qr requirements/pip.txt
+	pip install -qr requirements/pip-tools.txt
 	pip-compile --rebuild --upgrade -o requirements/base.txt requirements/base.in
 	pip-compile --rebuild --upgrade -o requirements/test.txt requirements/test.in
 	pip-compile --rebuild --upgrade -o requirements/doc.txt requirements/doc.in
