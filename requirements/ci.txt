@@ -4,12 +4,12 @@
 #
 #    make upgrade
 #
-certifi==2022.6.15
+certifi==2022.12.7
     # via requests
 charset-normalizer==2.0.12
     # via requests
 codecov==2.1.12
-    # via -r requirements/ci.in
+    # via -r ci.in
 coverage==6.4.1
     # via codecov
 distlib==0.3.4
@@ -40,10 +40,10 @@ toml==0.10.2
     # via tox
 tox==3.25.0
     # via
-    #   -r requirements/ci.in
+    #   -r ci.in
     #   tox-battery
 tox-battery==0.6.1
-    # via -r requirements/ci.in
+    # via -r ci.in
 urllib3==1.26.9
     # via requests
 virtualenv==20.15.0
