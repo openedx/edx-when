@@ -58,8 +58,8 @@ class TestDatePolicy(TestCase):
         day = timedelta(days=1)
         policy = DatePolicy(rel_date=day)
         schedule = DummySchedule(created=datetime(2020, 4, 1), start_date=datetime(2020, 4, 1))
-        self.assertIsNone(policy.actual_date(schedule, cutoff_datetime=(schedule.created - day)))
-        self.assertIsNotNone(policy.actual_date(schedule, cutoff_datetime=(schedule.created + day)))
+        self.assertIsNone(policy.actual_date(schedule, cutoff_datetime=schedule.created - day))
+        self.assertIsNotNone(policy.actual_date(schedule, cutoff_datetime=schedule.created + day))
 
     def test_mixed_dates(self):
         with self.assertRaises(ValidationError):
