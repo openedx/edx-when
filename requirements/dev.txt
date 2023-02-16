@@ -12,7 +12,7 @@ asgiref==3.6.0
     # via
     #   -r requirements/quality.txt
     #   django
-astroid==2.14.1
+astroid==2.14.2
     # via
     #   -r requirements/quality.txt
     #   pylint
@@ -59,7 +59,7 @@ coverage[toml]==7.1.0
     # via
     #   -r requirements/quality.txt
     #   pytest-cov
-cryptography==39.0.0
+cryptography==39.0.1
     # via
     #   -r requirements/quality.txt
     #   pyjwt
@@ -73,7 +73,7 @@ dill==0.3.6
     # via
     #   -r requirements/quality.txt
     #   pylint
-django==3.2.17
+django==3.2.18
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/quality.txt
@@ -112,7 +112,7 @@ edx-drf-extensions==8.4.1
     # via -r requirements/quality.txt
 edx-i18n-tools==0.9.2
     # via -r requirements/dev.in
-edx-lint==5.3.0
+edx-lint==5.3.2
     # via -r requirements/quality.txt
 edx-opaque-keys==2.3.0
     # via
@@ -173,7 +173,7 @@ mccabe==0.7.0
     #   pylint
 mock==5.0.1
     # via -r requirements/quality.txt
-newrelic==8.5.0
+newrelic==8.6.0
     # via
     #   -r requirements/quality.txt
     #   edx-django-utils
@@ -193,7 +193,7 @@ pbr==5.11.1
     #   stevedore
 pip-tools==6.12.2
     # via -r requirements/pip-tools.txt
-platformdirs==2.6.2
+platformdirs==3.0.0
     # via
     #   -r requirements/quality.txt
     #   pylint
@@ -218,7 +218,7 @@ pycryptodomex==3.17
     # via
     #   -r requirements/quality.txt
     #   pyjwkest
-pydantic==1.10.4
+pydantic==1.10.5
     # via inflect
 pydocstyle==6.3.0
     # via -r requirements/quality.txt
@@ -233,7 +233,7 @@ pyjwt[crypto]==2.6.0
     #   -r requirements/quality.txt
     #   drf-jwt
     #   edx-drf-extensions
-pylint==2.16.0
+pylint==2.16.2
     # via
     #   -r requirements/quality.txt
     #   edx-lint
@@ -320,7 +320,7 @@ sqlparse==0.4.3
     # via
     #   -r requirements/quality.txt
     #   django
-stevedore==4.1.1
+stevedore==5.0.0
     # via
     #   -r requirements/quality.txt
     #   code-annotations
@@ -343,7 +343,7 @@ tomlkit==0.11.6
     # via
     #   -r requirements/quality.txt
     #   pylint
-typing-extensions==4.4.0
+typing-extensions==4.5.0
     # via
     #   -r requirements/quality.txt
     #   astroid
@@ -371,7 +371,7 @@ wrapt==1.14.1
     #   astroid
 xblock==1.6.2
     # via -r requirements/quality.txt
-zipp==3.12.0
+zipp==3.13.0
     # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
