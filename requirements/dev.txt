@@ -12,7 +12,7 @@ asgiref==3.6.0
     # via
     #   -r requirements/quality.txt
     #   django
-astroid==2.15.0
+astroid==2.15.1
     # via
     #   -r requirements/quality.txt
     #   pylint
@@ -59,7 +59,7 @@ coverage[toml]==7.2.2
     # via
     #   -r requirements/quality.txt
     #   pytest-cov
-cryptography==39.0.2
+cryptography==40.0.1
     # via
     #   -r requirements/quality.txt
     #   pyjwt
@@ -104,7 +104,7 @@ drf-jwt==1.19.2
     # via
     #   -r requirements/quality.txt
     #   edx-drf-extensions
-edx-django-utils==5.2.0
+edx-django-utils==5.3.0
     # via
     #   -r requirements/quality.txt
     #   edx-drf-extensions
@@ -134,7 +134,7 @@ idna==3.4
     # via
     #   -r requirements/quality.txt
     #   requests
-importlib-metadata==6.0.0
+importlib-metadata==6.1.0
     # via path-py
 inflect==6.0.2
     # via jinja2-pluralize
@@ -173,7 +173,7 @@ mccabe==0.7.0
     #   pylint
 mock==5.0.1
     # via -r requirements/quality.txt
-newrelic==8.7.0
+newrelic==8.8.0
     # via
     #   -r requirements/quality.txt
     #   edx-django-utils
@@ -193,7 +193,7 @@ pbr==5.11.1
     #   stevedore
 pip-tools==6.12.3
     # via -r requirements/pip-tools.txt
-platformdirs==3.1.1
+platformdirs==3.2.0
     # via
     #   -r requirements/quality.txt
     #   pylint
@@ -218,7 +218,7 @@ pycryptodomex==3.17
     # via
     #   -r requirements/quality.txt
     #   pyjwkest
-pydantic==1.10.6
+pydantic==1.10.7
     # via inflect
 pydocstyle==6.3.0
     # via -r requirements/quality.txt
@@ -233,7 +233,7 @@ pyjwt[crypto]==2.6.0
     #   -r requirements/quality.txt
     #   drf-jwt
     #   edx-drf-extensions
-pylint==2.17.0
+pylint==2.17.1
     # via
     #   -r requirements/quality.txt
     #   edx-lint
@@ -283,7 +283,7 @@ python-slugify==8.0.1
     # via
     #   -r requirements/quality.txt
     #   code-annotations
-pytz==2022.7.1
+pytz==2023.3
     # via
     #   -r requirements/quality.txt
     #   django
@@ -339,7 +339,7 @@ tomli==2.0.1
     #   pylint
     #   pyproject-hooks
     #   pytest
-tomlkit==0.11.6
+tomlkit==0.11.7
     # via
     #   -r requirements/quality.txt
     #   pylint
