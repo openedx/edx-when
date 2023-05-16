@@ -12,7 +12,7 @@ asgiref==3.6.0
     # via
     #   -r requirements/quality.txt
     #   django
-astroid==2.15.4
+astroid==2.15.5
     # via
     #   -r requirements/quality.txt
     #   pylint
@@ -21,7 +21,7 @@ build==0.10.0
     # via
     #   -r requirements/pip-tools.txt
     #   pip-tools
-certifi==2022.12.7
+certifi==2023.5.7
     # via
     #   -r requirements/quality.txt
     #   requests
@@ -69,7 +69,7 @@ dill==0.3.6
     # via
     #   -r requirements/quality.txt
     #   pylint
-django==3.2.18
+django==3.2.19
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/quality.txt
@@ -189,7 +189,7 @@ pbr==5.11.1
     #   stevedore
 pip-tools==6.13.0
     # via -r requirements/pip-tools.txt
-platformdirs==3.5.0
+platformdirs==3.5.1
     # via
     #   -r requirements/quality.txt
     #   pylint
@@ -224,12 +224,12 @@ pyjwkest==1.4.2
     # via
     #   -r requirements/quality.txt
     #   edx-drf-extensions
-pyjwt[crypto]==2.6.0
+pyjwt[crypto]==2.7.0
     # via
     #   -r requirements/quality.txt
     #   drf-jwt
     #   edx-drf-extensions
-pylint==2.17.3
+pylint==2.17.4
     # via
     #   -r requirements/quality.txt
     #   edx-lint
@@ -244,7 +244,7 @@ pylint-django==2.5.3
     # via
     #   -r requirements/quality.txt
     #   edx-lint
-pylint-plugin-utils==0.7
+pylint-plugin-utils==0.8.1
     # via
     #   -r requirements/quality.txt
     #   pylint-celery
@@ -291,7 +291,7 @@ pyyaml==6.0
     #   code-annotations
     #   edx-i18n-tools
     #   xblock
-requests==2.29.0
+requests==2.30.0
     # via
     #   -r requirements/quality.txt
     #   edx-drf-extensions
@@ -316,7 +316,7 @@ sqlparse==0.4.4
     # via
     #   -r requirements/quality.txt
     #   django
-stevedore==5.0.0
+stevedore==5.1.0
     # via
     #   -r requirements/quality.txt
     #   code-annotations
@@ -345,7 +345,7 @@ typing-extensions==4.5.0
     #   astroid
     #   pydantic
     #   pylint
-urllib3==1.26.15
+urllib3==2.0.2
     # via
     #   -r requirements/quality.txt
     #   requests
