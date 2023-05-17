@@ -8,7 +8,7 @@ appdirs==1.4.4
     # via fs
 asgiref==3.6.0
     # via django
-certifi==2022.12.7
+certifi==2023.5.7
     # via requests
 cffi==1.15.1
     # via
@@ -20,7 +20,7 @@ click==8.1.3
     # via edx-django-utils
 cryptography==40.0.2
     # via pyjwt
-django==3.2.18
+django==3.2.19
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/base.in
@@ -76,7 +76,7 @@ pycryptodomex==3.17
     # via pyjwkest
 pyjwkest==1.4.2
     # via edx-drf-extensions
-pyjwt[crypto]==2.6.0
+pyjwt[crypto]==2.7.0
     # via
     #   drf-jwt
     #   edx-drf-extensions
@@ -95,7 +95,7 @@ pytz==2023.3
     #   xblock
 pyyaml==6.0
     # via xblock
-requests==2.29.0
+requests==2.30.0
     # via
     #   edx-drf-extensions
     #   pyjwkest
@@ -109,11 +109,11 @@ six==1.16.0
     #   python-dateutil
 sqlparse==0.4.4
     # via django
-stevedore==5.0.0
+stevedore==5.1.0
     # via
     #   edx-django-utils
     #   edx-opaque-keys
-urllib3==1.26.15
+urllib3==2.0.2
     # via requests
 web-fragments==2.0.0
     # via xblock
