@@ -9,6 +9,7 @@ from unittest.mock import Mock, call, patch
 import ddt
 from django.contrib import auth
 from django.test import TestCase
+from django.urls import reverse
 from edx_django_utils.cache.utils import TieredCache
 from opaque_keys.edx.locator import CourseLocator
 
@@ -576,6 +577,13 @@ class ApiTests(TestCase):
         # When setting same items, we should only do initial read
         with self.assertNumQueries(1):
             api.set_date_for_block(*args)
+
+    def test_api_view(self):
+        """
+        This test just for meeting code-coverage.
+        """
+        response = self.client.get(reverse('course_dates'))
+        self.assertEqual(response.status_code, 403)
 
 
 class ApiWaffleTests(TestCase):
