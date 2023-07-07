@@ -4,6 +4,8 @@
 #
 #    make upgrade
 #
+annotated-types==0.5.0
+    # via pydantic
 appdirs==1.4.4
     # via
     #   -r requirements/quality.txt
@@ -126,7 +128,7 @@ idna==3.4
     # via
     #   -r requirements/quality.txt
     #   requests
-importlib-metadata==6.6.0
+importlib-metadata==6.7.0
     # via path-py
 inflect==6.0.4
     # via jinja2-pluralize
@@ -165,7 +167,7 @@ mccabe==0.7.0
     #   pylint
 mock==5.0.2
     # via -r requirements/quality.txt
-newrelic==8.8.0
+newrelic==8.8.1
     # via
     #   -r requirements/quality.txt
     #   edx-django-utils
@@ -183,13 +185,13 @@ pbr==5.11.1
     # via
     #   -r requirements/quality.txt
     #   stevedore
-pip-tools==6.13.0
+pip-tools==6.14.0
     # via -r requirements/pip-tools.txt
-platformdirs==3.5.3
+platformdirs==3.8.0
     # via
     #   -r requirements/quality.txt
     #   pylint
-pluggy==1.0.0
+pluggy==1.2.0
     # via
     #   -r requirements/quality.txt
     #   diff-cover
@@ -206,8 +208,10 @@ pycparser==2.21
     # via
     #   -r requirements/quality.txt
     #   cffi
-pydantic==1.10.9
+pydantic==2.0
     # via inflect
+pydantic-core==2.0.1
+    # via pydantic
 pydocstyle==6.3.0
     # via -r requirements/quality.txt
 pygments==2.15.1
@@ -249,7 +253,7 @@ pyproject-hooks==1.0.0
     # via
     #   -r requirements/pip-tools.txt
     #   build
-pytest==7.3.2
+pytest==7.4.0
     # via
     #   -r requirements/quality.txt
     #   pytest-cov
@@ -318,6 +322,7 @@ tomli==2.0.1
     #   -r requirements/quality.txt
     #   build
     #   coverage
+    #   pip-tools
     #   pylint
     #   pyproject-hooks
     #   pytest
@@ -325,12 +330,14 @@ tomlkit==0.11.8
     # via
     #   -r requirements/quality.txt
     #   pylint
-typing-extensions==4.6.3
+typing-extensions==4.7.1
     # via
     #   -r requirements/quality.txt
+    #   annotated-types
     #   asgiref
     #   astroid
     #   pydantic
+    #   pydantic-core
     #   pylint
 urllib3==2.0.3
     # via
