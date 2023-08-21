@@ -33,6 +33,10 @@ INSTALLED_APPS = (
     'tests.test_models_app',
 )
 
+JWT_AUTH = {
+    'JWT_AUTH_COOKIE': 'edx-jwt-cookie'
+}
+
 LOCALE_PATHS = [
     root('edx_when', 'conf', 'locale'),
 ]
