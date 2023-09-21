@@ -22,8 +22,6 @@ babel==2.12.1
     #   sphinx
 beautifulsoup4==4.12.2
     # via pydata-sphinx-theme
-bleach==6.0.0
-    # via readme-renderer
 certifi==2023.7.22
     # via
     #   -r requirements/test.txt
@@ -44,7 +42,7 @@ click==8.1.7
     #   edx-django-utils
 code-annotations==1.5.0
     # via -r requirements/test.txt
-coverage[toml]==7.3.0
+coverage[toml]==7.3.1
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -55,7 +53,7 @@ cryptography==41.0.3
     #   secretstorage
 ddt==1.6.0
     # via -r requirements/test.txt
-django==3.2.20
+django==3.2.21
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/test.txt
@@ -99,7 +97,7 @@ edx-django-utils==5.7.0
     # via
     #   -r requirements/test.txt
     #   edx-drf-extensions
-edx-drf-extensions==8.9.2
+edx-drf-extensions==8.10.0
     # via -r requirements/test.txt
 edx-opaque-keys==2.5.0
     # via
@@ -164,6 +162,8 @@ newrelic==9.0.0
     # via
     #   -r requirements/test.txt
     #   edx-django-utils
+nh3==0.2.14
+    # via readme-renderer
 packaging==23.1
     # via
     #   -r requirements/test.txt
@@ -188,7 +188,7 @@ pycparser==2.21
     # via
     #   -r requirements/test.txt
     #   cffi
-pydata-sphinx-theme==0.13.3
+pydata-sphinx-theme==0.14.0
     # via sphinx-book-theme
 pygments==2.16.1
     # via
@@ -211,7 +211,7 @@ pynacl==1.5.0
     # via
     #   -r requirements/test.txt
     #   edx-django-utils
-pytest==7.4.0
+pytest==7.4.2
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -223,13 +223,12 @@ pytest-django==4.5.2
 python-dateutil==2.8.2
     # via
     #   -r requirements/test.txt
-    #   edx-drf-extensions
     #   xblock
 python-slugify==8.0.1
     # via
     #   -r requirements/test.txt
     #   code-annotations
-pytz==2023.3
+pytz==2023.3.post1
     # via
     #   -r requirements/test.txt
     #   babel
@@ -241,7 +240,7 @@ pyyaml==6.0.1
     #   -r requirements/test.txt
     #   code-annotations
     #   xblock
-readme-renderer==41.0
+readme-renderer==42.0
     # via twine
 requests==2.31.0
     # via
@@ -256,7 +255,7 @@ restructuredtext-lint==1.4.0
     # via doc8
 rfc3986==2.0.0
     # via twine
-rich==13.5.2
+rich==13.5.3
     # via twine
 secretstorage==3.3.3
     # via keyring
@@ -267,8 +266,6 @@ semantic-version==2.10.0
 six==1.16.0
     # via
     #   -r requirements/test.txt
-    #   bleach
-    #   edx-drf-extensions
     #   fs
     #   python-dateutil
 snowballstemmer==2.2.0
@@ -317,7 +314,7 @@ tomli==2.0.1
     #   pytest
 twine==4.0.2
     # via -r requirements/doc.in
-typing-extensions==4.7.1
+typing-extensions==4.8.0
     # via
     #   -r requirements/test.txt
     #   asgiref
@@ -333,15 +330,13 @@ web-fragments==2.1.0
     # via
     #   -r requirements/test.txt
     #   xblock
-webencodings==0.5.1
-    # via bleach
 webob==1.8.7
     # via
     #   -r requirements/test.txt
     #   xblock
 xblock==1.7.0
     # via -r requirements/test.txt
-zipp==3.16.2
+zipp==3.17.0
     # via
     #   importlib-metadata
     #   importlib-resources

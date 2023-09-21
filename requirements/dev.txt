@@ -19,7 +19,7 @@ astroid==2.15.6
     #   -r requirements/quality.txt
     #   pylint
     #   pylint-celery
-build==1.0.0
+build==1.0.3
     # via
     #   -r requirements/pip-tools.txt
     #   pip-tools
@@ -53,7 +53,7 @@ code-annotations==1.5.0
     # via
     #   -r requirements/quality.txt
     #   edx-lint
-coverage[toml]==7.3.0
+coverage[toml]==7.3.1
     # via
     #   -r requirements/quality.txt
     #   pytest-cov
@@ -71,7 +71,7 @@ dill==0.3.7
     # via
     #   -r requirements/quality.txt
     #   pylint
-django==3.2.20
+django==3.2.21
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/quality.txt
@@ -107,9 +107,9 @@ edx-django-utils==5.7.0
     # via
     #   -r requirements/quality.txt
     #   edx-drf-extensions
-edx-drf-extensions==8.9.2
+edx-drf-extensions==8.10.0
     # via -r requirements/quality.txt
-edx-i18n-tools==1.1.0
+edx-i18n-tools==1.2.0
     # via -r requirements/dev.in
 edx-lint==5.3.4
     # via -r requirements/quality.txt
@@ -257,7 +257,7 @@ pyproject-hooks==1.0.0
     # via
     #   -r requirements/pip-tools.txt
     #   build
-pytest==7.4.0
+pytest==7.4.2
     # via
     #   -r requirements/quality.txt
     #   pytest-cov
@@ -269,13 +269,12 @@ pytest-django==4.5.2
 python-dateutil==2.8.2
     # via
     #   -r requirements/quality.txt
-    #   edx-drf-extensions
     #   xblock
 python-slugify==8.0.1
     # via
     #   -r requirements/quality.txt
     #   code-annotations
-pytz==2023.3
+pytz==2023.3.post1
     # via
     #   -r requirements/quality.txt
     #   django
@@ -298,7 +297,6 @@ semantic-version==2.10.0
 six==1.16.0
     # via
     #   -r requirements/quality.txt
-    #   edx-drf-extensions
     #   edx-lint
     #   fs
     #   python-dateutil
@@ -334,7 +332,7 @@ tomlkit==0.12.1
     # via
     #   -r requirements/quality.txt
     #   pylint
-typing-extensions==4.7.1
+typing-extensions==4.8.0
     # via
     #   -r requirements/quality.txt
     #   annotated-types
@@ -367,7 +365,7 @@ wrapt==1.15.0
     #   astroid
 xblock==1.7.0
     # via -r requirements/quality.txt
-zipp==3.16.2
+zipp==3.17.0
     # via
     #   -r requirements/pip-tools.txt
     #   importlib-metadata
