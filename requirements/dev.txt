@@ -14,7 +14,7 @@ asgiref==3.7.2
     # via
     #   -r requirements/quality.txt
     #   django
-astroid==2.15.6
+astroid==2.15.8
     # via
     #   -r requirements/quality.txt
     #   pylint
@@ -57,7 +57,7 @@ coverage[toml]==7.3.1
     # via
     #   -r requirements/quality.txt
     #   pytest-cov
-cryptography==41.0.3
+cryptography==41.0.4
     # via
     #   -r requirements/quality.txt
     #   pyjwt
@@ -113,7 +113,7 @@ edx-i18n-tools==1.2.0
     # via -r requirements/dev.in
 edx-lint==5.3.4
     # via -r requirements/quality.txt
-edx-opaque-keys==2.5.0
+edx-opaque-keys==2.5.1
     # via
     #   -r requirements/quality.txt
     #   edx-drf-extensions
@@ -171,7 +171,7 @@ mccabe==0.7.0
     #   pylint
 mock==5.1.0
     # via -r requirements/quality.txt
-newrelic==9.0.0
+newrelic==9.1.0
     # via
     #   -r requirements/quality.txt
     #   edx-django-utils
@@ -212,9 +212,9 @@ pycparser==2.21
     # via
     #   -r requirements/quality.txt
     #   cffi
-pydantic==2.3.0
+pydantic==2.4.1
     # via inflect
-pydantic-core==2.6.3
+pydantic-core==2.10.1
     # via pydantic
 pydocstyle==6.3.0
     # via -r requirements/quality.txt
@@ -225,7 +225,7 @@ pyjwt[crypto]==2.8.0
     #   -r requirements/quality.txt
     #   drf-jwt
     #   edx-drf-extensions
-pylint==2.17.5
+pylint==2.17.6
     # via
     #   -r requirements/quality.txt
     #   edx-lint
@@ -343,7 +343,7 @@ typing-extensions==4.8.0
     #   pydantic
     #   pydantic-core
     #   pylint
-urllib3==2.0.4
+urllib3==2.0.5
     # via
     #   -r requirements/quality.txt
     #   requests
@@ -363,7 +363,7 @@ wrapt==1.15.0
     # via
     #   -r requirements/quality.txt
     #   astroid
-xblock==1.7.0
+xblock==1.8.0
     # via -r requirements/quality.txt
 zipp==3.17.0
     # via
