@@ -12,7 +12,7 @@ asgiref==3.7.2
     # via
     #   -r requirements/test.txt
     #   django
-astroid==2.15.6
+astroid==2.15.8
     # via
     #   pylint
     #   pylint-celery
@@ -46,7 +46,7 @@ coverage[toml]==7.3.1
     # via
     #   -r requirements/test.txt
     #   pytest-cov
-cryptography==41.0.3
+cryptography==41.0.4
     # via
     #   -r requirements/test.txt
     #   pyjwt
@@ -93,7 +93,7 @@ edx-drf-extensions==8.10.0
     # via -r requirements/test.txt
 edx-lint==5.3.4
     # via -r requirements/quality.in
-edx-opaque-keys==2.5.0
+edx-opaque-keys==2.5.1
     # via
     #   -r requirements/test.txt
     #   edx-drf-extensions
@@ -136,7 +136,7 @@ mccabe==0.7.0
     # via pylint
 mock==5.1.0
     # via -r requirements/test.txt
-newrelic==9.0.0
+newrelic==9.1.0
     # via
     #   -r requirements/test.txt
     #   edx-django-utils
@@ -171,7 +171,7 @@ pyjwt[crypto]==2.8.0
     #   -r requirements/test.txt
     #   drf-jwt
     #   edx-drf-extensions
-pylint==2.17.5
+pylint==2.17.6
     # via
     #   edx-lint
     #   pylint-celery
@@ -266,7 +266,7 @@ typing-extensions==4.8.0
     #   astroid
     #   edx-opaque-keys
     #   pylint
-urllib3==2.0.4
+urllib3==2.0.5
     # via
     #   -r requirements/test.txt
     #   requests
@@ -280,7 +280,7 @@ webob==1.8.7
     #   xblock
 wrapt==1.15.0
     # via astroid
-xblock==1.7.0
+xblock==1.8.0
     # via -r requirements/test.txt
 
 # The following packages are considered to be unsafe in a requirements file:
