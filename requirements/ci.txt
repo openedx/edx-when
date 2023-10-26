@@ -6,7 +6,7 @@
 #
 certifi==2023.7.22
     # via requests
-charset-normalizer==3.3.0
+charset-normalizer==3.3.1
     # via requests
 codecov==2.1.13
     # via -r requirements/ci.in
@@ -38,9 +38,6 @@ tox==3.28.0
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/ci.in
-    #   tox-battery
-tox-battery==0.6.2
-    # via -r requirements/ci.in
 urllib3==2.0.7
     # via requests
 virtualenv==20.24.5
