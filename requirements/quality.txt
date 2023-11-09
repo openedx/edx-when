@@ -25,7 +25,7 @@ cffi==1.16.0
     #   -r requirements/test.txt
     #   cryptography
     #   pynacl
-charset-normalizer==3.3.1
+charset-normalizer==3.3.2
     # via
     #   -r requirements/test.txt
     #   requests
@@ -55,7 +55,7 @@ ddt==1.6.0
     # via -r requirements/test.txt
 dill==0.3.7
     # via pylint
-django==3.2.22
+django==3.2.23
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/test.txt
@@ -86,11 +86,11 @@ drf-jwt==1.19.2
     # via
     #   -r requirements/test.txt
     #   edx-drf-extensions
-edx-django-utils==5.7.0
+edx-django-utils==5.8.0
     # via
     #   -r requirements/test.txt
     #   edx-drf-extensions
-edx-drf-extensions==8.12.0
+edx-drf-extensions==8.13.0
     # via -r requirements/test.txt
 edx-lint==5.3.6
     # via -r requirements/quality.in
@@ -266,7 +266,7 @@ tomli==2.0.1
     #   coverage
     #   pylint
     #   pytest
-tomlkit==0.12.1
+tomlkit==0.12.2
     # via pylint
 typing-extensions==4.8.0
     # via

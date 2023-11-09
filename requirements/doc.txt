@@ -31,7 +31,7 @@ cffi==1.16.0
     #   -r requirements/test.txt
     #   cryptography
     #   pynacl
-charset-normalizer==3.3.1
+charset-normalizer==3.3.2
     # via
     #   -r requirements/test.txt
     #   requests
@@ -54,7 +54,7 @@ cryptography==41.0.5
     #   secretstorage
 ddt==1.6.0
     # via -r requirements/test.txt
-django==3.2.22
+django==3.2.23
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/test.txt
@@ -94,11 +94,11 @@ drf-jwt==1.19.2
     # via
     #   -r requirements/test.txt
     #   edx-drf-extensions
-edx-django-utils==5.7.0
+edx-django-utils==5.8.0
     # via
     #   -r requirements/test.txt
     #   edx-drf-extensions
-edx-drf-extensions==8.12.0
+edx-drf-extensions==8.13.0
     # via -r requirements/test.txt
 edx-opaque-keys==2.5.1
     # via
@@ -123,7 +123,7 @@ importlib-metadata==6.8.0
     #   keyring
     #   sphinx
     #   twine
-importlib-resources==6.1.0
+importlib-resources==6.1.1
     # via keyring
 iniconfig==2.0.0
     # via
