@@ -130,7 +130,7 @@ idna==3.6
     # via
     #   -r requirements/quality.txt
     #   requests
-importlib-metadata==6.8.0
+importlib-metadata==7.0.0
     # via
     #   -r requirements/pip-tools.txt
     #   build
@@ -184,7 +184,7 @@ packaging==23.2
     #   -r requirements/quality.txt
     #   build
     #   pytest
-path==16.7.1
+path==16.9.0
     # via edx-i18n-tools
 path-py==11.5.0
     # via -r requirements/dev.in
@@ -194,9 +194,8 @@ pbr==6.0.0
     #   stevedore
 pip-tools==7.3.0
     # via -r requirements/pip-tools.txt
-platformdirs==3.11.0
+platformdirs==4.1.0
     # via
-    #   -c requirements/common_constraints.txt
     #   -r requirements/quality.txt
     #   pylint
 pluggy==1.3.0
