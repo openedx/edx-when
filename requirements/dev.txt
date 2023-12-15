@@ -14,7 +14,7 @@ asgiref==3.7.2
     # via
     #   -r requirements/quality.txt
     #   django
-astroid==3.0.1
+astroid==3.0.2
     # via
     #   -r requirements/quality.txt
     #   pylint
@@ -53,7 +53,7 @@ code-annotations==1.5.0
     # via
     #   -r requirements/quality.txt
     #   edx-lint
-coverage[toml]==7.3.2
+coverage[toml]==7.3.3
     # via
     #   -r requirements/quality.txt
     #   coverage
@@ -90,7 +90,7 @@ django-crum==0.7.9
     #   edx-django-utils
 django-model-utils==4.3.1
     # via -r requirements/quality.txt
-django-waffle==4.0.0
+django-waffle==4.1.0
     # via
     #   -r requirements/quality.txt
     #   edx-django-utils
@@ -108,7 +108,7 @@ edx-django-utils==5.9.0
     # via
     #   -r requirements/quality.txt
     #   edx-drf-extensions
-edx-drf-extensions==9.0.0
+edx-drf-extensions==9.0.1
     # via -r requirements/quality.txt
 edx-i18n-tools==1.3.0
     # via -r requirements/dev.in
@@ -130,7 +130,7 @@ idna==3.6
     # via
     #   -r requirements/quality.txt
     #   requests
-importlib-metadata==6.8.0
+importlib-metadata==7.0.0
     # via
     #   -r requirements/pip-tools.txt
     #   build
@@ -141,7 +141,7 @@ iniconfig==2.0.0
     # via
     #   -r requirements/quality.txt
     #   pytest
-isort==5.12.0
+isort==5.13.2
     # via
     #   -r requirements/quality.txt
     #   pylint
@@ -174,7 +174,7 @@ mccabe==0.7.0
     #   pylint
 mock==5.1.0
     # via -r requirements/quality.txt
-newrelic==9.2.0
+newrelic==9.3.0
     # via
     #   -r requirements/quality.txt
     #   edx-django-utils
@@ -184,7 +184,7 @@ packaging==23.2
     #   -r requirements/quality.txt
     #   build
     #   pytest
-path==16.7.1
+path==16.9.0
     # via edx-i18n-tools
 path-py==11.5.0
     # via -r requirements/dev.in
@@ -194,9 +194,8 @@ pbr==6.0.0
     #   stevedore
 pip-tools==7.3.0
     # via -r requirements/pip-tools.txt
-platformdirs==3.11.0
+platformdirs==4.1.0
     # via
-    #   -c requirements/common_constraints.txt
     #   -r requirements/quality.txt
     #   pylint
 pluggy==1.3.0
@@ -230,7 +229,7 @@ pyjwt[crypto]==2.8.0
     #   drf-jwt
     #   edx-drf-extensions
     #   pyjwt
-pylint==3.0.2
+pylint==3.0.3
     # via
     #   -r requirements/quality.txt
     #   edx-lint
@@ -341,7 +340,7 @@ tomlkit==0.12.3
     # via
     #   -r requirements/quality.txt
     #   pylint
-typing-extensions==4.8.0
+typing-extensions==4.9.0
     # via
     #   -r requirements/quality.txt
     #   annotated-types
@@ -368,7 +367,7 @@ wheel==0.42.0
     # via
     #   -r requirements/pip-tools.txt
     #   pip-tools
-xblock==1.8.1
+xblock==1.9.0
     # via -r requirements/quality.txt
 zipp==3.17.0
     # via
