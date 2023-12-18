@@ -2,5 +2,4 @@
 
 -c constraints.txt
 
-codecov                   # Code coverage reporting
 tox                       # Virtualenv management for tests

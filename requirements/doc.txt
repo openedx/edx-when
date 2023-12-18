@@ -51,7 +51,6 @@ cryptography==41.0.7
     # via
     #   -r requirements/test.txt
     #   pyjwt
-    #   secretstorage
 ddt==1.7.0
     # via -r requirements/test.txt
 django==3.2.23
@@ -131,10 +130,6 @@ iniconfig==2.0.0
     #   pytest
 jaraco-classes==3.3.0
     # via keyring
-jeepney==0.8.0
-    # via
-    #   keyring
-    #   secretstorage
 jinja2==3.1.2
     # via
     #   -r requirements/test.txt
@@ -186,7 +181,7 @@ pluggy==1.3.0
     # via
     #   -r requirements/test.txt
     #   pytest
-psutil==5.9.6
+psutil==5.9.7
     # via
     #   -r requirements/test.txt
     #   edx-django-utils
@@ -264,8 +259,6 @@ rfc3986==2.0.0
     # via twine
 rich==13.7.0
     # via twine
-secretstorage==3.3.3
-    # via keyring
 semantic-version==2.10.0
     # via
     #   -r requirements/test.txt
