@@ -16,7 +16,7 @@ codecov==2.1.13
     # via -r requirements/ci.in
 colorama==0.4.6
     # via tox
-coverage==7.3.3
+coverage==7.4.0
     # via codecov
 distlib==0.3.8
     # via virtualenv
