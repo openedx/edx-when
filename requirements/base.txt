@@ -67,7 +67,7 @@ markupsafe==2.1.3
     # via
     #   mako
     #   xblock
-newrelic==9.4.0
+newrelic==9.5.0
     # via edx-django-utils
 pbr==6.0.0
     # via stevedore
