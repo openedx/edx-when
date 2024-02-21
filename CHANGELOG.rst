@@ -16,6 +16,7 @@ Unreleased
 
 * Switch from ``edx-sphinx-theme`` to ``sphinx-book-theme`` since the former is
   deprecated
+* Add support for Python 3.12
 
 [2.4.0] - 2023-06-21
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

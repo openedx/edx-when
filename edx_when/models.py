@@ -157,7 +157,7 @@ class UserDate(TimeStampedModel):
 
         schedule = get_schedule_for_user(self.user.id, self.content_date.course_id)  # pylint: disable=no-member
         policy_date = self.content_date.policy.actual_date(schedule=schedule)
-        if self.rel_date is not None and self.rel_date.total_seconds() < 0:
+        if self.rel_date is not None and self.rel_date.total_seconds() < 0:  # pylint: disable=no-member
             raise ValidationError(_("Override date must be later than policy date"))
         if self.abs_date is not None and isinstance(policy_date, datetime) and self.abs_date < policy_date:
             raise ValidationError(_("Override date must be later than policy date"))
