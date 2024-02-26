@@ -68,8 +68,8 @@ class TestFieldData(XblockTests):
         assert date == self.items[0][1]['due']
 
         # non-date
-        dfd.get(block, b'foo')
-        assert defaults.get.called_once_with(block.location, 'foo')
+        dfd.get(block, 'foo')
+        defaults.get.assert_called_once_with(block, 'foo')
 
         # non-existent value
         defaults.has.return_value = False
@@ -100,9 +100,9 @@ class TestFieldData(XblockTests):
         defaults = mock.MagicMock()
         dfd = field_data.DateLookupFieldData(defaults, course_id=self.course_id, use_cached=False, user=self.user)
         dfd.set('foo', 'bar', 'x')
-        assert defaults.called_once_with('foo', 'bar', 'x')
+        defaults.set.assert_called_once_with('foo', 'bar', 'x')
         dfd.delete('baz', 'boing')
-        assert defaults.called_once_with('baz', 'boing')
+        defaults.delete.assert_called_once_with('baz', 'boing')
 
     def test_wrapped_fielddata(self):
         defaults = mock.MagicMock()
@@ -122,7 +122,7 @@ class TransformerTests(XblockTests):
     def test_collect(self):
         block_structure = mock.MagicMock()
         field_data.DateOverrideTransformer.collect(block_structure)
-        assert block_structure.request_xblock_fields.called_once_with('due', 'start')
+        block_structure.request_xblock_fields.assert_called_once_with('due', 'start', 'end')
 
     @mock.patch('edx_when.api._are_relative_dates_enabled', return_value=True)
     def test_transform(self, _mock):
