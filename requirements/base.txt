@@ -18,7 +18,7 @@ charset-normalizer==3.3.2
     # via requests
 click==8.1.7
     # via edx-django-utils
-cryptography==42.0.2
+cryptography==42.0.3
     # via pyjwt
 django==3.2.24
     # via
@@ -33,7 +33,7 @@ django==3.2.24
     #   edx-drf-extensions
 django-crum==0.7.9
     # via edx-django-utils
-django-model-utils==4.3.1
+django-model-utils==4.4.0
     # via -r requirements/base.in
 django-waffle==4.1.0
     # via
@@ -79,7 +79,6 @@ pyjwt[crypto]==2.8.0
     # via
     #   drf-jwt
     #   edx-drf-extensions
-    #   pyjwt
 pymongo==3.13.0
     # via edx-opaque-keys
 pynacl==1.5.0
@@ -113,7 +112,7 @@ typing-extensions==4.9.0
     # via
     #   asgiref
     #   edx-opaque-keys
-urllib3==2.2.0
+urllib3==2.2.1
     # via requests
 web-fragments==2.1.0
     # via xblock
