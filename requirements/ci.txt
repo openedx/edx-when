@@ -4,7 +4,7 @@
 #
 #    make upgrade
 #
-cachetools==5.3.2
+cachetools==5.3.3
     # via tox
 certifi==2024.2.2
     # via requests
@@ -16,7 +16,7 @@ codecov==2.1.13
     # via -r requirements/ci.in
 colorama==0.4.6
     # via tox
-coverage==7.4.1
+coverage==7.4.3
     # via codecov
 distlib==0.3.8
     # via virtualenv
@@ -48,5 +48,5 @@ tox==4.13.0
     # via -r requirements/ci.in
 urllib3==2.2.1
     # via requests
-virtualenv==20.25.0
+virtualenv==20.25.1
     # via tox
