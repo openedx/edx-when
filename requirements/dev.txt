@@ -14,12 +14,16 @@ asgiref==3.7.2
     # via
     #   -r requirements/quality.txt
     #   django
-astroid==3.0.3
+astroid==3.1.0
     # via
     #   -r requirements/quality.txt
     #   pylint
     #   pylint-celery
-build==1.0.3
+backports-zoneinfo==0.2.1
+    # via
+    #   -r requirements/quality.txt
+    #   django
+build==1.1.1
     # via
     #   -r requirements/pip-tools.txt
     #   pip-tools
@@ -53,15 +57,15 @@ code-annotations==1.6.0
     # via
     #   -r requirements/quality.txt
     #   edx-lint
-coverage[toml]==7.4.1
+coverage[toml]==7.4.3
     # via
     #   -r requirements/quality.txt
     #   pytest-cov
-cryptography==42.0.3
+cryptography==42.0.5
     # via
     #   -r requirements/quality.txt
     #   pyjwt
-ddt==1.7.1
+ddt==1.7.2
     # via -r requirements/quality.txt
 diff-cover==4.0.0
     # via
@@ -71,7 +75,7 @@ dill==0.3.8
     # via
     #   -r requirements/quality.txt
     #   pylint
-django==3.2.24
+django==4.2.11
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/quality.txt
@@ -173,7 +177,7 @@ mccabe==0.7.0
     #   pylint
 mock==5.1.0
     # via -r requirements/quality.txt
-newrelic==9.6.0
+newrelic==9.7.0
     # via
     #   -r requirements/quality.txt
     #   edx-django-utils
@@ -214,9 +218,9 @@ pycparser==2.21
     # via
     #   -r requirements/quality.txt
     #   cffi
-pydantic==2.6.1
+pydantic==2.6.3
     # via inflect
-pydantic-core==2.16.2
+pydantic-core==2.16.3
     # via pydantic
 pydocstyle==6.3.0
     # via -r requirements/quality.txt
@@ -227,7 +231,7 @@ pyjwt[crypto]==2.8.0
     #   -r requirements/quality.txt
     #   drf-jwt
     #   edx-drf-extensions
-pylint==3.0.3
+pylint==3.1.0
     # via
     #   -r requirements/quality.txt
     #   edx-lint
@@ -260,7 +264,7 @@ pyproject-hooks==1.0.0
     #   -r requirements/pip-tools.txt
     #   build
     #   pip-tools
-pytest==8.0.1
+pytest==8.0.2
     # via
     #   -r requirements/quality.txt
     #   pytest-cov
@@ -269,7 +273,7 @@ pytest-cov==4.1.0
     # via -r requirements/quality.txt
 pytest-django==4.8.0
     # via -r requirements/quality.txt
-python-dateutil==2.8.2
+python-dateutil==2.9.0.post0
     # via
     #   -r requirements/quality.txt
     #   xblock
@@ -280,7 +284,6 @@ python-slugify==8.0.4
 pytz==2024.1
     # via
     #   -r requirements/quality.txt
-    #   django
     #   djangorestframework
     #   xblock
 pyyaml==6.0.1
@@ -315,7 +318,7 @@ sqlparse==0.4.4
     # via
     #   -r requirements/quality.txt
     #   django
-stevedore==5.1.0
+stevedore==5.2.0
     # via
     #   -r requirements/quality.txt
     #   code-annotations
@@ -335,11 +338,11 @@ tomli==2.0.1
     #   pylint
     #   pyproject-hooks
     #   pytest
-tomlkit==0.12.3
+tomlkit==0.12.4
     # via
     #   -r requirements/quality.txt
     #   pylint
-typing-extensions==4.9.0
+typing-extensions==4.10.0
     # via
     #   -r requirements/quality.txt
     #   annotated-types
@@ -366,7 +369,7 @@ wheel==0.42.0
     # via
     #   -r requirements/pip-tools.txt
     #   pip-tools
-xblock==1.10.0
+xblock==2.0.0
     # via -r requirements/quality.txt
 zipp==3.17.0
     # via
