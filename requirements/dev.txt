@@ -107,7 +107,7 @@ drf-jwt==1.19.2
     # via
     #   -r requirements/quality.txt
     #   edx-drf-extensions
-edx-django-utils==5.10.1
+edx-django-utils==5.11.0
     # via
     #   -r requirements/quality.txt
     #   edx-drf-extensions
@@ -133,7 +133,7 @@ idna==3.6
     # via
     #   -r requirements/quality.txt
     #   requests
-importlib-metadata==7.0.1
+importlib-metadata==7.0.2
     # via
     #   -r requirements/pip-tools.txt
     #   build
@@ -177,11 +177,11 @@ mccabe==0.7.0
     #   pylint
 mock==5.1.0
     # via -r requirements/quality.txt
-newrelic==9.7.0
+newrelic==9.7.1
     # via
     #   -r requirements/quality.txt
     #   edx-django-utils
-packaging==23.2
+packaging==24.0
     # via
     #   -r requirements/pip-tools.txt
     #   -r requirements/quality.txt
@@ -195,7 +195,7 @@ pbr==6.0.0
     # via
     #   -r requirements/quality.txt
     #   stevedore
-pip-tools==7.4.0
+pip-tools==7.4.1
     # via -r requirements/pip-tools.txt
 platformdirs==4.2.0
     # via
@@ -218,7 +218,7 @@ pycparser==2.21
     # via
     #   -r requirements/quality.txt
     #   cffi
-pydantic==2.6.3
+pydantic==2.6.4
     # via inflect
 pydantic-core==2.16.3
     # via pydantic
@@ -264,7 +264,7 @@ pyproject-hooks==1.0.0
     #   -r requirements/pip-tools.txt
     #   build
     #   pip-tools
-pytest==8.0.2
+pytest==8.1.1
     # via
     #   -r requirements/quality.txt
     #   pytest-cov
@@ -365,7 +365,7 @@ webob==1.8.7
     # via
     #   -r requirements/quality.txt
     #   xblock
-wheel==0.42.0
+wheel==0.43.0
     # via
     #   -r requirements/pip-tools.txt
     #   pip-tools
