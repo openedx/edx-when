@@ -47,7 +47,7 @@ djangorestframework==3.14.0
     #   edx-drf-extensions
 drf-jwt==1.19.2
     # via edx-drf-extensions
-edx-django-utils==5.10.1
+edx-django-utils==5.11.0
     # via
     #   -r requirements/base.in
     #   edx-drf-extensions
@@ -69,7 +69,7 @@ markupsafe==2.1.5
     # via
     #   mako
     #   xblock
-newrelic==9.7.0
+newrelic==9.7.1
     # via edx-django-utils
 pbr==6.0.0
     # via stevedore
