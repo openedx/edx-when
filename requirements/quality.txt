@@ -8,14 +8,19 @@ appdirs==1.4.4
     # via
     #   -r requirements/test.txt
     #   fs
-asgiref==3.7.2
+asgiref==3.8.1
     # via
     #   -r requirements/test.txt
     #   django
-astroid==3.0.3
+astroid==3.1.0
     # via
     #   pylint
     #   pylint-celery
+backports-zoneinfo==0.2.1
+    # via
+    #   -r requirements/test.txt
+    #   django
+    #   djangorestframework
 certifi==2024.2.2
     # via
     #   -r requirements/test.txt
@@ -38,23 +43,23 @@ click==8.1.7
     #   edx-lint
 click-log==0.4.0
     # via edx-lint
-code-annotations==1.6.0
+code-annotations==1.7.0
     # via
     #   -r requirements/test.txt
     #   edx-lint
-coverage[toml]==7.4.1
+coverage[toml]==7.4.4
     # via
     #   -r requirements/test.txt
     #   pytest-cov
-cryptography==42.0.3
+cryptography==42.0.5
     # via
     #   -r requirements/test.txt
     #   pyjwt
-ddt==1.7.1
+ddt==1.7.2
     # via -r requirements/test.txt
 dill==0.3.8
     # via pylint
-django==3.2.24
+django==4.2.11
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/test.txt
@@ -76,7 +81,7 @@ django-waffle==4.1.0
     #   -r requirements/test.txt
     #   edx-django-utils
     #   edx-drf-extensions
-djangorestframework==3.14.0
+djangorestframework==3.15.1
     # via
     #   -r requirements/test.txt
     #   drf-jwt
@@ -85,7 +90,7 @@ drf-jwt==1.19.2
     # via
     #   -r requirements/test.txt
     #   edx-drf-extensions
-edx-django-utils==5.10.1
+edx-django-utils==5.11.0
     # via
     #   -r requirements/test.txt
     #   edx-drf-extensions
@@ -139,11 +144,11 @@ mccabe==0.7.0
     # via pylint
 mock==5.1.0
     # via -r requirements/test.txt
-newrelic==9.6.0
+newrelic==9.7.1
     # via
     #   -r requirements/test.txt
     #   edx-django-utils
-packaging==23.2
+packaging==24.0
     # via
     #   -r requirements/test.txt
     #   pytest
@@ -174,7 +179,7 @@ pyjwt[crypto]==2.8.0
     #   -r requirements/test.txt
     #   drf-jwt
     #   edx-drf-extensions
-pylint==3.0.3
+pylint==3.1.0
     # via
     #   edx-lint
     #   pylint-celery
@@ -196,16 +201,16 @@ pynacl==1.5.0
     # via
     #   -r requirements/test.txt
     #   edx-django-utils
-pytest==8.0.1
+pytest==8.1.1
     # via
     #   -r requirements/test.txt
     #   pytest-cov
     #   pytest-django
-pytest-cov==4.1.0
+pytest-cov==5.0.0
     # via -r requirements/test.txt
 pytest-django==4.8.0
     # via -r requirements/test.txt
-python-dateutil==2.8.2
+python-dateutil==2.9.0.post0
     # via
     #   -r requirements/test.txt
     #   xblock
@@ -216,8 +221,6 @@ python-slugify==8.0.4
 pytz==2024.1
     # via
     #   -r requirements/test.txt
-    #   django
-    #   djangorestframework
     #   xblock
 pyyaml==6.0.1
     # via
@@ -248,7 +251,7 @@ sqlparse==0.4.4
     # via
     #   -r requirements/test.txt
     #   django
-stevedore==5.1.0
+stevedore==5.2.0
     # via
     #   -r requirements/test.txt
     #   code-annotations
@@ -264,9 +267,9 @@ tomli==2.0.1
     #   coverage
     #   pylint
     #   pytest
-tomlkit==0.12.3
+tomlkit==0.12.4
     # via pylint
-typing-extensions==4.9.0
+typing-extensions==4.10.0
     # via
     #   -r requirements/test.txt
     #   asgiref
@@ -285,7 +288,7 @@ webob==1.8.7
     # via
     #   -r requirements/test.txt
     #   xblock
-xblock==1.10.0
+xblock==3.0.0
     # via -r requirements/test.txt
 
 # The following packages are considered to be unsafe in a requirements file:
