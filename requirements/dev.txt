@@ -4,8 +4,6 @@
 #
 #    make upgrade
 #
-annotated-types==0.6.0
-    # via pydantic
 appdirs==1.4.4
     # via
     #   -r requirements/quality.txt
@@ -24,7 +22,7 @@ backports-zoneinfo==0.2.1
     #   -r requirements/quality.txt
     #   django
     #   djangorestframework
-build==1.1.1
+build==1.2.1
     # via
     #   -r requirements/pip-tools.txt
     #   pip-tools
@@ -92,7 +90,7 @@ django-crum==0.7.9
     # via
     #   -r requirements/quality.txt
     #   edx-django-utils
-django-model-utils==4.4.0
+django-model-utils==4.5.0
     # via -r requirements/quality.txt
 django-waffle==4.1.0
     # via
@@ -108,11 +106,11 @@ drf-jwt==1.19.2
     # via
     #   -r requirements/quality.txt
     #   edx-drf-extensions
-edx-django-utils==5.11.0
+edx-django-utils==5.12.0
     # via
     #   -r requirements/quality.txt
     #   edx-drf-extensions
-edx-drf-extensions==10.2.0
+edx-drf-extensions==10.3.0
     # via -r requirements/quality.txt
 edx-i18n-tools==1.3.0
     # via -r requirements/dev.in
@@ -140,7 +138,8 @@ importlib-metadata==6.11.0
     #   -r requirements/pip-tools.txt
     #   build
     #   path-py
-inflect==7.0.0
+    #   typeguard
+inflect==7.2.0
     # via jinja2-pluralize
 iniconfig==2.0.0
     # via
@@ -158,7 +157,7 @@ jinja2==3.1.3
     #   jinja2-pluralize
 jinja2-pluralize==0.3.0
     # via diff-cover
-lxml==5.1.0
+lxml==5.2.1
     # via
     #   -r requirements/quality.txt
     #   edx-i18n-tools
@@ -179,7 +178,9 @@ mccabe==0.7.0
     #   pylint
 mock==5.1.0
     # via -r requirements/quality.txt
-newrelic==9.7.1
+more-itertools==10.2.0
+    # via inflect
+newrelic==9.8.0
     # via
     #   -r requirements/quality.txt
     #   edx-django-utils
@@ -216,14 +217,10 @@ psutil==5.9.8
     #   edx-django-utils
 pycodestyle==2.11.1
     # via -r requirements/quality.txt
-pycparser==2.21
+pycparser==2.22
     # via
     #   -r requirements/quality.txt
     #   cffi
-pydantic==2.6.4
-    # via inflect
-pydantic-core==2.16.3
-    # via pydantic
 pydocstyle==6.3.0
     # via -r requirements/quality.txt
 pygments==2.17.2
@@ -343,22 +340,22 @@ tomlkit==0.12.4
     # via
     #   -r requirements/quality.txt
     #   pylint
+typeguard==4.2.1
+    # via inflect
 typing-extensions==4.10.0
     # via
     #   -r requirements/quality.txt
-    #   annotated-types
     #   asgiref
     #   astroid
     #   edx-opaque-keys
     #   inflect
-    #   pydantic
-    #   pydantic-core
     #   pylint
+    #   typeguard
 urllib3==2.2.1
     # via
     #   -r requirements/quality.txt
     #   requests
-web-fragments==2.1.0
+web-fragments==2.2.0
     # via
     #   -r requirements/quality.txt
     #   xblock
