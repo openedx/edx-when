@@ -20,8 +20,9 @@ babel==2.14.0
     # via
     #   pydata-sphinx-theme
     #   sphinx
-backports-zoneinfo==0.2.1
+backports-zoneinfo==0.2.1 ; python_version < "3.9"
     # via
+    #   -c requirements/constraints.txt
     #   -r requirements/test.txt
     #   django
     #   djangorestframework
@@ -73,7 +74,7 @@ django-crum==0.7.9
     # via
     #   -r requirements/test.txt
     #   edx-django-utils
-django-model-utils==4.4.0
+django-model-utils==4.5.0
     # via -r requirements/test.txt
 django-waffle==4.1.0
     # via
@@ -98,11 +99,11 @@ drf-jwt==1.19.2
     # via
     #   -r requirements/test.txt
     #   edx-drf-extensions
-edx-django-utils==5.11.0
+edx-django-utils==5.12.0
     # via
     #   -r requirements/test.txt
     #   edx-drf-extensions
-edx-drf-extensions==10.2.0
+edx-drf-extensions==10.3.0
     # via -r requirements/test.txt
 edx-opaque-keys==2.5.1
     # via
@@ -134,7 +135,7 @@ iniconfig==2.0.0
     # via
     #   -r requirements/test.txt
     #   pytest
-jaraco-classes==3.3.1
+jaraco-classes==3.4.0
     # via keyring
 jaraco-context==4.3.0
     # via keyring
@@ -149,9 +150,9 @@ jinja2==3.1.3
     #   -r requirements/test.txt
     #   code-annotations
     #   sphinx
-keyring==25.0.0
+keyring==25.1.0
     # via twine
-lxml==5.1.0
+lxml==5.2.1
     # via
     #   -r requirements/test.txt
     #   xblock
@@ -175,7 +176,7 @@ more-itertools==10.2.0
     # via
     #   jaraco-classes
     #   jaraco-functools
-newrelic==9.7.1
+newrelic==9.8.0
     # via
     #   -r requirements/test.txt
     #   edx-django-utils
@@ -201,7 +202,7 @@ psutil==5.9.8
     # via
     #   -r requirements/test.txt
     #   edx-django-utils
-pycparser==2.21
+pycparser==2.22
     # via
     #   -r requirements/test.txt
     #   cffi
@@ -345,7 +346,7 @@ urllib3==2.2.1
     #   -r requirements/test.txt
     #   requests
     #   twine
-web-fragments==2.1.0
+web-fragments==2.2.0
     # via
     #   -r requirements/test.txt
     #   xblock
