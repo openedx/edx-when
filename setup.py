@@ -129,7 +129,7 @@ setup(
         'Natural Language :: English',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.8',
-        'Programming Language :: Python :: 3.12',
+        'Programming Language :: Python :: 3.11',
     ],
     entry_points={
         'lms.djangoapp': [
