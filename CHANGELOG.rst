@@ -14,6 +14,9 @@ Change Log
 Unreleased
 ~~~~~~~~~~
 
+[2.5.0] - 2024-04-02
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* Add support for Python 3.11. Dropped django32 support.
 * Switch from ``edx-sphinx-theme`` to ``sphinx-book-theme`` since the former is
   deprecated
 
