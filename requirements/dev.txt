@@ -53,7 +53,7 @@ click-log==0.4.0
     # via
     #   -r requirements/quality.txt
     #   edx-lint
-code-annotations==1.7.0
+code-annotations==1.8.0
     # via
     #   -r requirements/quality.txt
     #   edx-lint
@@ -191,7 +191,7 @@ packaging==24.0
     #   -r requirements/quality.txt
     #   build
     #   pytest
-path==16.10.0
+path==16.14.0
     # via edx-i18n-tools
 path-py==11.5.0
     # via -r requirements/dev.in
@@ -343,7 +343,7 @@ tomlkit==0.12.4
     #   pylint
 typeguard==4.2.1
     # via inflect
-typing-extensions==4.10.0
+typing-extensions==4.11.0
     # via
     #   -r requirements/quality.txt
     #   asgiref
@@ -368,7 +368,7 @@ wheel==0.43.0
     # via
     #   -r requirements/pip-tools.txt
     #   pip-tools
-xblock==3.0.0
+xblock==3.1.0
     # via -r requirements/quality.txt
 zipp==3.18.1
     # via
