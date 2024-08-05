@@ -193,7 +193,7 @@ def get_dates_for_course(
             user_id = user.id if not user.is_anonymous else ''
 
     if schedule is None and user is not None and user_id != '':
-        schedule = get_schedule_for_user(user_id, course_id)
+        schedule = get_schedule_for_user(user_id, course_id, use_cached=use_cached)
 
     # Construct the cache key, incorporating all parameters which would cause a different
     # query set to be returned.
