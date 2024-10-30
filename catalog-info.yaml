@@ -1,0 +1,12 @@
+# This file records information about this repo. Its use is described in OEP-55:
+# https://open-edx-proposals.readthedocs.io/en/latest/processes/oep-0055-proc-project-maintainers.html
+
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: 'edx-when'
+  description: "This repo contains start, end, and due dates for Courses and offers the functionality to have both absolute and relative dates."
+spec:
+  owner: group:openedx-unmaintained
+  type: 'library'
+  lifecycle: ''
