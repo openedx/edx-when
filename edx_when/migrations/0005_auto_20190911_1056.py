@@ -5,23 +5,35 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('edx_when', '0004_datepolicy_rel_date'),
     ]
 
     operations = [
-        migrations.AlterField(
+        migrations.RemoveField(
+            model_name='datepolicy',
+            name='abs_date'
+        ),
+        migrations.AddField(
             model_name='datepolicy',
             name='abs_date',
             field=models.DateTimeField(blank=True, db_index=True, null=True),
         ),
-        migrations.AlterField(
+        migrations.RemoveField(
+            model_name='datepolicy',
+            name='rel_date'
+        ),
+        migrations.AddField(
             model_name='datepolicy',
             name='rel_date',
             field=models.DurationField(blank=True, db_index=True, null=True),
         ),
-        migrations.AlterField(
+
+        migrations.RemoveField(
+            model_name='userdate',
+            name='rel_date'
+        ),
+        migrations.AddField(
             model_name='userdate',
             name='rel_date',
             field=models.DurationField(blank=True, db_index=True, null=True),
