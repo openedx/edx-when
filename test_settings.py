@@ -4,7 +4,7 @@ These settings are here to use during tests, because django requires them.
 In a real-world use case, apps in this project are installed into other
 Django applications, so these settings will not be used.
 """
-
+import os
 from os.path import abspath, dirname, join
 
 
@@ -17,12 +17,12 @@ def root(*args):
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': 'default.db',
-        'USER': '',
-        'PASSWORD': '',
-        'HOST': '',
-        'PORT': '',
+        'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.sqlite3'),
+        'NAME': os.getenv('DB_NAME', 'default.db'),
+        'USER': os.getenv('DB_USER', ''),
+        'PASSWORD': os.getenv('DB_PASSWORD', ''),
+        'HOST': os.getenv('DB_HOST', ''),
+        'PORT': os.getenv('DB_PORT', ''),
     }
 }
 
