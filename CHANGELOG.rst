@@ -13,7 +13,7 @@ Change Log
 
 Unreleased
 ~~~~~~~~~~
-[2.5.2] - 2025-04-17
+[3.0.0] - 2025-04-23
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * Dropped support for Python 3.8 and added support for Python 3.12.
 
