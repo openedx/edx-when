@@ -4,6 +4,17 @@ from django.db import connection, migrations, models
 
 
 def alter_rel_date_column(apps, schema_editor):
+    """
+    Alters the 'rel_date' column in the 'edx_when_datepolicy' table to ensure
+    it uses the correct data type for the database engine.
+
+    For PostgreSQL, the column is converted to the 'interval' type using a cast.
+    For MySQL, the column is modified to use the 'BIGINT' type.
+
+    This function is necessary because Django's default handling of DurationField
+    may not automatically align with the existing schema or database-specific
+    requirements, especially when migrating legacy data.
+    """
     db_engine = connection.settings_dict['ENGINE']
     with connection.cursor() as cursor:
         if 'postgres' in db_engine:
@@ -19,6 +30,17 @@ def alter_rel_date_column(apps, schema_editor):
 
 
 def reverse_alter_rel_date_column(apps, schema_editor):
+    """
+    Reverts the 'rel_date' column in the 'edx_when_datepolicy' table to its
+    previous data type.
+
+    For PostgreSQL, the column is converted back to 'varchar' using a cast.
+    For MySQL, the column is modified to use the 'VARCHAR(255)' type.
+
+    This function is necessary to ensure that the schema can be rolled back
+    to its original state, maintaining compatibility with the previous data
+    type and structure.
+    """
     db_engine = connection.settings_dict['ENGINE']
     with connection.cursor() as cursor:
         if 'postgres' in db_engine:
