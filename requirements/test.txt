@@ -12,7 +12,7 @@ asgiref==3.8.1
     # via
     #   -r requirements/base.txt
     #   django
-certifi==2025.1.31
+certifi==2025.4.26
     # via
     #   -r requirements/base.txt
     #   requests
@@ -80,7 +80,7 @@ edx-django-utils==7.4.0
     #   edx-drf-extensions
 edx-drf-extensions==10.6.0
     # via -r requirements/base.txt
-edx-opaque-keys==2.12.0
+edx-opaque-keys==3.0.0
     # via
     #   -r requirements/base.txt
     #   edx-drf-extensions
@@ -96,7 +96,7 @@ iniconfig==2.1.0
     # via pytest
 jinja2==3.1.6
     # via code-annotations
-lxml==5.3.2
+lxml==5.4.0
     # via
     #   -r requirements/base.txt
     #   xblock
@@ -112,7 +112,7 @@ markupsafe==3.0.2
     #   xblock
 mock==5.2.0
     # via -r requirements/test.in
-newrelic==10.9.0
+newrelic==10.10.0
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
