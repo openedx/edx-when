@@ -4,7 +4,7 @@ data_file = .coverage
 source=edx_when
 omit =
     test_settings
-    *migrations*
+    */migrations/*
     *admin.py
     *static*
     *templates*

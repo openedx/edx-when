@@ -1,0 +1,82 @@
+name: Migrations check on postgresql and mysql
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - master
+
+jobs:
+  validate-migrations:
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          # The MySQL docker container requires these environment variables to be set
+          # so we can create and migrate the test database.
+          # See: https://hub.docker.com/_/mysql
+          MYSQL_DATABASE: openedx
+          MYSQL_ROOT_PASSWORD: openedx
+        ports:
+          # Opens port 3306 on service container and host
+          # https://docs.github.com/en/actions/using-containerized-services/about-service-containers
+          - 3307:3306
+          # Before continuing, verify the mysql container is reachable from the ubuntu host
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: openedx
+          POSTGRES_PASSWORD: openedx
+          POSTGRES_DB: openedx
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    name: check migrations
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest ]
+        python-version: [ '3.8', '3.11' ]
+    steps:
+      - uses: actions/checkout@v2
+      - name: setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install pip
+        run: pip install -r requirements/pip.txt
+
+      - name: Install Dependencies
+        run: |
+          pip install -r requirements/ci.txt
+          pip install -r requirements/test.txt
+          pip install mysqlclient
+          pip install psycopg2-binary
+      - name: Apply Postgresql Migrations
+        env:
+          DB_ENGINE: django.db.backends.postgresql
+          DB_NAME: openedx
+          DB_USER: openedx
+          DB_PASSWORD: openedx
+          DB_HOST: localhost
+          DB_PORT: 5432
+        run: |
+          python manage.py migrate --settings=test_settings
+      - name: Apply Mysql Migrations
+        env:
+          DB_ENGINE: django.db.backends.mysql
+          DB_NAME: openedx
+          DB_USER: root
+          DB_PASSWORD: openedx
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3307
+        run: |
+          python manage.py migrate --settings=test_settings

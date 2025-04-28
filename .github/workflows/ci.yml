@@ -17,7 +17,29 @@ jobs:
         os: [ubuntu-latest]
         python-version: ['3.8', '3.11']
         toxenv: [quality, docs, pii_check, django42]
-
+        db: [mysql, postgres]
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: openedx
+          MYSQL_ROOT_PASSWORD: openedx
+        ports:
+          - 3307:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: openedx
+          POSTGRES_PASSWORD: openedx
+          POSTGRES_DB: openedx
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
     - uses: actions/checkout@v2
     - name: setup python
@@ -29,17 +51,64 @@ jobs:
       run: pip install -r requirements/pip.txt
 
     - name: Install Dependencies
-      run: pip install -r requirements/ci.txt
+      run: |
+        pip install -r requirements/ci.txt
+        pip install -r requirements/test.txt
+        pip install mysqlclient
+        pip install mysqlclient psycopg2-binary
 
     - name: Run Tests
       env:
         TOXENV: ${{ matrix.toxenv }}
-      run: tox
-
-    - name: Run Coverage
-      if: matrix.python-version == '3.11' && matrix.toxenv=='django42'
-      uses: codecov/codecov-action@v4
+        DB_ENGINE: ${{ matrix.db == 'mysql' && 'django.db.backends.mysql' || 'django.db.backends.postgresql' }}
+        DB_NAME: openedx
+        DB_USER: ${{ matrix.db == 'mysql' && 'root' || 'openedx' }}
+        DB_PASSWORD: openedx
+        DB_HOST: 127.0.0.1
+        DB_PORT: ${{ matrix.db == 'mysql' && '3307' || '5432' }}
+      run: |
+        tox
+    - name: Rename Coverage File
+      if: ${{ matrix.python-version == '3.11' && matrix.toxenv == 'django42' }}
+      run: |
+        if [ -f .coverage ]; then
+          mv .coverage coverage.${{ matrix.db }}
+        fi
+    - name: Upload Coverage Artifact
+      if: ${{ matrix.python-version == '3.11' && matrix.toxenv == 'django42' }}
+      uses: actions/upload-artifact@v4
       with:
-        flags: unittests
-        fail_ci_if_error: true
-        token: ${{ secrets.CODECOV_TOKEN }}
+        name: coverage-${{ matrix.db }}
+        path: coverage.${{ matrix.db }}
+        include-hidden-files: true
+
+  merge_and_upload_coverage:
+    name: Merge and Upload Coverage
+    needs: run_tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download Coverage Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-mysql
+          path: ./
+      - name: Download Coverage Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-postgres
+          path: ./
+      - name: Debug Coverage File
+        run: ls -la
+      - name: Merge Coverage Reports
+        run: |
+          pip install coverage
+          coverage combine coverage.mysql coverage.postgres
+          coverage xml
+
+      - name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          flags: unittests
+          fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }}

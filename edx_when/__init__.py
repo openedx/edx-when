@@ -2,4 +2,4 @@
 Central source of course block dates for the LMS.
 """
 
-__version__ = '2.5.1'
+__version__ = '2.5.2'
