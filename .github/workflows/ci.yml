@@ -2,10 +2,10 @@ name: Python CI
 
 on:
   push:
-    branches: [master]
+    branches: [ master ]
   pull_request:
     branches:
-    - '**'
+      - '**'
 
 jobs:
   run_tests:
@@ -14,10 +14,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
-        python-version: ['3.10', '3.11']
-        toxenv: [quality, docs, pii_check, django52]
-        db: [mysql, postgres]
+        os: [ ubuntu-latest ]
+        python-version: [ '3.11','3.12' ]
+        toxenv: [ quality, docs, pii_check, django52 ]
+        db: [ mysql, postgres ]
     services:
       mysql:
         image: mysql:8.0
@@ -41,46 +41,46 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-    - uses: actions/checkout@v2
-    - name: setup python
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
+      - uses: actions/checkout@v2
+      - name: setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
 
-    - name: Install pip
-      run: pip install -r requirements/pip.txt
+      - name: Install pip
+        run: pip install -r requirements/pip.txt
 
-    - name: Install Dependencies
-      run: |
-        pip install -r requirements/ci.txt
-        pip install -r requirements/test.txt
-        pip install mysqlclient
-        pip install mysqlclient psycopg2-binary
+      - name: Install Dependencies
+        run: |
+          pip install -r requirements/ci.txt
+          pip install -r requirements/test.txt
+          pip install mysqlclient
+          pip install mysqlclient psycopg2-binary
 
-    - name: Run Tests
-      env:
-        TOXENV: ${{ matrix.toxenv }}
-        DB_ENGINE: ${{ matrix.db == 'mysql' && 'django.db.backends.mysql' || 'django.db.backends.postgresql' }}
-        DB_NAME: openedx
-        DB_USER: ${{ matrix.db == 'mysql' && 'root' || 'openedx' }}
-        DB_PASSWORD: openedx
-        DB_HOST: 127.0.0.1
-        DB_PORT: ${{ matrix.db == 'mysql' && '3307' || '5432' }}
-      run: |
-        tox
-    - name: Rename Coverage File
-      if: matrix.python-version == '3.11' && matrix.toxenv=='django52'
-      run: |
-        if [ -f .coverage ]; then
-          mv .coverage coverage.${{ matrix.db }}
-        fi
-    - name: Upload Coverage Artifact
-      if: matrix.python-version == '3.11' && matrix.toxenv=='django52'
-      uses: actions/upload-artifact@v4
-      with:
-        name: coverage-${{ matrix.db }}
-        path: coverage.${{ matrix.db }}
-        include-hidden-files: true
+      - name: Run Tests
+        env:
+          TOXENV: ${{ matrix.toxenv }}
+          DB_ENGINE: ${{ matrix.db == 'mysql' && 'django.db.backends.mysql' || 'django.db.backends.postgresql' }}
+          DB_NAME: openedx
+          DB_USER: ${{ matrix.db == 'mysql' && 'root' || 'openedx' }}
+          DB_PASSWORD: openedx
+          DB_HOST: 127.0.0.1
+          DB_PORT: ${{ matrix.db == 'mysql' && '3307' || '5432' }}
+        run: |
+          tox
+      - name: Rename Coverage File
+        if: matrix.python-version == '3.11' && matrix.toxenv=='django52'
+        run: |
+          if [ -f .coverage ]; then
+            mv .coverage coverage.${{ matrix.db }}
+          fi
+      - name: Upload Coverage Artifact
+        if: matrix.python-version == '3.11' && matrix.toxenv=='django52'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.db }}
+          path: coverage.${{ matrix.db }}
+          include-hidden-files: true
 
   merge_and_upload_coverage:
     name: Merge and Upload Coverage
