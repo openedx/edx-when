@@ -140,7 +140,7 @@ def _get_end_dates_from_content_dates(qset):
 def _processed_results_cache_key(
         course_id, user_id, schedule, allow_relative_dates,
         subsection_and_higher_only, published_version
-        ):
+):  # pylint: disable=too-many-positional-arguments
     """
     Construct the cache key, incorporating all parameters which would cause a different query set to be returned.
     """
@@ -164,7 +164,7 @@ def get_dates_for_course(
         course_id,
         user=None, use_cached=True, schedule=None,
         subsection_and_higher_only=False, published_version=None
-        ):
+):  # pylint: disable=too-many-positional-arguments
     """
     Return dictionary of dates for the given course_id and optional user.
 
@@ -361,7 +361,7 @@ def get_overrides_for_user(course_id, user):
 def set_date_for_block(
         course_id, block_id, field, date_or_timedelta,
         user=None, reason='', actor=None
-        ):
+):  # pylint: disable=too-many-positional-arguments
     """
     Save the date for a particular field in a block.
 
