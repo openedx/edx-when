@@ -33,11 +33,11 @@ cffi==1.17.1
     #   -r requirements/test.txt
     #   cryptography
     #   pynacl
-charset-normalizer==3.4.1
+charset-normalizer==3.4.2
     # via
     #   -r requirements/test.txt
     #   requests
-click==8.1.8
+click==8.2.0
     # via
     #   -r requirements/test.txt
     #   code-annotations
@@ -48,13 +48,13 @@ coverage[toml]==7.8.0
     # via
     #   -r requirements/test.txt
     #   pytest-cov
-cryptography==44.0.2
+cryptography==44.0.3
     # via
     #   -r requirements/test.txt
     #   pyjwt
 ddt==1.7.2
     # via -r requirements/test.txt
-django==4.2.20
+django==4.2.21
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/test.txt
@@ -120,7 +120,7 @@ idna==3.10
     #   requests
 imagesize==1.4.1
     # via sphinx
-importlib-metadata==8.6.1
+importlib-metadata==8.7.0
     # via keyring
 iniconfig==2.1.0
     # via
@@ -163,7 +163,7 @@ more-itertools==10.7.0
     # via
     #   jaraco-classes
     #   jaraco-functools
-newrelic==10.10.0
+newrelic==10.12.0
     # via
     #   -r requirements/test.txt
     #   edx-django-utils
@@ -180,7 +180,7 @@ pbr==6.1.1
     # via
     #   -r requirements/test.txt
     #   stevedore
-pluggy==1.5.0
+pluggy==1.6.0
     # via
     #   -r requirements/test.txt
     #   pytest
@@ -207,7 +207,7 @@ pyjwt[crypto]==2.10.1
     #   -r requirements/test.txt
     #   drf-jwt
     #   edx-drf-extensions
-pymongo==4.12.0
+pymongo==4.13.0
     # via
     #   -r requirements/test.txt
     #   edx-opaque-keys
@@ -274,7 +274,7 @@ six==1.17.0
     #   -r requirements/test.txt
     #   fs
     #   python-dateutil
-snowballstemmer==2.2.0
+snowballstemmer==3.0.1
     # via sphinx
 soupsieve==2.7
     # via beautifulsoup4
@@ -326,7 +326,7 @@ urllib3==2.2.3
     #   -r requirements/test.txt
     #   requests
     #   twine
-web-fragments==3.0.0
+web-fragments==3.1.0
     # via
     #   -r requirements/test.txt
     #   xblock
