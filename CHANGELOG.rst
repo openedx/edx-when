@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ~~~~~~~~~~
 
+[3.0.0] - 2025-05-15
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* Dropped support for Python 3.8.
+* Added support for Python 3.12.
+
 [2.5.1] - 2024-08-06
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * Reduce schedule queries by using a request cache for get_schedule_for_user.
