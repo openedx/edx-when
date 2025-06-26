@@ -21,11 +21,3 @@ class EdxWhenConfig(AppConfig):
             },
         }
     }
-
-    def ready(self):
-        """
-        Perform any necessary initialization when the application is ready.
-        This method is called when Django starts up and the application is loaded.
-        """
-        # Import signal handlers or other initialization code here if needed
-        from .signals import handlers
