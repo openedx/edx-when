@@ -112,3 +112,44 @@ class TestUserDatesView(APITestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data, {})
+
+    @patch('edx_when.rest_api.v1.views.get_user_dates')
+    def test_get_user_dates_multiple_courses(self, mock_get_user_dates):
+        """
+        Test retrieval of user dates for multiple enrolled courses.
+        """
+        with patch.object(self.user, 'courseenrollment_set') as mock_enrollment_set:
+            mock_enrollment_set.filter.return_value.values_list.return_value = [
+                'course-v1:TestOrg+Course1+Run1',
+                'course-v1:TestOrg+Course2+Run2'
+            ]
+
+            mock_get_user_dates.side_effect = [
+                {('assignment_1', 'due'): datetime(2023, 12, 15, 23, 59, 59)},
+                {('quiz_1', 'due'): datetime(2023, 12, 20, 23, 59, 59)}
+            ]
+
+            self.client.force_authenticate(user=self.user)
+            url = reverse('edx_when:v1:user_dates_no_course')
+            response = self.client.get(url)
+
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(len(response.data.keys()), 2)
+            self.assertEqual(response.data['assignment_1'], datetime(2023, 12, 15, 23, 59, 59))
+            self.assertEqual(response.data['quiz_1'], datetime(2023, 12, 20, 23, 59, 59))
+
+            self.assertEqual(mock_get_user_dates.call_count, 2)
+            mock_get_user_dates.assert_any_call(
+                'course-v1:TestOrg+Course1+Run1',
+                self.user.id,
+                block_types=None,
+                block_keys=None,
+                date_types=None
+            )
+            mock_get_user_dates.assert_any_call(
+                'course-v1:TestOrg+Course2+Run2',
+                self.user.id,
+                block_types=None,
+                block_keys=None,
+                date_types=None
+            )

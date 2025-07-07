@@ -1,7 +1,8 @@
-## 📘 `GET /api/edx_when/v1/user-dates/{course_id}`
+### 📘 `GET /api/edx_when/v1/user-dates/`
+### 📘 `GET /api/edx_when/v1/user-dates/{course_id}`
 
 ### Description
-Retrieves user-specific dates for a course in Open edX. Dates may include due dates, release dates, etc. Supports optional filtering.
+Retrieves user-specific dates for a specific course or all enrolled courses. in Open edX. Dates may include due dates, release dates, etc. Supports optional filtering.
 
 ---
 
@@ -19,7 +20,7 @@ User must be authenticated and have access to the course.
 
 | Name       | Type   | Required | Description                     |
 |------------|--------|----------|---------------------------------|
-| course_id  | string | ✅ Yes    | Course ID in URL-encoded format |
+| course_id  | string | ❌ No    | Course ID in URL-encoded format |
 
 ---
 
@@ -58,17 +59,30 @@ User must be authenticated and have access to the course.
 
 ### 💡 Usage Example
 
-#### Request
+#### Requests
+```http
+GET /api/edx_when/v1/user-dates/
+```
+
 ```http
 GET /api/edx_when/v1/user-dates/course-v1:edX+DemoX+2023
 ```
 
 #### With Filters
 ```http
+GET /api/edx_when/v1/user-dates/?block_types=problem,video&date_types=due
+```
+
+```http
 GET /api/edx_when/v1/user-dates/course-v1:edX+DemoX+2023?block_types=problem,video&date_types=due
 ```
 
 #### Curl Example
+```bash
+curl -X GET "https://your-domain.org/api/edx_when/v1/user-dates/?block_types=problem&date_types=due" \
+  -H "Authorization: Bearer <your_jwt_token>"
+```
+
 ```bash
 curl -X GET "https://your-domain.org/api/edx_when/v1/user-dates/course-v1:edX+DemoX+2023?block_types=problem&date_types=due" \
   -H "Authorization: Bearer <your_jwt_token>"
