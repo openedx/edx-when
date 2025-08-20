@@ -139,14 +139,12 @@ class UserDate(TimeStampedModel):
         get_user_model(), null=True, default=None, blank=True, related_name="actor", on_delete=models.CASCADE
     )
     first_component_block_id = UsageKeyField(null=True, blank=True, max_length=255, db_index=True)
-    user_date_value = models.DateTimeField(null=True, blank=True, db_index=True)
 
     class Meta:
         """Django Metadata."""
 
         indexes = [
             models.Index(fields=('user', 'first_component_block_id'), name='edx_when_user_first_block_idx'),
-            models.Index(fields=('user_date_value', 'user'), name='edx_when_user_date_value_idx'),
         ]
 
     @property
@@ -200,4 +198,4 @@ class UserDate(TimeStampedModel):
         # pylint: disable=no-member
         return (f'UserDate(id={self.id}, user="{self.user.username}", '
                 f'first_component_block_id={self.first_component_block_id}, '
-                f'user_date_value={self.user_date_value}, content_date={self.content_date.id})')
+                f'content_date={self.content_date.id})')
