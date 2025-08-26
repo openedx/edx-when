@@ -516,6 +516,8 @@ class _Assignment:
     date: datetime
     block_key: UsageKey
     assignment_type: str
+    contains_gated_content: bool
+    first_component_block_id: str
 
     def __post_init__(self):
         if not isinstance(self.date, datetime):
