@@ -726,21 +726,27 @@ class UserDateHandler:
             log.exception(f"UserDate sync failed for user_id={user_id} in {self.course_key}")
             raise
 
+    # -------------------------
+    # Private helper methods
+    # -------------------------
 
     @staticmethod
     def _validate(obj: UserDate):
+        """Validate a UserDate object before saving, raising InvalidDateError if invalid."""
         try:
             obj.full_clean()
         except ValidationError as error:
             raise InvalidDateError(obj.actual_date) from error
 
     def _map_active_content_dates(self) -> dict:
+        """Return a mapping of (block_key, field) → content_date_id for active ContentDates in this course."""
         return {
             (str(cd.location), cd.field): cd.id
             for cd in ContentDate.objects.filter(course_id=self.course_key, active=True)
         }
 
     def _build_course_dates(self, user_id: int, course_data: dict, active_content_dates: dict) -> list[UserDate]:
+        """Return a list of UserDate objects to be created for course-level start/end dates."""
         course_dates = []
         course_location = course_data["location"]
 
@@ -761,6 +767,7 @@ class UserDateHandler:
         return course_dates
 
     def _build_assignment_dates(self, user_id: int, assignments: list, active_content_dates: dict) -> list[UserDate]:
+        """Return a list of UserDate objects to be created for assignment due dates."""
         assignment_dates = []
 
         for assignment in assignments:
@@ -781,6 +788,7 @@ class UserDateHandler:
 
     @staticmethod
     def _map_target_course_dates(user_id: int, course_data: dict, active_content_dates: dict) -> dict:
+        """For course-level start/end dates, map combinations of user and ContentDates to desired UserDate attributes."""
         target_map = {}
         course_location = course_data["location"]
 
@@ -800,6 +808,7 @@ class UserDateHandler:
 
     @staticmethod
     def _map_target_assignment_dates(user_id: int, assignments: list, active_content_dates: dict) -> dict:
+        """For assignment-level due dates, map combinations of user and ContentDates to desired UserDate attributes."""
         target_map = {}
 
         for assignment in assignments:
@@ -818,10 +827,18 @@ class UserDateHandler:
         return target_map
 
     def _map_existing_dates(self, user_id: int) -> dict:
+        """For all of user's UserDates within the course, map their user_id+content_date_id to the actual object."""
         existing_user_dates = UserDate.objects.filter(user_id=user_id, content_date__course_id=self.course_key)
         return {(ud.user_id, ud.content_date_id): ud for ud in existing_user_dates}
 
     def _diff_creates_and_updates(self, user_id: int, target_dates: dict, existing_dates: dict) -> tuple:
+        """
+        Compare target and existing UserDates and make two buckets of UserDate objects:
+        those to be created and those to be updated.
+
+        Returns:
+            tuple: (to_create, to_update) lists of UserDate objects.
+        """
         to_create = []
         to_update = []
 
@@ -840,6 +857,7 @@ class UserDateHandler:
 
     @staticmethod
     def _bulk_commit(to_create: list, to_update: list, to_delete: list) -> None:
+        """Perform the create, update, and delete operations in bulk."""
         if to_create:
             UserDate.objects.bulk_create(to_create, batch_size=500)
 
