@@ -744,8 +744,8 @@ class UserDateHandler:
         course_dates = []
         course_location = course_data["location"]
 
-        for field in "start", "end":
-            content_date_key = course_location, field
+        for field in ("start", "end"):
+            content_date_key = (course_location, field)
             content_date_id = active_content_dates.get(content_date_key)
             if not content_date_id:
                 continue
@@ -784,8 +784,8 @@ class UserDateHandler:
         target_map = {}
         course_location = course_data["location"]
 
-        for field in "start", "end":
-            content_date_key = course_location, field
+        for field in ("start", "end"):
+            content_date_key = (course_location, field)
             content_date_id = active_content_dates.get(content_date_key)
             if not content_date_id:
                 continue
