@@ -5,6 +5,7 @@ API for retrieving and setting dates.
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 import logging
+from typing import Any
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -731,14 +732,14 @@ class UserDateHandler:
     # -------------------------
 
     @staticmethod
-    def _validate(obj: UserDate):
+    def _validate(obj: UserDate) -> None:
         """Validate a UserDate object before saving, raising InvalidDateError if invalid."""
         try:
             obj.full_clean()
         except ValidationError as error:
             raise InvalidDateError(obj.actual_date) from error
 
-    def _map_active_content_dates(self) -> dict:
+    def _map_active_content_dates(self) -> dict[tuple[str, str], int]:
         """Return a mapping of (block_key, field) → content_date_id for active ContentDates in this course."""
         return {
             (str(cd.location), cd.field): cd.id
@@ -787,7 +788,7 @@ class UserDateHandler:
         return assignment_dates
 
     @staticmethod
-    def _map_target_course_dates(user_id: int, course_data: dict, active_content_dates: dict) -> dict:
+    def _map_target_course_dates(user_id: int, course_data: dict, active_content_dates: dict) -> dict[tuple[int, int], dict[str, Any]]:
         """For course-level start/end dates, map combinations of user and ContentDates to desired UserDate attributes."""
         target_map = {}
         course_location = course_data["location"]
@@ -807,7 +808,7 @@ class UserDateHandler:
         return target_map
 
     @staticmethod
-    def _map_target_assignment_dates(user_id: int, assignments: list, active_content_dates: dict) -> dict:
+    def _map_target_assignment_dates(user_id: int, assignments: list, active_content_dates: dict) -> dict[tuple[int, int], dict[str, Any]]:
         """For assignment-level due dates, map combinations of user and ContentDates to desired UserDate attributes."""
         target_map = {}
 
@@ -826,12 +827,12 @@ class UserDateHandler:
 
         return target_map
 
-    def _map_existing_dates(self, user_id: int) -> dict:
+    def _map_existing_dates(self, user_id: int) -> dict[tuple[int, int], UserDate]:
         """For all of user's UserDates within the course, map their user_id+content_date_id to the actual object."""
         existing_user_dates = UserDate.objects.filter(user_id=user_id, content_date__course_id=self.course_key)
         return {(ud.user_id, ud.content_date_id): ud for ud in existing_user_dates}
 
-    def _diff_creates_and_updates(self, user_id: int, target_dates: dict, existing_dates: dict) -> tuple:
+    def _diff_creates_and_updates(self, user_id: int, target_dates: dict, existing_dates: dict) -> tuple[list[UserDate], list[UserDate]]:
         """
         Compare target and existing UserDates and make two buckets of UserDate objects:
         those to be created and those to be updated.
