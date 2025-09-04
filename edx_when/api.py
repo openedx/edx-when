@@ -651,6 +651,7 @@ class UserDateHandler:
     """
 
     course_key: str
+    UPDATE_FIELDS = ("abs_date", "rel_date", "first_component_block_id", "is_content_gated")
 
     def create_for_user(self, user_id: int, assignments: list, course_data: dict) -> None:
         """
@@ -856,8 +857,7 @@ class UserDateHandler:
 
         return to_create, to_update
 
-    @staticmethod
-    def _bulk_commit(to_create: list, to_update: list, to_delete: list) -> None:
+    def _bulk_commit(self, to_create: list, to_update: list, to_delete: list) -> None:
         """Perform the create, update, and delete operations in bulk."""
         if to_create:
             UserDate.objects.bulk_create(to_create, batch_size=500)
@@ -865,7 +865,7 @@ class UserDateHandler:
         if to_update:
             UserDate.objects.bulk_update(
                 to_update,
-                fields=["abs_date", "rel_date", "first_component_block_id", "is_content_gated"],
+                fields=self.UPDATE_FIELDS,
                 batch_size=500
             )
 
