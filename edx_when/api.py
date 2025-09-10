@@ -720,7 +720,7 @@ class UserDateHandler:
             with transaction.atomic():
                 self._bulk_commit(to_create, to_update, to_delete)
 
-            log.info(
+            log.debug(
                 f"UserDates synced for user_id={user_id} in {self.course_key}: "
                 f"len({to_create}) created, len({to_update}) updated, len({to_delete}) deleted."
             )
