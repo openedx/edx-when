@@ -27,6 +27,7 @@ except ImportError:
 log = logging.getLogger(__name__)
 
 FIELDS_TO_EXTRACT = ('due', 'start', 'end')
+DB_BULK_BATCH_SIZE = 500
 
 
 def _content_dates_cache_key(course_key, query_dict, subsection_and_higher_only, published_version):
@@ -860,13 +861,13 @@ class UserDateHandler:
     def _bulk_commit(self, to_create: list, to_update: list, to_delete: list) -> None:
         """Perform the create, update, and delete operations in bulk."""
         if to_create:
-            UserDate.objects.bulk_create(to_create, batch_size=500)
+            UserDate.objects.bulk_create(to_create, batch_size=DB_BULK_BATCH_SIZE)
 
         if to_update:
             UserDate.objects.bulk_update(
                 to_update,
                 fields=self.UPDATE_FIELDS,
-                batch_size=500
+                batch_size=DB_BULK_BATCH_SIZE
             )
 
         if to_delete:
