@@ -5,7 +5,7 @@ API for retrieving and setting dates.
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 import logging
-from typing import Any
+from typing import Any, NoReturn
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -686,7 +686,7 @@ class UserDateHandler:
         """
         UserDate.objects.filter(user_id=user_id, content_date__course_id=self.course_key).delete()
 
-    def sync_for_user(self, user_id: int, assignments: list, course_data: dict | None = None):
+    def sync_for_user(self, user_id: int, assignments: list, course_data: dict | None = None) -> None | NoReturn:
         """
         Synchronize UserDates for a user with the current course configuration.
         This ensures that UserDates match the desired state:
@@ -734,7 +734,7 @@ class UserDateHandler:
     # -------------------------
 
     @staticmethod
-    def _validate(obj: UserDate) -> None:
+    def _validate(obj: UserDate) -> None | NoReturn:
         """Validate a UserDate object before saving, raising InvalidDateError if invalid."""
         try:
             obj.full_clean()
