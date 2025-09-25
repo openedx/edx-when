@@ -7,7 +7,7 @@ from opaque_keys.edx.keys import CourseKey, UsageKey
 from django.contrib.auth import get_user_model
 from datetime import datetime, timedelta, timezone
 
-from edx_when.api import update_or_create_assignments_due_dates
+from edx_when.api import update_or_create_assignments_due_dates, UserDateHandler, _Assignment
 from edx_when.models import ContentDate, DatePolicy, UserDate
 
 User = get_user_model()
@@ -170,7 +170,7 @@ class TestGetUserDates(TestCase):
     """
     Test cases for the get_user_dates API function.
     """
-    
+
     def test_get_user_dates_basic(self):
         """
         Test basic functionality of get_user_dates.
@@ -258,7 +258,7 @@ class TestGetUserDates(TestCase):
         )
 
         result = api.get_user_dates(course_id, user_id, block_types=['sequential'])
-        
+
         self.assertEqual(len(result), 1)
         self.assertIn((seq_key, 'due'), result)
         self.assertNotIn((seq_2_key, 'due'), result)
@@ -374,11 +374,11 @@ class TestGetUserDates(TestCase):
         )
 
         result = api.get_user_dates(
-            course_id, user_id, 
-            block_types=['sequential'], 
+            course_id, user_id,
+            block_types=['sequential'],
             date_types=['due']
         )
-        
+
         self.assertEqual(len(result), 1)
         self.assertIn((seq_key, 'due'), result)
         self.assertNotIn((seq_key, 'start'), result)
@@ -424,7 +424,7 @@ class TestGetUserDates(TestCase):
             policy=policy,
             block_type='sequential'
         )
-        
+
         result = api.get_user_dates(course_id, user_id)
         self.assertEqual(len(result), 0)
 
@@ -507,7 +507,7 @@ class TestGetUserDates(TestCase):
             policy=policy,
             block_type='sequential'
         )
-        
+
         user = User.objects.create(username='testuser', id=user_id)
 
         older_override = UserDate.objects.create(
@@ -530,3 +530,186 @@ class TestGetUserDates(TestCase):
 
         expected_key = (block_key, 'due')
         self.assertEqual(result[expected_key], datetime(2023, 1, 25, 10, 0, 0, tzinfo=timezone.utc))
+
+
+class TestUserDateHandler(TestCase):
+    """
+    Tests for the UserDateHandler class, which manages creation, deletion, and synchronization of UserDate records
+    for users in a given course.
+    The tests verify that UserDateHandler correctly interacts with the database when handling course-level and
+    assignment-level content dates. They focus on the public API methods of the handler:
+    create_for_user, delete_for_user, sync_for_user.
+    """
+
+    def setUp(self):
+        self.user = User.objects.create(username="test_user")
+        self.course_key = CourseKey.from_string('course-v1:TestX+Test+2025')
+        self.block_key = UsageKey.from_string('block-v1:TestX+Test+2025+type@sequential+block@test')
+        self.course_block_key = UsageKey.from_string('block-v1:TestX+Test+2025+type@course+block@course')
+        self.policy = DatePolicy.objects.create(abs_date=datetime(2025, 1, 15, 10, 0, 0))
+        self.content_date = ContentDate.objects.create(
+            course_id=self.course_key,
+            location=self.block_key,
+            field='due',
+            active=True,
+            policy=self.policy,
+            block_type='sequential'
+        )
+        self.content_date_course_start = ContentDate.objects.create(
+            course_id=self.course_key,
+            location=self.course_block_key,
+            field='start',
+            active=True,
+            policy=DatePolicy.objects.create(abs_date=datetime(2025, 1, 2)),
+            block_type='course'
+        )
+        self.content_date_course_end = ContentDate.objects.create(
+            course_id=self.course_key,
+            location=self.course_block_key,
+            field='end',
+            active=True,
+            policy=DatePolicy.objects.create(abs_date=datetime(2025, 1, 3)),
+            block_type='course'
+        )
+        self.assignments = [
+            _Assignment(
+                title='Test Assignment 1',
+                date=datetime(2025, 12, 31, 23, 59, 59, tzinfo=timezone.utc),
+                block_key=self.block_key,
+                assignment_type='Homework',
+                first_component_block_id=self.block_key,
+                contains_gated_content=False,
+
+            )
+        ]
+        self.course_data = {
+            "start": datetime(2025, 1, 1),
+            "end": datetime(2025, 2, 1),
+            "location": str(self.course_block_key),
+        }
+        self.handler = UserDateHandler(str(self.course_key))
+
+    def test_user_dates_are_created(self):
+        """
+        Ensure that `create_for_user` correctly creates UserDate records for both course-level (start/end)
+        and assignment-level dates when provided with course data and assignment input.
+
+        This test verifies:
+          - The expected number of UserDate objects is created.
+          - The created UserDates are linked to the correct ContentDate rows.
+        """
+        self.handler.create_for_user(self.user.id, self.assignments, self.course_data)
+
+        uds = UserDate.objects.filter(user_id=self.user.id)
+        self.assertEqual(uds.count(), 3)
+        self.assertSetEqual(
+            {ud.content_date_id for ud in uds},
+            {self.content_date.id, self.content_date_course_start.id, self.content_date_course_end.id})
+
+    def test_user_dates_are_deleted(self):
+        """
+        Ensure that `delete_for_user` removes all UserDate records associated with a specific user and course.
+
+        This test verifies:
+         - UserDate rows associated with the target course are deleted.
+         - UserDate rows associated with a different course are kept untouched.
+        """
+        ud_to_delete = UserDate.objects.create(user=self.user, content_date=self.content_date)
+
+        course_key_2 = CourseKey.from_string('course-v1:Other+Course+2026')
+        block_key_2 = UsageKey.from_string('block-v1:Other+Course+2026+type@sequential+block@test')
+        policy_2 = DatePolicy.objects.create(abs_date=datetime(2026, 1, 15, 10, 0, 0))
+        content_date_2 = ContentDate.objects.create(
+            course_id=course_key_2,
+            location=block_key_2,
+            field='due',
+            active=True,
+            policy=policy_2,
+            block_type='sequential'
+        )
+        ud_to_keep = UserDate.objects.create(user=self.user, content_date=content_date_2)
+
+        self.handler.delete_for_user(self.user.id)
+
+        self.assertFalse(UserDate.objects.filter(id=ud_to_delete.id).exists())
+        self.assertTrue(UserDate.objects.filter(id=ud_to_keep.id).exists())
+
+    def test_user_dates_are_synced(self):
+        """
+        Ensure that `sync_for_user` synchronizes the UserDate rows for a user by creating, updating, and deleting rows
+        to reflect the current state. This test verifies that:
+          - New UserDates are created when missing.
+          - Existing UserDates are updated when values differ.
+          - UserDates that no longer correspond to active content dates are deleted.
+        """
+        ud_to_update = UserDate.objects.create(
+            user_id=self.user.id,
+            content_date=self.content_date,
+            first_component_block_id=self.block_key,
+            is_content_gated=False,
+        )
+        content_date_2 = ContentDate.objects.create(
+            course_id=self.course_key,
+            location=UsageKey.from_string('block-v1:TestX+Test+2025+type@sequential+block@test3'),
+            field='due',
+            active=True,
+            policy=DatePolicy.objects.create(abs_date=datetime(2026, 1, 1)),
+            block_type='sequential'
+        )
+        ud_to_delete = UserDate.objects.create(user=self.user, content_date=content_date_2)
+
+        block_key_1 = UsageKey.from_string('block-v1:TestX+Test+2025+type@sequential+block@test1')
+        block_key_2 = UsageKey.from_string('block-v1:TestX+Test+2025+type@sequential+block@test2')
+
+        content_date_2 = ContentDate.objects.create(
+            course_id=self.course_key,
+            location=block_key_2,
+            field='due',
+            active=True,
+            policy=DatePolicy.objects.create(abs_date=datetime(2026, 1, 1)),
+            block_type='sequential'
+        )
+
+        assignments = [
+            _Assignment(
+                title='Test Assignment 1',
+                date=datetime(2025, 10, 10),
+                block_key=self.block_key,
+                assignment_type='Homework',
+                # fields with new values that should be populated in the existing UserDate
+                first_component_block_id=block_key_1,
+                contains_gated_content=True,
+            ),
+            _Assignment(
+                title='Test Assignment 2',
+                date=datetime(2025, 11, 11),
+                block_key=block_key_2,
+                assignment_type='Lab',
+                first_component_block_id=block_key_2,
+                contains_gated_content=True,
+            )
+        ]
+        course_data = {
+            "start": datetime(2025, 1, 1),
+            "end": datetime(2025, 2, 1),
+            "location": str(self.course_key),
+        }
+
+        self.handler.sync_for_user(self.user.id, assignments, course_data)
+
+        # Test create
+        created_uds = UserDate.objects.filter(user=self.user, content_date=content_date_2)
+        self.assertTrue(created_uds.exists())
+        created_ud = created_uds[0]
+        self.assertEqual(created_ud.first_component_block_id, block_key_2)
+        self.assertTrue(created_ud.is_content_gated, True)
+
+        # Test update
+        updated_uds = UserDate.objects.filter(id=ud_to_update.id)
+        self.assertTrue(updated_uds.exists())
+        updated_ud = updated_uds[0]
+        self.assertEqual(updated_ud.first_component_block_id, block_key_1)
+        self.assertTrue(updated_ud.is_content_gated, True)
+
+        # Test delete
+        self.assertFalse(UserDate.objects.filter(id=ud_to_delete.id).exists())
