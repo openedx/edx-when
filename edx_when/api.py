@@ -81,11 +81,12 @@ def is_enabled_for_course(course_key):
     return models.ContentDate.objects.filter(course_id=course_key, active=True).exists()
 
 
-def set_dates_for_course(course_key, items):
+def set_dates_for_course(course_key, items, user=None):
     """
     Set dates for blocks.
 
     items: iterator of (location, field metadata dictionary)
+    user: user object to set dates for
     """
     with transaction.atomic():
         active_date_ids = []
@@ -97,7 +98,7 @@ def set_dates_for_course(course_key, items):
                     if val:
                         log.info('Setting date for %r, %s, %r', location, field, val)
                         active_date_ids.append(
-                            set_date_for_block(course_key, location, field, val)
+                            set_date_for_block(course_key, location, field, val, user)
                         )
 
         # Now clear out old dates that we didn't touch
