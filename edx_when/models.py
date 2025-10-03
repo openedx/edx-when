@@ -93,6 +93,9 @@ class ContentDate(models.Model):
     field = models.CharField(max_length=255, default='')
     active = models.BooleanField(default=True)
     block_type = models.CharField(max_length=255, null=True)
+    assignment_title = models.CharField(max_length=255, blank=True, default='', db_index=True)
+    course_name = models.CharField(max_length=255, blank=True, default='')
+    subsection_name = models.CharField(max_length=255, blank=True, default='', db_index=True)
 
     class Meta:
         """Django Metadata."""
@@ -100,6 +103,8 @@ class ContentDate(models.Model):
         unique_together = ('policy', 'location', 'field')
         indexes = [
             models.Index(fields=('course_id', 'block_type'), name='edx_when_course_block_type_idx'),
+            models.Index(fields=('assignment_title', 'course_id'), name='edx_when_assignment_course_idx'),
+            models.Index(fields=('subsection_name', 'course_id'), name='edx_when_subsection_course_idx'),
         ]
 
     def __str__(self):
@@ -108,6 +113,14 @@ class ContentDate(models.Model):
         """
         # Location already holds course id
         return f'ContentDate({self.policy}, {self.location}, {self.field}, {self.block_type})'
+
+    def __repr__(self):
+        """
+        Get a detailed representation of this model instance.
+        """
+        return (f'ContentDate(id={self.id}, assignment_title="{self.assignment_title}", '
+                f'course_name="{self.course_name}", subsection_name="{self.subsection_name}", '
+                f'policy={self.policy}, location={self.location})')
 
 
 class UserDate(TimeStampedModel):
@@ -125,6 +138,15 @@ class UserDate(TimeStampedModel):
     actor = models.ForeignKey(
         get_user_model(), null=True, default=None, blank=True, related_name="actor", on_delete=models.CASCADE
     )
+    first_component_block_id = UsageKeyField(null=True, blank=True, max_length=255, db_index=True)
+    is_content_gated = models.BooleanField(default=False)
+
+    class Meta:
+        """Django Metadata."""
+
+        indexes = [
+            models.Index(fields=('user', 'first_component_block_id'), name='edx_when_user_first_block_idx'),
+        ]
 
     @property
     def actual_date(self):
@@ -148,6 +170,13 @@ class UserDate(TimeStampedModel):
         """
         return self.content_date.location
 
+    @property
+    def learner_has_access(self):
+        """
+        Return a boolean indicating whether the piece of content is accessible to the learner.
+        """
+        return not self.is_content_gated
+
     def clean(self):
         """
         Validate data before saving.
@@ -169,3 +198,11 @@ class UserDate(TimeStampedModel):
         # Location already holds course id
         # pylint: disable=no-member
         return f'{self.user.username}, {self.content_date.location}, {self.content_date.field}'
+
+    def __repr__(self):
+        """
+        Get a detailed representation of this model instance.
+        """
+        return (f'UserDate(id={self.id}, user="{self.user.username}", '
+                f'first_component_block_id={self.first_component_block_id}, '
+                f'content_date={self.content_date.id})')

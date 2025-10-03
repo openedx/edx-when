@@ -2,17 +2,20 @@
 API for retrieving and setting dates.
 """
 
+from dataclasses import dataclass
+from datetime import datetime, timedelta
 import logging
-from datetime import timedelta
+from typing import Any, NoReturn
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import DateTimeField, ExpressionWrapper, F, ObjectDoesNotExist, Q
+from django.db.models import DateTimeField, ExpressionWrapper, F, ObjectDoesNotExist, Prefetch, Q
 from edx_django_utils.cache.utils import TieredCache
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey, UsageKey
 
 from . import models
+from .models import UserDate, ContentDate
 from .utils import get_schedule_for_user
 
 try:
@@ -24,6 +27,7 @@ except ImportError:
 log = logging.getLogger(__name__)
 
 FIELDS_TO_EXTRACT = ('due', 'start', 'end')
+DB_BULK_BATCH_SIZE = 500
 
 
 def _content_dates_cache_key(course_key, query_dict, subsection_and_higher_only, published_version):
@@ -77,11 +81,12 @@ def is_enabled_for_course(course_key):
     return models.ContentDate.objects.filter(course_id=course_key, active=True).exists()
 
 
-def set_dates_for_course(course_key, items):
+def set_dates_for_course(course_key, items, user=None):
     """
     Set dates for blocks.
 
     items: iterator of (location, field metadata dictionary)
+    user: user object to set dates for
     """
     with transaction.atomic():
         active_date_ids = []
@@ -93,7 +98,7 @@ def set_dates_for_course(course_key, items):
                     if val:
                         log.info('Setting date for %r, %s, %r', location, field, val)
                         active_date_ids.append(
-                            set_date_for_block(course_key, location, field, val)
+                            set_date_for_block(course_key, location, field, val, user)
                         )
 
         # Now clear out old dates that we didn't touch
@@ -506,6 +511,116 @@ def get_schedules_with_due_date(course_id, assignment_date):
     return schedules
 
 
+@dataclass
+class _Assignment:
+    """
+    Represents an assignment with a title, date, block key, and assignment type.
+    """
+    title: str
+    date: datetime
+    block_key: UsageKey
+    assignment_type: str
+    contains_gated_content: bool
+    first_component_block_id: str
+
+    def __post_init__(self):
+        if not isinstance(self.date, datetime):
+            raise TypeError("date must be a datetime object")
+        if not isinstance(self.block_key, UsageKey):
+            raise TypeError("block_key must be a UsageKey object")
+
+
+def update_or_create_assignments_due_dates(course_key, assignments: list[_Assignment]):
+    """
+    Update or create assignment due dates for a course.
+    """
+    course_key_str = str(course_key)
+    for assignment in assignments:
+        log.info(
+            "Updating assignment '%s' with due date '%s' for course %s",
+            assignment.title,
+            assignment.date,
+            course_key_str
+        )
+        if not all((assignment.date, assignment.title)):
+            log.warning(
+                "Skipping assignment '%s' for course %s because it has no date or title",
+                assignment,
+                course_key_str
+            )
+            continue
+        models.ContentDate.objects.update_or_create(
+            course_id=course_key,
+            location=assignment.block_key,
+            field='due',
+            block_type=assignment.assignment_type,
+            contains_gated_content=assignment.contains_gated_content,
+            defaults={
+                'policy': models.DatePolicy.objects.get_or_create(abs_date=assignment.date)[0],
+                'assignment_title': assignment.title,
+                'course_name': course_key.course,
+                'subsection_name': assignment.title
+            }
+        )
+
+
+def get_user_dates(course_id, user_id, block_types=None, block_keys=None, date_types=None):
+    """
+    Get all user dates for a course with optional filters.
+
+    Arguments:
+        course_id: either a CourseKey or string representation of same
+        user_id: User ID
+        block_types: optional list of block types to filter by (e.g., ['sequential', 'vertical'])
+        block_keys: optional list of UsageKey objects or strings to filter by
+        date_types: optional list of date field types to filter by (e.g., ['due', 'start', 'end'])
+
+    Returns:
+        dict with keys as (location, field) tuples and values as date objects
+        User overrides take priority over content defaults
+    """
+    course_id = _ensure_key(CourseKey, course_id)
+
+    content_dates_query = models.ContentDate.objects.filter(
+        course_id=course_id,
+        active=True,
+    ).select_related('policy')
+
+    # Apply filters
+    if block_types:
+        content_dates_query = content_dates_query.filter(block_type__in=block_types)
+
+    if block_keys:
+        normalized_keys = [_ensure_key(UsageKey, key) for key in block_keys]
+        content_dates_query = content_dates_query.filter(location__in=normalized_keys)
+
+    if date_types:
+        content_dates_query = content_dates_query.filter(field__in=date_types)
+
+    content_dates_query = content_dates_query.prefetch_related(
+        Prefetch(
+            'userdate_set',
+            queryset=models.UserDate.objects.filter(user_id=user_id).order_by('-modified'),
+            to_attr='user_overrides'
+        )
+    )
+
+    dates = {}
+
+    for content_date in content_dates_query:
+        key = (content_date.location, content_date.field)
+
+        if content_date.user_overrides:
+            dates[key] = content_date.user_overrides[0].actual_date
+        else:
+            try:
+                dates[key] = content_date.policy.actual_date()
+            except (AttributeError, models.MissingScheduleError):
+                continue
+
+    return dates
+
+
 class BaseWhenException(Exception):
     pass
 
@@ -516,3 +631,246 @@ class MissingDateError(BaseWhenException):
 
 class InvalidDateError(BaseWhenException):
     pass
+
+
+@dataclass
+class UserDateHandler:
+    """
+    A handler for managing UserDate records in a specific course.
+
+    The handler provides the public API for:
+    - Creating UserDate rows for a given user
+    - Deleting UserDate rows for a given user
+    - Synchronizing UserDate rows for a given user
+
+    Synchronization involves determining the desired configuration of user dates (based on the provided course-level
+    and assignment-level data), comparing it to the existing state, and reconciling the differences by:
+        - Creating new rows
+        - Updating existing rows
+        - Deleting stale rows
+
+    Args:
+        course_key (str): The course identifier to scope operations.
+    """
+
+    course_key: str
+    UPDATE_FIELDS = ("abs_date", "rel_date", "first_component_block_id", "is_content_gated")
+
+    def create_for_user(self, user_id: int, assignments: list, course_data: dict) -> None:
+        """
+        Create UserDate entries for a user in a course.
+
+        This method inserts new UserDates for:
+          - Course-level dates (start, end).
+          - Assignment-level due dates.
+
+        Args:
+            user_id (int): The ID of the user for whom UserDates should be created.
+            assignments (list): A list of _Assignment named tuples (from get_course_assignments).
+            course_data (dict): Course-level data, including:
+                - start (datetime or None)
+                - end (datetime or None)
+                - location (str): course block key
+        """
+        active_content_dates = self._map_active_content_dates()
+        course_dates = self._build_course_dates(user_id, course_data, active_content_dates)
+        assignment_dates = self._build_assignment_dates(user_id, assignments, active_content_dates)
+
+        to_create = course_dates + assignment_dates
+        UserDate.objects.bulk_create(to_create)
+
+    def delete_for_user(self, user_id: int):
+        """
+        Delete all UserDate entries for a user in a course.
+
+        Args:
+            user_id (int): The ID of the user whose UserDates should be removed.
+        """
+        UserDate.objects.filter(user_id=user_id, content_date__course_id=self.course_key).delete()
+
+    def sync_for_user(self, user_id: int, assignments: list, course_data: dict | None = None) -> None | NoReturn:
+        """
+        Synchronize UserDates for a user with the current course configuration.
+        This ensures that UserDates match the desired state:
+          - Missing UserDates are created
+          - Outdated UserDates are updated
+          - Stale UserDates (no longer valid) are deleted
+
+        All of these operations on the UserDate table are performed in bulk, inside a transaction.
+
+        Args:
+            user_id (int): The ID of the user being synchronized.
+            assignments (list): A list of assignment objects.
+            course_data (dict, optional): Course-level data including start/end dates and location.
+        """
+        target_user_date_map = {}
+        active_content_date_map = self._map_active_content_dates()
+
+        if course_data:
+            course_dates = self._map_target_course_dates(user_id, course_data, active_content_date_map)
+            target_user_date_map |= course_dates
+
+        assignment_dates = self._map_target_assignment_dates(user_id, assignments, active_content_date_map)
+        target_user_date_map |= assignment_dates
+
+        existing_user_date_map = self._map_existing_dates(user_id)
+
+        to_create, to_update = self._diff_creates_and_updates(user_id, target_user_date_map, existing_user_date_map)
+        to_delete = [ud.id for key, ud in existing_user_date_map.items() if key not in target_user_date_map]
+
+        try:
+            with transaction.atomic():
+                self._bulk_commit(to_create, to_update, to_delete)
+
+            log.debug(
+                f"UserDates synced for user_id={user_id} in {self.course_key}: "
+                f"len({to_create}) created, len({to_update}) updated, len({to_delete}) deleted."
+            )
+
+        except Exception:  # pylint: disable=broad-except
+            log.exception(f"UserDate sync failed for user_id={user_id} in {self.course_key}")
+            raise
+
+    # -------------------------
+    # Private helper methods
+    # -------------------------
+
+    @staticmethod
+    def _validate(obj: UserDate) -> None | NoReturn:
+        """Validate a UserDate object before saving, raising InvalidDateError if invalid."""
+        try:
+            obj.full_clean()
+        except ValidationError as error:
+            raise InvalidDateError(obj.actual_date) from error
+
+    def _map_active_content_dates(self) -> dict[tuple[str, str], int]:
+        """Return a mapping of (block_key, field) → content_date_id for active ContentDates in this course."""
+        return {
+            (str(cd.location), cd.field): cd.id
+            for cd in ContentDate.objects.filter(course_id=self.course_key, active=True)
+        }
+
+    def _build_course_dates(self, user_id: int, course_data: dict, active_content_dates: dict) -> list[UserDate]:
+        """Return a list of UserDate objects to be created for course-level start/end dates."""
+        course_dates = []
+        course_location = course_data["location"]
+
+        for field in ("start", "end"):
+            content_date_key = (course_location, field)
+            content_date_id = active_content_dates.get(content_date_key)
+            if not content_date_id:
+                continue
+
+            user_date = UserDate(
+                user_id=user_id,
+                content_date_id=content_date_id,
+                first_component_block_id=course_location,
+            )
+            self._validate(user_date)
+            course_dates.append(user_date)
+
+        return course_dates
+
+    def _build_assignment_dates(self, user_id: int, assignments: list, active_content_dates: dict) -> list[UserDate]:
+        """Return a list of UserDate objects to be created for assignment due dates."""
+        assignment_dates = []
+
+        for assignment in assignments:
+            content_date_key = str(assignment.block_key), "due"
+            content_date_id = active_content_dates.get(content_date_key)
+            if not content_date_id:
+                continue
+
+            user_date = UserDate(
+                user_id=user_id,
+                content_date_id=content_date_id,
+                first_component_block_id=assignment.first_component_block_id,
+            )
+            self._validate(user_date)
+            assignment_dates.append(user_date)
+
+        return assignment_dates
+
+    @staticmethod
+    def _map_target_course_dates(user_id: int, course_data: dict, active_content_dates: dict) -> dict[tuple[int, int], dict[str, Any]]:
+        """For course-level start/end dates, map combinations of user and ContentDates to desired UserDate attributes."""
+        target_map = {}
+        course_location = course_data["location"]
+
+        for field in ("start", "end"):
+            content_date_key = (course_location, field)
+            content_date_id = active_content_dates.get(content_date_key)
+            if not content_date_id:
+                continue
+
+            user_date_key = user_id, content_date_id
+            target_map[user_date_key] = {
+                "content_date_id": content_date_id,
+                "first_component_block_id": course_location,
+            }
+
+        return target_map
+
+    @staticmethod
+    def _map_target_assignment_dates(user_id: int, assignments: list, active_content_dates: dict) -> dict[tuple[int, int], dict[str, Any]]:
+        """For assignment-level due dates, map combinations of user and ContentDates to desired UserDate attributes."""
+        target_map = {}
+
+        for assignment in assignments:
+            content_date_key = str(assignment.block_key), "due"
+            content_date_id = active_content_dates.get(content_date_key)
+            if not content_date_id:
+                continue
+
+            user_date_key = user_id, content_date_id
+            target_map[user_date_key] = {
+                "content_date_id": content_date_id,
+                "first_component_block_id": assignment.first_component_block_id,
+                "is_content_gated": assignment.contains_gated_content,
+            }
+
+        return target_map
+
+    def _map_existing_dates(self, user_id: int) -> dict[tuple[int, int], UserDate]:
+        """For all of user's UserDates within the course, map their user_id+content_date_id to the actual object."""
+        existing_user_dates = UserDate.objects.filter(user_id=user_id, content_date__course_id=self.course_key)
+        return {(ud.user_id, ud.content_date_id): ud for ud in existing_user_dates}
+
+    def _diff_creates_and_updates(self, user_id: int, target_dates: dict, existing_dates: dict) -> tuple[list[UserDate], list[UserDate]]:
+        """
+        Compare target and existing UserDates and make two buckets of UserDate objects:
+        those to be created and those to be updated.
+
+        Returns:
+            tuple: (to_create, to_update) lists of UserDate objects.
+        """
+        to_create = []
+        to_update = []
+
+        for key, target_data in target_dates.items():
+            if key not in existing_dates:
+                new_ud = UserDate(user_id=user_id, **target_data)
+                self._validate(new_ud)
+                to_create.append(new_ud)
+            else:
+                existing_ud = existing_dates[key]
+                existing_ud.first_component_block_id = target_data.get("first_component_block_id")
+                existing_ud.is_content_gated = target_data.get("is_content_gated", False)
+                to_update.append(existing_ud)
+
+        return to_create, to_update
+
+    def _bulk_commit(self, to_create: list, to_update: list, to_delete: list) -> None:
+        """Perform the create, update, and delete operations in bulk."""
+        if to_create:
+            UserDate.objects.bulk_create(to_create, batch_size=DB_BULK_BATCH_SIZE)
+
+        if to_update:
+            UserDate.objects.bulk_update(
+                to_update,
+                fields=self.UPDATE_FIELDS,
+                batch_size=DB_BULK_BATCH_SIZE
+            )
+
+        if to_delete:
+            UserDate.objects.filter(id__in=to_delete).delete()
