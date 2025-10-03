@@ -553,6 +553,7 @@ def update_or_create_assignments_due_dates(course_key, assignments: list[_Assign
             location=assignment.block_key,
             field='due',
             block_type=assignment.assignment_type,
+            contains_gated_content=assignment.contains_gated_content,
             defaults={
                 'policy': models.DatePolicy.objects.get_or_create(abs_date=assignment.date)[0],
                 'assignment_title': assignment.title,
