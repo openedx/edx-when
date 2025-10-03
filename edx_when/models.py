@@ -170,6 +170,13 @@ class UserDate(TimeStampedModel):
         """
         return self.content_date.location
 
+    @property
+    def learner_has_access(self):
+        """
+        Return a boolean indicating whether the piece of content is accessible to the learner.
+        """
+        return not self.is_content_gated
+
     def clean(self):
         """
         Validate data before saving.
