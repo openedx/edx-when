@@ -508,7 +508,7 @@ class ApiTests(TestCase):
 
         # Should return empty list
         overrides = api.get_overrides_for_course(course_key)
-        assert overrides == []
+        assert not overrides
 
     def test_get_overrides_for_course_with_profile(self):
         """Test get_overrides_for_course basic functionality."""
