@@ -295,7 +295,7 @@ def get_date_for_block(course_id, block_id, name='due', user=None, published_ver
         return None
 
 
-def get_overrides_for_block(course_id, block_id, extra_data = False):
+def get_overrides_for_block(course_id, block_id, extra_data=False):
     """
     Return list of date overrides for a block.
 

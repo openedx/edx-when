@@ -286,6 +286,11 @@ class ApiTests(TestCase):
         assert len(overrides) == 1
         assert overrides[0][2] == expected_date
 
+        # Test with extra_data=True
+        overrides_extra = api.get_overrides_for_block(block_id.course_key, block_id, extra_data=True)
+        assert len(overrides_extra) == 1
+        assert overrides_extra[0] == (self.user.username, 'unknown', self.user.email, block_id, expected_date)
+
         overrides = list(api.get_overrides_for_user(block_id.course_key, self.user))
         assert len(overrides) == 1
         assert overrides[0] == {'location': block_id, 'actual_date': expected_date}
@@ -415,8 +420,17 @@ class ApiTests(TestCase):
         # get_overrides_for_block
         block2_overrides = [(self.user.username, 'unknown', date2_override)]
         assert api.get_overrides_for_block(course_key, block2) == block2_overrides
+
+        # Test with extra_data=True
+        block2_overrides_extra = [(self.user.username, 'unknown', self.user.email, block2, date2_override)]
+        assert api.get_overrides_for_block(course_key, block2, extra_data=True) == block2_overrides_extra
+
         with patch('edx_when.api._are_relative_dates_enabled', return_value=False):
             assert api.get_overrides_for_block(course_key, block2) == [(self.user.username, 'unknown', date2_override)]
+            assert api.get_overrides_for_block(
+                course_key, block2, extra_data=True) == [
+                (self.user.username, 'unknown', self.user.email, block2, date2_override)
+            ]
 
         # get_overrides_for_user
         user_overrides = [
@@ -426,6 +440,144 @@ class ApiTests(TestCase):
         assert list(api.get_overrides_for_user(course_key, self.user)) == user_overrides
         with patch('edx_when.api._are_relative_dates_enabled', return_value=False):
             assert list(api.get_overrides_for_user(course_key, self.user)) == user_overrides
+
+    def test_get_overrides_for_course(self):
+        """Test get_overrides_for_course function with multiple users and blocks."""
+        course_key = CourseLocator('testX', 'tt101', '2019')
+
+        # Create additional users
+        user2 = User(username='tester2', email='tester2@test.com')
+        user2.save()
+        user3 = User(username='tester3', email='tester3@test.com')
+        user3.save()
+
+        # Create blocks and dates
+        block1 = make_block_id(course_key)
+        block2 = make_block_id(course_key)
+        block3 = make_block_id(course_key)
+
+        date1 = datetime(2019, 3, 22)
+        date2 = datetime(2019, 3, 23)
+        date3 = datetime(2019, 3, 24)
+
+        override1 = datetime(2019, 4, 1)
+        override2 = datetime(2019, 4, 2)
+        override3 = datetime(2019, 4, 3)
+
+        # Set up course dates
+        items = [
+            (block1, {'due': date1}),
+            (block2, {'due': date2}),
+            (block3, {'due': date3}),
+        ]
+        api.set_dates_for_course(course_key, items)
+
+        # Set up user overrides
+        api.set_date_for_block(course_key, block1, 'due', override1, user=self.user)
+        api.set_date_for_block(course_key, block2, 'due', override2, user=user2)
+        api.set_date_for_block(course_key, block3, 'due', override3, user=user3)
+        api.set_date_for_block(course_key, block1, 'due', override2, user=user2)  # Multiple overrides per user
+
+        # Test get_overrides_for_course
+        overrides = api.get_overrides_for_course(course_key)
+
+        # Should return all overrides, but only the latest for each user
+        # Expected format: (username, full_name, email, location, date)
+        expected_overrides = [
+            (user2.username, 'unknown', user2.email, block1, override2),
+            (user3.username, 'unknown', user3.email, block3, override3),
+            (self.user.username, 'unknown', self.user.email, block1, override1),
+        ]
+
+        # Sort both lists by username for consistent comparison
+        overrides_sorted = sorted(overrides, key=lambda x: x[0])
+        expected_sorted = sorted(expected_overrides, key=lambda x: x[0])
+
+        assert overrides_sorted == expected_sorted
+
+    def test_get_overrides_for_course_empty(self):
+        """Test get_overrides_for_course with no overrides."""
+        course_key = CourseLocator('testX', 'tt102', '2019')
+
+        # Create a block with a date but no overrides
+        block1 = make_block_id(course_key)
+        date1 = datetime(2019, 3, 22)
+
+        items = [(block1, {'due': date1})]
+        api.set_dates_for_course(course_key, items)
+
+        # Should return empty list
+        overrides = api.get_overrides_for_course(course_key)
+        assert overrides == []
+
+    def test_get_overrides_for_course_with_profile(self):
+        """Test get_overrides_for_course basic functionality."""
+        course_key = CourseLocator('testX', 'tt103', '2019')
+
+        # Create block and override
+        block1 = make_block_id(course_key)
+        date1 = datetime(2019, 3, 22)
+        override1 = datetime(2019, 4, 1)
+
+        items = [(block1, {'due': date1})]
+        api.set_dates_for_course(course_key, items)
+        api.set_date_for_block(course_key, block1, 'due', override1, user=self.user)
+
+        # Test get_overrides_for_course
+        overrides = api.get_overrides_for_course(course_key)
+
+        expected_overrides = [
+            (self.user.username, 'unknown', self.user.email, block1, override1),
+        ]
+
+        assert overrides == expected_overrides
+
+    def test_get_overrides_for_block_extra_data(self):
+        """Test get_overrides_for_block with extra_data parameter."""
+        course_key = CourseLocator('testX', 'tt104', '2019')
+
+        # Create additional user
+        user2 = User(username='tester2', email='tester2@test.com')
+        user2.save()
+
+        # Create block and dates
+        block1 = make_block_id(course_key)
+        date1 = datetime(2019, 3, 22)
+        override1 = datetime(2019, 4, 1)
+        override2 = datetime(2019, 4, 2)
+
+        # Set up course date and user overrides
+        items = [(block1, {'due': date1})]
+        api.set_dates_for_course(course_key, items)
+        api.set_date_for_block(course_key, block1, 'due', override1, user=self.user)
+        api.set_date_for_block(course_key, block1, 'due', override2, user=user2)
+
+        # Test without extra_data (default behavior)
+        overrides_default = api.get_overrides_for_block(course_key, block1)
+        expected_default = [
+            (user2.username, 'unknown', override2),
+            (self.user.username, 'unknown', override1),
+        ]
+        # Sort by username for consistent comparison
+        overrides_default_sorted = sorted(overrides_default, key=lambda x: x[0])
+        expected_default_sorted = sorted(expected_default, key=lambda x: x[0])
+        assert overrides_default_sorted == expected_default_sorted
+
+        # Test with extra_data=False (explicit)
+        overrides_false = api.get_overrides_for_block(course_key, block1, extra_data=False)
+        overrides_false_sorted = sorted(overrides_false, key=lambda x: x[0])
+        assert overrides_false_sorted == expected_default_sorted
+
+        # Test with extra_data=True
+        overrides_extra = api.get_overrides_for_block(course_key, block1, extra_data=True)
+        expected_extra = [
+            (user2.username, 'unknown', user2.email, block1, override2),
+            (self.user.username, 'unknown', self.user.email, block1, override1),
+        ]
+        # Sort by username for consistent comparison
+        overrides_extra_sorted = sorted(overrides_extra, key=lambda x: x[0])
+        expected_extra_sorted = sorted(expected_extra, key=lambda x: x[0])
+        assert overrides_extra_sorted == expected_extra_sorted
 
     def test_relative_date_past_end_date(self):
         course_key = CourseLocator('testX', 'tt101', '2019')
