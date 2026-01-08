@@ -415,7 +415,9 @@ class ApiTests(TestCase):
         assert api.get_overrides_for_block(course_key, block2) == block2_overrides
 
         with patch('edx_when.api._are_relative_dates_enabled', return_value=False):
-            assert api.get_overrides_for_block(course_key, block2) == [(self.user.username, 'unknown', date2_override, self.user.email, block2)]
+            assert api.get_overrides_for_block(course_key, block2) == [
+                (self.user.username, 'unknown', date2_override, self.user.email, block2)
+            ]
 
         # get_overrides_for_user
         user_overrides = [
@@ -520,23 +522,23 @@ class ApiTests(TestCase):
     def test_get_overrides_for_block_format(self):
         """Test get_overrides_for_block returns the correct format."""
         course_key = CourseLocator('testX', 'tt104', '2019')
-        
+
         # Create additional user
         user2 = User(username='tester2', email='tester2@test.com')
         user2.save()
-        
+
         # Create block and dates
         block1 = make_block_id(course_key)
         date1 = datetime(2019, 3, 22)
         override1 = datetime(2019, 4, 1)
         override2 = datetime(2019, 4, 2)
-        
+
         # Set up course date and user overrides
         items = [(block1, {'due': date1})]
         api.set_dates_for_course(course_key, items)
         api.set_date_for_block(course_key, block1, 'due', override1, user=self.user)
         api.set_date_for_block(course_key, block1, 'due', override2, user=user2)
-        
+
         # Test the function returns the extended format (username, full_name, date, email, location)
         overrides = api.get_overrides_for_block(course_key, block1)
         expected = [
