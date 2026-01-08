@@ -284,16 +284,9 @@ class ApiTests(TestCase):
 
         overrides = api.get_overrides_for_block(block_id.course_key, block_id)
         assert len(overrides) == 1
-        assert overrides[0][2] == expected_date
-
-        # Test with extra_data=True
-        overrides_extra = api.get_overrides_for_block(block_id.course_key, block_id, extra_data=True)
-        assert len(overrides_extra) == 1
-        assert overrides_extra[0] == (self.user.username, 'unknown', self.user.email, block_id, expected_date)
+        assert overrides[0] == (self.user.username, 'unknown', expected_date, self.user.email, block_id)
 
         overrides = list(api.get_overrides_for_user(block_id.course_key, self.user))
-        assert len(overrides) == 1
-        assert overrides[0] == {'location': block_id, 'actual_date': expected_date}
 
     @ddt.data(
         (datetime(2019, 4, 6), datetime(2019, 4, 10), datetime(2019, 4, 10)),
@@ -418,19 +411,11 @@ class ApiTests(TestCase):
             assert api.get_date_for_block(course_key, block4, user=self.user) is None
 
         # get_overrides_for_block
-        block2_overrides = [(self.user.username, 'unknown', date2_override)]
+        block2_overrides = [(self.user.username, 'unknown', date2_override, self.user.email, block2)]
         assert api.get_overrides_for_block(course_key, block2) == block2_overrides
 
-        # Test with extra_data=True
-        block2_overrides_extra = [(self.user.username, 'unknown', self.user.email, block2, date2_override)]
-        assert api.get_overrides_for_block(course_key, block2, extra_data=True) == block2_overrides_extra
-
         with patch('edx_when.api._are_relative_dates_enabled', return_value=False):
-            assert api.get_overrides_for_block(course_key, block2) == [(self.user.username, 'unknown', date2_override)]
-            assert api.get_overrides_for_block(
-                course_key, block2, extra_data=True) == [
-                (self.user.username, 'unknown', self.user.email, block2, date2_override)
-            ]
+            assert api.get_overrides_for_block(course_key, block2) == [(self.user.username, 'unknown', date2_override, self.user.email, block2)]
 
         # get_overrides_for_user
         user_overrides = [
@@ -532,52 +517,36 @@ class ApiTests(TestCase):
 
         assert overrides == expected_overrides
 
-    def test_get_overrides_for_block_extra_data(self):
-        """Test get_overrides_for_block with extra_data parameter."""
+    def test_get_overrides_for_block_format(self):
+        """Test get_overrides_for_block returns the correct format."""
         course_key = CourseLocator('testX', 'tt104', '2019')
-
+        
         # Create additional user
         user2 = User(username='tester2', email='tester2@test.com')
         user2.save()
-
+        
         # Create block and dates
         block1 = make_block_id(course_key)
         date1 = datetime(2019, 3, 22)
         override1 = datetime(2019, 4, 1)
         override2 = datetime(2019, 4, 2)
-
+        
         # Set up course date and user overrides
         items = [(block1, {'due': date1})]
         api.set_dates_for_course(course_key, items)
         api.set_date_for_block(course_key, block1, 'due', override1, user=self.user)
         api.set_date_for_block(course_key, block1, 'due', override2, user=user2)
-
-        # Test without extra_data (default behavior)
-        overrides_default = api.get_overrides_for_block(course_key, block1)
-        expected_default = [
-            (user2.username, 'unknown', override2),
-            (self.user.username, 'unknown', override1),
+        
+        # Test the function returns the extended format (username, full_name, date, email, location)
+        overrides = api.get_overrides_for_block(course_key, block1)
+        expected = [
+            (user2.username, 'unknown', override2, user2.email, block1),
+            (self.user.username, 'unknown', override1, self.user.email, block1),
         ]
         # Sort by username for consistent comparison
-        overrides_default_sorted = sorted(overrides_default, key=lambda x: x[0])
-        expected_default_sorted = sorted(expected_default, key=lambda x: x[0])
-        assert overrides_default_sorted == expected_default_sorted
-
-        # Test with extra_data=False (explicit)
-        overrides_false = api.get_overrides_for_block(course_key, block1, extra_data=False)
-        overrides_false_sorted = sorted(overrides_false, key=lambda x: x[0])
-        assert overrides_false_sorted == expected_default_sorted
-
-        # Test with extra_data=True
-        overrides_extra = api.get_overrides_for_block(course_key, block1, extra_data=True)
-        expected_extra = [
-            (user2.username, 'unknown', user2.email, block1, override2),
-            (self.user.username, 'unknown', self.user.email, block1, override1),
-        ]
-        # Sort by username for consistent comparison
-        overrides_extra_sorted = sorted(overrides_extra, key=lambda x: x[0])
-        expected_extra_sorted = sorted(expected_extra, key=lambda x: x[0])
-        assert overrides_extra_sorted == expected_extra_sorted
+        overrides_sorted = sorted(overrides, key=lambda x: x[0])
+        expected_sorted = sorted(expected, key=lambda x: x[0])
+        assert overrides_sorted == expected_sorted
 
     def test_relative_date_past_end_date(self):
         course_key = CourseLocator('testX', 'tt101', '2019')

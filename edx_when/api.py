@@ -295,7 +295,7 @@ def get_date_for_block(course_id, block_id, name='due', user=None, published_ver
         return None
 
 
-def get_overrides_for_block(course_id, block_id, extra_data=False):
+def get_overrides_for_block(course_id, block_id):
     """
     Return list of date overrides for a block.
 
@@ -304,8 +304,7 @@ def get_overrides_for_block(course_id, block_id, extra_data=False):
         block_id: either a UsageKey or string representation of same
 
     Returns:
-        list of (username, full_name, email, location, date) if extra_data is True
-        list of (username, full_name, date) if extra_data is False
+        list of (username, full_name, date, email, location)
     """
     course_id = _ensure_key(CourseKey, course_id)
     block_id = _ensure_key(UsageKey, block_id)
@@ -328,12 +327,9 @@ def get_overrides_for_block(course_id, block_id, extra_data=False):
         except AttributeError:
             full_name = 'unknown'
         override = udate.actual_date
-        if extra_data:
-            email = udate.user.email
-            location = udate.content_date.location
-            dates.append((username, full_name, email, location, override))
-        else:
-            dates.append((username, full_name, override))
+        email = udate.user.email
+        location = udate.content_date.location
+        dates.append((username, full_name, override, email, location))
     return dates
 
 
