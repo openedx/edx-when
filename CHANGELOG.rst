@@ -14,7 +14,7 @@ Change Log
 Unreleased
 ~~~~~~~~~~
 
-[3.1.0] - 2026-01-08
+[3.1.0] - 2026-01-09
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * Add get_overrides_for_course API to retrieve all overrides for a course.
 * Update get_overrides_for_block to also return email and location.
