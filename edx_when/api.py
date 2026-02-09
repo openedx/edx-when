@@ -7,7 +7,7 @@ from datetime import timedelta
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import DateTimeField, ExpressionWrapper, F, ObjectDoesNotExist, Q
+from django.db.models import DateTimeField, ExpressionWrapper, F, ObjectDoesNotExist, Prefetch, Q
 from edx_django_utils.cache.utils import TieredCache
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey, UsageKey
@@ -546,6 +546,63 @@ def get_schedules_with_due_date(course_id, assignment_date):
         ).exclude(enrollment__user_id__in=user_ids).select_related('enrollment') | schedules
 
     return schedules
+
+
+def get_user_dates(course_id, user_id, block_types=None, block_keys=None, date_types=None):
+    """
+    Get all user dates for a course with optional filters.
+
+    Arguments:
+        course_id: either a CourseKey or string representation of same
+        user_id: User ID
+        block_types: optional list of block types to filter by (e.g., ['sequential', 'vertical'])
+        block_keys: optional list of UsageKey objects or strings to filter by
+        date_types: optional list of date field types to filter by (e.g., ['due', 'start', 'end'])
+
+    Returns:
+        dict with keys as (location, field) tuples and values as date objects
+        User overrides take priority over content defaults
+    """
+    course_id = _ensure_key(CourseKey, course_id)
+
+    content_dates_query = models.ContentDate.objects.filter(
+        course_id=course_id,
+        active=True,
+    ).select_related('policy')
+
+    # Apply filters
+    if block_types:
+        content_dates_query = content_dates_query.filter(block_type__in=block_types)
+
+    if block_keys:
+        normalized_keys = [_ensure_key(UsageKey, key) for key in block_keys]
+        content_dates_query = content_dates_query.filter(location__in=normalized_keys)
+
+    if date_types:
+        content_dates_query = content_dates_query.filter(field__in=date_types)
+
+    content_dates_query = content_dates_query.prefetch_related(
+        Prefetch(
+            'userdate_set',
+            queryset=models.UserDate.objects.filter(user_id=user_id).order_by('-modified'),
+            to_attr='user_overrides'
+        )
+    )
+
+    dates = {}
+
+    for content_date in content_dates_query:
+        key = (content_date.location, content_date.field)
+
+        if content_date.user_overrides:
+            dates[key] = content_date.user_overrides[0].actual_date
+        else:
+            try:
+                dates[key] = content_date.policy.actual_date()
+            except (AttributeError, models.MissingScheduleError):
+                continue
+
+    return dates
 
 
 class BaseWhenException(Exception):
