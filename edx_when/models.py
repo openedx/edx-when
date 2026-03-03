@@ -139,13 +139,6 @@ class UserDate(TimeStampedModel):
     first_component_block_id = UsageKeyField(null=True, blank=True, max_length=255)
     is_content_gated = models.BooleanField(default=False)
 
-    class Meta:
-        """Metadata for UserDate model — adds query performance indexes."""
-
-        indexes = [
-            models.Index(fields=["user", "modified"]),
-        ]
-
     @property
     def actual_date(self):
         """
