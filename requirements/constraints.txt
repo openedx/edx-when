@@ -19,3 +19,7 @@ diff-cover==4.0.0
 
 # Temporary pin.
 backports-zoneinfo==0.2.1;python_version < "3.9"
+
+# Cause: pbr depends on pkg_resources, which is no longer included in newer setuptools versions
+# TODO: remove once pbr no longer depends on pkg_resources
+setuptools<70.0.0
