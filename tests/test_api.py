@@ -465,13 +465,20 @@ class ApiTests(TestCase):
         api.set_date_for_block(course_key, block3, 'due', override3, user=user3)
         api.set_date_for_block(course_key, block1, 'due', override2, user=user2)  # Multiple overrides per user
 
+        # Same user, same block, date changed twice — should only appear once in results
+        api.set_date_for_block(course_key, block3, 'due', override1, user=self.user)
+        api.set_date_for_block(course_key, block3, 'due', override2, user=self.user)
+        # Expected: one entry for (self.user, block3, override2), not two
+
         # Test get_overrides_for_course
         overrides = api.get_overrides_for_course(course_key)
 
-        # Should return all overrides, but only the latest for each user
+        # Should return all overrides, but only the latest for each user and block combination
         # Expected format: (username, full_name, email, location, date)
         expected_overrides = [
+            (self.user.username, 'unknown', self.user.email, block3, override2),
             (user2.username, 'unknown', user2.email, block1, override2),
+            (user2.username, 'unknown', user2.email, block2, override2),
             (user3.username, 'unknown', user3.email, block3, override3),
             (self.user.username, 'unknown', self.user.email, block1, override1),
         ]
@@ -481,6 +488,9 @@ class ApiTests(TestCase):
         expected_sorted = sorted(expected_overrides, key=lambda x: x[0])
 
         assert overrides_sorted == expected_sorted
+
+        # Make sure we have all overrides, including multiple for same user and block combination
+        assert len(overrides) == 5
 
     def test_get_overrides_for_course_empty(self):
         """Test get_overrides_for_course with no overrides."""

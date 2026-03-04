@@ -13,6 +13,10 @@ Change Log
 
 Unreleased
 ~~~~~~~~~~
+[3.2.1] - 2026-02-20
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* Add distinct query by block and user in get_overrides_for_course to prevent duplicate overrides when a user has multiple overrides for the same block.
+
 [3.2.0] - 2026-01-12
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * Extend ContentDate/UserDate models to support enhanced assignment metadata and future scheduling use cases.
