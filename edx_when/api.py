@@ -377,13 +377,18 @@ def get_overrides_for_course(course_id):
         content_date__course_id=course_id,
         content_date__active=True,
     ).order_by('-modified')
-    dates = []
-    users = set()
-    for udate in query:
-        if udate.user_id in users:
-            continue
 
-        users.add(udate.user_id)
+    dates = []
+    seen = set()
+    for udate in query:
+        key = (udate.user_id, udate.content_date_id)
+        if key in seen:
+            # We've already seen an override for this user and block combination, so skip it.
+            # We order by modified date descending, so we know we've already seen the latest
+            # override for this user and block.
+            continue
+        seen.add(key)
+
         username = udate.user.username
         try:
             full_name = udate.user.profile.name

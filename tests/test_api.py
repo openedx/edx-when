@@ -11,9 +11,11 @@ from django.contrib import auth
 from django.test import TestCase
 from django.urls import reverse
 from edx_django_utils.cache.utils import RequestCache, TieredCache
+from opaque_keys.edx.keys import CourseKey, UsageKey
 from opaque_keys.edx.locator import CourseLocator
 
 from edx_when import api, models
+from edx_when.api import Assignment
 from test_utils import make_block_id, make_items
 from tests.test_models_app.models import DummyCourse, DummyEnrollment, DummySchedule
 
@@ -465,13 +467,20 @@ class ApiTests(TestCase):
         api.set_date_for_block(course_key, block3, 'due', override3, user=user3)
         api.set_date_for_block(course_key, block1, 'due', override2, user=user2)  # Multiple overrides per user
 
+        # Same user, same block, date changed twice — should only appear once in results
+        api.set_date_for_block(course_key, block3, 'due', override1, user=self.user)
+        api.set_date_for_block(course_key, block3, 'due', override2, user=self.user)
+        # Expected: one entry for (self.user, block3, override2), not two
+
         # Test get_overrides_for_course
         overrides = api.get_overrides_for_course(course_key)
 
-        # Should return all overrides, but only the latest for each user
+        # Should return all overrides, but only the latest for each user and block combination
         # Expected format: (username, full_name, email, location, date)
         expected_overrides = [
+            (self.user.username, 'unknown', self.user.email, block3, override2),
             (user2.username, 'unknown', user2.email, block1, override2),
+            (user2.username, 'unknown', user2.email, block2, override2),
             (user3.username, 'unknown', user3.email, block3, override3),
             (self.user.username, 'unknown', self.user.email, block1, override1),
         ]
@@ -481,6 +490,9 @@ class ApiTests(TestCase):
         expected_sorted = sorted(expected_overrides, key=lambda x: x[0])
 
         assert overrides_sorted == expected_sorted
+
+        # Make sure we have all overrides, including multiple for same user and block combination
+        assert len(overrides) == 5
 
     def test_get_overrides_for_course_empty(self):
         """Test get_overrides_for_course with no overrides."""
@@ -737,3 +749,162 @@ class ApiWaffleTests(TestCase):
     @patch.dict(sys.modules, {'openedx.features.course_experience': None})
     def test_relative_dates_import_error(self):
         assert not api._are_relative_dates_enabled()  # pylint: disable=protected-access
+
+
+class TestUpdateAssignmentDatesForCourse(TestCase):
+    """
+    Tests for the update_assignment_dates_for_course task.
+    """
+
+    def setUp(self):
+        self.course_key = CourseKey.from_string('course-v1:edX+DemoX+Demo_Course')
+        self.course_key_str = str(self.course_key)
+        self.staff_user = User.objects.create_user(
+            username='staff_user',
+            email='staff@example.com',
+            is_staff=True
+        )
+        self.block_key = UsageKey.from_string(
+            'block-v1:edX+DemoX+Demo_Course+type@sequential+block@test1'
+        )
+        self.due_date = datetime(2024, 12, 31, 23, 59, 59)
+        self.assignments = [
+            Assignment(
+                title='Test Assignment',
+                date=self.due_date,
+                block_key=self.block_key,
+                assignment_type='Homework',
+                subsection_name='Test Subsection',
+            )
+        ]
+
+    def test_update_assignment_dates_new_records(self):
+        """
+        Test inserting new records when missing.
+        """
+        api.update_or_create_assignments_due_dates(self.course_key, self.assignments)
+
+        content_date = models.ContentDate.objects.get(
+            course_id=self.course_key,
+            location=self.block_key
+        )
+        self.assertEqual(content_date.assignment_title, 'Test Assignment')
+        self.assertEqual(content_date.subsection_name, 'Test Subsection')
+        self.assertEqual(content_date.block_type, 'Homework')
+        self.assertEqual(content_date.policy.abs_date, self.due_date)
+
+    def test_update_assignment_dates_existing_records(self):
+        """
+        Test updating existing records when values differ.
+        """
+        existing_policy = models.DatePolicy.objects.create(
+            abs_date=datetime(2024, 6, 1)
+        )
+        models.ContentDate.objects.create(
+            course_id=self.course_key,
+            location=self.block_key,
+            field='due',
+            block_type='Homework',
+            policy=existing_policy,
+            assignment_title='Old Title',
+            course_name=self.course_key.course,
+            subsection_name='Old Title'
+        )
+        new_assignment = Assignment(
+            title='Updated Assignment',
+            date=self.due_date,
+            block_key=self.block_key,
+            assignment_type='Homework',
+            subsection_name='Updated Subsection',
+        )
+
+        api.update_or_create_assignments_due_dates(self.course_key, [new_assignment])
+
+        content_date = models.ContentDate.objects.get(
+            course_id=self.course_key,
+            location=self.block_key
+        )
+        self.assertEqual(content_date.assignment_title, 'Updated Assignment')
+        self.assertEqual(content_date.subsection_name, 'Updated Subsection')
+        self.assertEqual(content_date.policy.abs_date, self.due_date)
+
+    def test_assignment_with_null_date(self):
+        """
+        Test handling assignments with null dates.
+        """
+        null_date_assignment = Assignment(
+            title='Null Date Assignment',
+            date=None,
+            block_key=self.block_key,
+            assignment_type='Homework',
+        )
+        api.update_or_create_assignments_due_dates(self.course_key, [null_date_assignment])
+
+        content_date_exists = models.ContentDate.objects.filter(
+            course_id=self.course_key,
+            location=self.block_key
+        ).exists()
+        self.assertFalse(content_date_exists)
+
+    def test_assignment_with_missing_metadata(self):
+        """
+        Test handling assignments with missing metadata (no title).
+        """
+        assignment = Assignment(
+            title='',
+            date=self.due_date,
+            block_key=self.block_key,
+            assignment_type='Homework',
+        )
+        api.update_or_create_assignments_due_dates(self.course_key, [assignment])
+
+        content_date_exists = models.ContentDate.objects.filter(
+            course_id=self.course_key,
+            location=self.block_key
+        ).exists()
+        self.assertFalse(content_date_exists)
+
+    def test_multiple_assignments(self):
+        """
+        Test processing multiple assignments.
+        """
+        assignment1 = Assignment(
+            title='Assignment 1',
+            date=self.due_date,
+            block_key=self.block_key,
+            assignment_type='Gradeable',
+        )
+
+        assignment2 = Assignment(
+            title='Assignment 2',
+            date=datetime(2025, 1, 15),
+            block_key=UsageKey.from_string(
+                'block-v1:edX+DemoX+Demo_Course+type@sequential+block@test2'
+            ),
+            assignment_type='Homework',
+        )
+        api.update_or_create_assignments_due_dates(self.course_key, [assignment1, assignment2])
+        self.assertEqual(models.ContentDate.objects.count(), 2)
+
+    def test_empty_assignments_list(self):
+        """
+        Test handling empty assignments list.
+        """
+        api.update_or_create_assignments_due_dates(self.course_key, [])
+        self.assertEqual(models.ContentDate.objects.count(), 0)
+
+    @patch('edx_when.models.DatePolicy.objects.get_or_create')
+    def test_date_policy_creation_exception(self, mock_policy_create):
+        """
+        Test handling exception during DatePolicy creation.
+        """
+        assignment = Assignment(
+            title='Test Assignment',
+            date=self.due_date,
+            block_key=self.block_key,
+            assignment_type='problem',
+        )
+        mock_policy_create.side_effect = Exception('Database Error')
+
+        with self.assertRaises(Exception):
+            api.update_or_create_assignments_due_dates(self.course_key, [assignment])
