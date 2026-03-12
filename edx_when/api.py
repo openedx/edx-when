@@ -3,7 +3,8 @@ API for retrieving and setting dates.
 """
 
 import logging
-from datetime import timedelta
+from dataclasses import dataclass
+from datetime import datetime, timedelta
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -546,6 +547,77 @@ def get_schedules_with_due_date(course_id, assignment_date):
         ).exclude(enrollment__user_id__in=user_ids).select_related('enrollment') | schedules
 
     return schedules
+
+
+@dataclass
+class Assignment:
+    """
+    Represents an assignment with a title, date, block key, assignment type, and optional subsection name.
+    """
+
+    title: str
+    date: datetime | None
+    block_key: UsageKey
+    assignment_type: str
+    subsection_name: str = ''
+
+    def __post_init__(self):
+        """
+        Validate the assignment object.
+        """
+        if self.date is not None and not isinstance(self.date, datetime):
+            raise TypeError("date must be a datetime object or None")
+        if not isinstance(self.block_key, UsageKey):
+            raise TypeError("block_key must be a UsageKey object")
+
+
+def update_or_create_assignments_due_dates(course_key, assignments: list[Assignment]):
+    """
+    Update or create due dates for a list of assignments in a course.
+
+    Each assignment's due date is written to ContentDate. If a ContentDate already
+    exists for (course_key, assignment.block_key, 'due'), it is updated; otherwise
+    a new one is created. All operations are performed inside a single database
+    transaction.
+
+    Arguments:
+        course_key: CourseKey or string representation of the course.
+        assignments: List of Assignment instances. Assignments with missing date or
+            title are skipped (with a warning). Use Assignment.subsection_name for
+            the containing subsection when available; it is stored separately from
+            assignment_title.
+
+    Returns:
+        None
+    """
+    course_key_str = str(course_key)
+    with transaction.atomic():
+        for assignment in assignments:
+            log.info(
+                "Updating assignment '%s' with due date '%s' for course %s",
+                assignment.title,
+                assignment.date,
+                course_key_str
+            )
+            if not all((assignment.date, assignment.title)):
+                log.warning(
+                    "Skipping assignment '%s' for course %s because it has no date or title",
+                    assignment,
+                    course_key_str
+                )
+                continue
+            models.ContentDate.objects.update_or_create(
+                course_id=course_key,
+                location=assignment.block_key,
+                field='due',
+                block_type=assignment.assignment_type,
+                defaults={
+                    'policy': models.DatePolicy.objects.get_or_create(abs_date=assignment.date)[0],
+                    'assignment_title': assignment.title,
+                    'course_name': course_key.course,
+                    'subsection_name': assignment.subsection_name,
+                }
+            )
 
 
 class BaseWhenException(Exception):
