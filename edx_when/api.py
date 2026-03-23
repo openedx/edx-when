@@ -137,6 +137,28 @@ def _get_end_dates_from_content_dates(qset):
     return end_datetime, cutoff_datetime
 
 
+def _resolve_policy_dates(content_dates, schedule=None, end_datetime=None, cutoff_datetime=None):
+    """
+    Resolve ContentDate objects to their policy-derived datetimes.
+
+    Passes schedule/end/cutoff so relative dates (self-paced courses) are included.
+    Silently skips entries that require a schedule when none is available.
+
+    Returns:
+        dict where keys are (location, field) tuples and values are datetime objects,
+        representing policy-resolved dates.
+    """
+    dates = {}
+    for cdate in content_dates:
+        try:
+            dates[(cdate.location, cdate.field)] = cdate.policy.actual_date(
+                schedule, end_datetime, cutoff_datetime
+            )
+        except models.MissingScheduleError:
+            pass
+    return dates
+
+
 def _processed_results_cache_key(
         course_id, user_id, schedule, allow_relative_dates,
         subsection_and_higher_only, published_version
@@ -581,28 +603,56 @@ def get_user_dates(course_id, user_id, block_types=None, block_keys=None, date_t
     if date_types:
         content_dates_query = content_dates_query.filter(field__in=date_types)
 
-    content_dates_query = content_dates_query.prefetch_related(
-        Prefetch(
-            'userdate_set',
-            queryset=models.UserDate.objects.filter(user_id=user_id).order_by('-modified'),
-            to_attr='user_overrides'
+    content_dates = list(
+        content_dates_query.prefetch_related(
+            Prefetch(
+                'userdate_set',
+                queryset=models.UserDate.objects.filter(user_id=user_id).order_by('-modified'),
+                to_attr='user_overrides'
+            )
         )
     )
 
-    dates = {}
+    schedule = get_schedule_for_user(user_id, course_id)
+    end_datetime, cutoff_datetime = _get_end_dates_from_content_dates(content_dates)
+    dates = _resolve_policy_dates(content_dates, schedule, end_datetime, cutoff_datetime)
 
-    for content_date in content_dates_query:
-        key = (content_date.location, content_date.field)
-
+    for content_date in content_dates:
         if content_date.user_overrides:
-            dates[key] = content_date.user_overrides[0].actual_date
-        else:
-            try:
-                dates[key] = content_date.policy.actual_date()
-            except (AttributeError, models.MissingScheduleError):
-                continue
+            dates[(content_date.location, content_date.field)] = content_date.user_overrides[0].actual_date
 
     return dates
+
+
+def get_existing_due_locations(course_key):
+    """
+    Return the set of block locations that already have an active 'due' ContentDate for the given course.
+
+    Arguments:
+        course_key: either a CourseKey or string representation of same
+
+    Returns:
+        set of UsageKey objects representing blocks with existing due dates
+    """
+    course_key = _ensure_key(CourseKey, course_key)
+    return set(
+        models.ContentDate.objects.filter(course_id=course_key, field='due', active=True)
+        .values_list('location', flat=True)
+    )
+
+
+def update_or_create_assignments_due_dates(course_key, assignments):
+    """
+    Create or update ContentDate entries for a list of assignment objects.
+
+    Arguments:
+        course_key: either a CourseKey or string representation of same
+        assignments: iterable of objects with attributes ``block_key`` (UsageKey) and ``date`` (datetime)
+    """
+    course_key = _ensure_key(CourseKey, course_key)
+    for assignment in assignments:
+        if assignment.date is not None:
+            set_date_for_block(course_key, assignment.block_key, 'due', assignment.date)
 
 
 class BaseWhenException(Exception):

@@ -1118,3 +1118,211 @@ class ApiWaffleTests(TestCase):
     @patch.dict(sys.modules, {'openedx.features.course_experience': None})
     def test_relative_dates_import_error(self):
         assert not api._are_relative_dates_enabled()  # pylint: disable=protected-access
+
+
+class TestResolvePolicyDates(TestCase):
+    """
+    Tests for the _resolve_policy_dates helper.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.course_key = CourseLocator('testX', 'tt101', '2019')
+
+    def test_absolute_date(self):
+        block_key = make_block_id(self.course_key)
+        policy = models.DatePolicy.objects.create(abs_date=datetime(2023, 1, 15))
+        content_date = models.ContentDate.objects.create(
+            course_id=self.course_key, location=block_key, field='due',
+            active=True, policy=policy, block_type='sequential'
+        )
+
+        result = api._resolve_policy_dates([content_date])  # pylint: disable=protected-access
+
+        assert result == {(block_key, 'due'): datetime(2023, 1, 15)}
+
+    def test_relative_date_with_schedule(self):
+        block_key = make_block_id(self.course_key)
+        policy = models.DatePolicy.objects.create(rel_date=timedelta(days=7))
+        content_date = models.ContentDate.objects.create(
+            course_id=self.course_key, location=block_key, field='due',
+            active=True, policy=policy, block_type='sequential'
+        )
+        schedule = Mock(start_date=datetime(2023, 1, 1), created=datetime(2023, 1, 1))
+
+        result = api._resolve_policy_dates([content_date], schedule=schedule)  # pylint: disable=protected-access
+
+        assert result == {(block_key, 'due'): datetime(2023, 1, 8)}
+
+    def test_relative_date_without_schedule_skipped(self):
+        block_key = make_block_id(self.course_key)
+        policy = models.DatePolicy.objects.create(rel_date=timedelta(days=7))
+        content_date = models.ContentDate.objects.create(
+            course_id=self.course_key, location=block_key, field='due',
+            active=True, policy=policy, block_type='sequential'
+        )
+
+        result = api._resolve_policy_dates([content_date])  # pylint: disable=protected-access
+
+        assert not result
+
+    def test_empty_content_dates(self):
+        result = api._resolve_policy_dates([])  # pylint: disable=protected-access
+        assert not result
+
+
+class TestGetUserDatesSelfPaced(TestCase):
+    """
+    Tests for get_user_dates, focusing on schedule-driven (self-paced) behaviour.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.course_key = CourseLocator('testX', 'tt101', '2019')
+        self.user = User(username='tester', email='tester@test.com')
+        self.user.save()
+
+        dummy_schedule_patcher = patch('edx_when.utils.Schedule', DummySchedule)
+        dummy_schedule_patcher.start()
+        self.addCleanup(dummy_schedule_patcher.stop)
+        self.addCleanup(RequestCache.clear_all_namespaces)
+
+    def _make_enrollment_with_schedule(self, start_date, created=None):
+        """Create a DummyCourse/Enrollment/Schedule chain for self.user."""
+        course = DummyCourse(id=self.course_key)
+        course.save()
+        enrollment = DummyEnrollment(user=self.user, course=course)
+        enrollment.save()
+        schedule = DummySchedule(
+            enrollment=enrollment,
+            start_date=start_date,
+            created=created or start_date,
+        )
+        schedule.save()
+        return schedule
+
+    def test_relative_date_resolved_when_schedule_exists(self):
+        block_key = make_block_id(self.course_key)
+        policy = models.DatePolicy.objects.create(rel_date=timedelta(days=7))
+        models.ContentDate.objects.create(
+            course_id=self.course_key, location=block_key, field='due',
+            active=True, policy=policy, block_type='sequential'
+        )
+        self._make_enrollment_with_schedule(start_date=datetime(2023, 1, 1))
+
+        result = api.get_user_dates(self.course_key, self.user.id)
+
+        assert result == {(block_key, 'due'): datetime(2023, 1, 8)}
+
+    def test_relative_date_skipped_without_schedule(self):
+        block_key = make_block_id(self.course_key)
+        policy = models.DatePolicy.objects.create(rel_date=timedelta(days=7))
+        models.ContentDate.objects.create(
+            course_id=self.course_key, location=block_key, field='due',
+            active=True, policy=policy, block_type='sequential'
+        )
+
+        result = api.get_user_dates(self.course_key, self.user.id)
+
+        assert not result
+
+    def test_user_override_takes_priority_over_relative_date(self):
+        block_key = make_block_id(self.course_key)
+        policy = models.DatePolicy.objects.create(rel_date=timedelta(days=7))
+        content_date = models.ContentDate.objects.create(
+            course_id=self.course_key, location=block_key, field='due',
+            active=True, policy=policy, block_type='sequential'
+        )
+        self._make_enrollment_with_schedule(start_date=datetime(2023, 1, 1))
+
+        override_date = datetime(2023, 1, 30)
+        models.UserDate.objects.create(user=self.user, content_date=content_date, abs_date=override_date)
+
+        result = api.get_user_dates(self.course_key, self.user.id)
+
+        assert result[(block_key, 'due')] == override_date
+
+
+class TestGetExistingDueLocations(TestCase):
+    """
+    Tests for get_existing_due_locations.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.course_key = CourseLocator('testX', 'tt101', '2019')
+
+    def test_returns_locations_with_active_due_dates(self):
+        block_key = make_block_id(self.course_key)
+        policy = models.DatePolicy.objects.create(abs_date=datetime(2023, 1, 15))
+        models.ContentDate.objects.create(
+            course_id=self.course_key, location=block_key, field='due',
+            active=True, policy=policy, block_type='sequential'
+        )
+
+        result = api.get_existing_due_locations(self.course_key)
+
+        assert block_key in result
+
+    def test_excludes_inactive_due_dates(self):
+        block_key = make_block_id(self.course_key)
+        policy = models.DatePolicy.objects.create(abs_date=datetime(2023, 1, 15))
+        models.ContentDate.objects.create(
+            course_id=self.course_key, location=block_key, field='due',
+            active=False, policy=policy, block_type='sequential'
+        )
+
+        result = api.get_existing_due_locations(self.course_key)
+
+        assert block_key not in result
+
+    def test_excludes_non_due_fields(self):
+        block_key = make_block_id(self.course_key)
+        policy = models.DatePolicy.objects.create(abs_date=datetime(2023, 1, 15))
+        models.ContentDate.objects.create(
+            course_id=self.course_key, location=block_key, field='start',
+            active=True, policy=policy, block_type='sequential'
+        )
+
+        result = api.get_existing_due_locations(self.course_key)
+
+        assert block_key not in result
+
+    def test_accepts_string_course_key(self):
+        result = api.get_existing_due_locations(str(self.course_key))
+        assert isinstance(result, set)
+
+
+class TestUpdateOrCreateAssignmentsDueDates(TestCase):
+    """
+    Tests for update_or_create_assignments_due_dates.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.course_key = CourseLocator('testX', 'tt101', '2019')
+
+    def test_creates_date_for_assignment(self):
+        block_key = make_block_id(self.course_key)
+        due = datetime(2023, 6, 1)
+        assignment = Mock(block_key=block_key, date=due)
+
+        api.update_or_create_assignments_due_dates(self.course_key, [assignment])
+
+        assert models.ContentDate.objects.filter(
+            course_id=self.course_key, location=block_key, field='due'
+        ).exists()
+
+    def test_skips_assignment_with_null_date(self):
+        block_key = make_block_id(self.course_key)
+        assignment = Mock(block_key=block_key, date=None)
+
+        api.update_or_create_assignments_due_dates(self.course_key, [assignment])
+
+        assert not models.ContentDate.objects.filter(
+            course_id=self.course_key, location=block_key
+        ).exists()
+
+    def test_empty_list_creates_nothing(self):
+        api.update_or_create_assignments_due_dates(self.course_key, [])
+        assert models.ContentDate.objects.count() == 0
