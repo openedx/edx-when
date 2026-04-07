@@ -4,21 +4,21 @@
 #
 #    make upgrade
 #
-cachetools==7.0.3
+cachetools==7.0.5
     # via tox
 certifi==2026.2.25
     # via requests
-charset-normalizer==3.4.5
+charset-normalizer==3.4.7
     # via requests
 codecov==2.1.13
     # via -r requirements/ci.in
 colorama==0.4.6
     # via tox
-coverage==7.13.4
+coverage==7.13.5
     # via codecov
 distlib==0.4.0
     # via virtualenv
-filelock==3.25.0
+filelock==3.25.2
     # via
     #   python-discovery
     #   tox
@@ -38,15 +38,17 @@ pluggy==1.6.0
     # via tox
 pyproject-api==1.10.0
     # via tox
-python-discovery==1.1.0
-    # via virtualenv
-requests==2.32.5
+python-discovery==1.2.1
+    # via
+    #   tox
+    #   virtualenv
+requests==2.33.1
     # via codecov
 tomli-w==1.2.0
     # via tox
-tox==4.49.0
+tox==4.52.0
     # via -r requirements/ci.in
 urllib3==2.6.3
     # via requests
-virtualenv==21.1.0
+virtualenv==21.2.0
     # via tox

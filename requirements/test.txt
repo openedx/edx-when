@@ -21,20 +21,20 @@ cffi==2.0.0
     #   -r requirements/base.txt
     #   cryptography
     #   pynacl
-charset-normalizer==3.4.5
+charset-normalizer==3.4.7
     # via
     #   -r requirements/base.txt
     #   requests
-click==8.3.1
+click==8.3.2
     # via
     #   -r requirements/base.txt
     #   code-annotations
     #   edx-django-utils
-code-annotations==2.3.2
+code-annotations==3.0.0
     # via -r requirements/test.in
-coverage[toml]==7.13.4
+coverage[toml]==7.13.5
     # via pytest-cov
-cryptography==46.0.5
+cryptography==46.0.6
     # via
     #   -r requirements/base.txt
     #   pyjwt
@@ -61,7 +61,7 @@ django-waffle==5.0.0
     #   -r requirements/base.txt
     #   edx-django-utils
     #   edx-drf-extensions
-djangorestframework==3.16.1
+djangorestframework==3.17.1
     # via
     #   -r requirements/base.txt
     #   drf-jwt
@@ -80,7 +80,7 @@ edx-django-utils==8.0.1
     #   edx-drf-extensions
 edx-drf-extensions==10.6.0
     # via -r requirements/base.txt
-edx-opaque-keys==3.1.0
+edx-opaque-keys==4.0.0
     # via
     #   -r requirements/base.txt
     #   edx-drf-extensions
@@ -126,9 +126,9 @@ pycparser==3.0
     # via
     #   -r requirements/base.txt
     #   cffi
-pygments==2.19.2
+pygments==2.20.0
     # via pytest
-pyjwt[crypto]==2.11.0
+pyjwt[crypto]==2.12.1
     # via
     #   -r requirements/base.txt
     #   drf-jwt
@@ -145,7 +145,7 @@ pytest==9.0.2
     # via
     #   pytest-cov
     #   pytest-django
-pytest-cov==7.0.0
+pytest-cov==7.1.0
     # via -r requirements/test.in
 pytest-django==4.12.0
     # via -r requirements/test.in
@@ -164,7 +164,7 @@ pyyaml==6.0.3
     #   -r requirements/base.txt
     #   code-annotations
     #   xblock
-requests==2.32.5
+requests==2.33.1
     # via
     #   -r requirements/base.txt
     #   edx-drf-extensions
@@ -201,7 +201,7 @@ urllib3==2.6.3
     # via
     #   -r requirements/base.txt
     #   requests
-web-fragments==3.1.0
+web-fragments==4.0.0
     # via
     #   -r requirements/base.txt
     #   xblock
@@ -209,7 +209,7 @@ webob==1.8.9
     # via
     #   -r requirements/base.txt
     #   xblock
-xblock==5.3.0
+xblock==6.0.0
     # via -r requirements/base.txt
 
 # The following packages are considered to be unsafe in a requirements file:
