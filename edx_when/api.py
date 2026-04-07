@@ -7,7 +7,7 @@ from datetime import timedelta
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import DateTimeField, ExpressionWrapper, F, ObjectDoesNotExist, Q
+from django.db.models import DateTimeField, ExpressionWrapper, F, ObjectDoesNotExist, Prefetch, Q
 from edx_django_utils.cache.utils import TieredCache
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey, UsageKey
@@ -135,6 +135,28 @@ def _get_end_dates_from_content_dates(qset):
     cutoff_datetime = end_datetime - last_date if last_date else end_datetime
 
     return end_datetime, cutoff_datetime
+
+
+def _resolve_policy_dates(content_dates, schedule=None, end_datetime=None, cutoff_datetime=None):
+    """
+    Resolve ContentDate objects to their policy-derived datetimes.
+
+    Passes schedule/end/cutoff so relative dates (self-paced courses) are included.
+    Silently skips entries that require a schedule when none is available.
+
+    Returns:
+        dict where keys are (location, field) tuples and values are datetime objects,
+        representing policy-resolved dates.
+    """
+    dates = {}
+    for cdate in content_dates:
+        try:
+            dates[(cdate.location, cdate.field)] = cdate.policy.actual_date(
+                schedule, end_datetime, cutoff_datetime
+            )
+        except models.MissingScheduleError:
+            pass
+    return dates
 
 
 def _processed_results_cache_key(
@@ -546,6 +568,91 @@ def get_schedules_with_due_date(course_id, assignment_date):
         ).exclude(enrollment__user_id__in=user_ids).select_related('enrollment') | schedules
 
     return schedules
+
+
+def get_user_dates(course_id, user_id, block_types=None, block_keys=None, date_types=None):
+    """
+    Get all user dates for a course with optional filters.
+
+    Arguments:
+        course_id: either a CourseKey or string representation of same
+        user_id: User ID
+        block_types: optional list of block types to filter by (e.g., ['sequential', 'vertical'])
+        block_keys: optional list of UsageKey objects or strings to filter by
+        date_types: optional list of date field types to filter by (e.g., ['due', 'start', 'end'])
+
+    Returns:
+        dict with keys as (location, field) tuples and values as date objects
+        User overrides take priority over content defaults
+    """
+    course_id = _ensure_key(CourseKey, course_id)
+
+    content_dates_query = models.ContentDate.objects.filter(
+        course_id=course_id,
+        active=True,
+    ).select_related('policy')
+
+    # Apply filters
+    if block_types:
+        content_dates_query = content_dates_query.filter(block_type__in=block_types)
+
+    if block_keys:
+        normalized_keys = [_ensure_key(UsageKey, key) for key in block_keys]
+        content_dates_query = content_dates_query.filter(location__in=normalized_keys)
+
+    if date_types:
+        content_dates_query = content_dates_query.filter(field__in=date_types)
+
+    content_dates = list(
+        content_dates_query.prefetch_related(
+            Prefetch(
+                'userdate_set',
+                queryset=models.UserDate.objects.filter(user_id=user_id).order_by('-modified'),
+                to_attr='user_overrides'
+            )
+        )
+    )
+
+    schedule = get_schedule_for_user(user_id, course_id)
+    end_datetime, cutoff_datetime = _get_end_dates_from_content_dates(content_dates)
+    dates = _resolve_policy_dates(content_dates, schedule, end_datetime, cutoff_datetime)
+
+    for content_date in content_dates:
+        if content_date.user_overrides:
+            dates[(content_date.location, content_date.field)] = content_date.user_overrides[0].actual_date
+
+    return dates
+
+
+def get_existing_due_locations(course_key):
+    """
+    Return the set of block locations that already have an active 'due' ContentDate for the given course.
+
+    Arguments:
+        course_key: either a CourseKey or string representation of same
+
+    Returns:
+        set of UsageKey objects representing blocks with existing due dates
+    """
+    course_key = _ensure_key(CourseKey, course_key)
+    return set(
+        models.ContentDate.objects.filter(course_id=course_key, field='due', active=True)
+        .values_list('location', flat=True)
+    )
+
+
+def update_or_create_assignments_due_dates(course_key, assignments):
+    """
+    Create or update ContentDate entries for a list of assignment objects.
+
+    Arguments:
+        course_key: either a CourseKey or string representation of same
+        assignments: iterable of objects with attributes ``block_key`` (UsageKey) and ``date`` (datetime)
+    """
+    course_key = _ensure_key(CourseKey, course_key)
+    for assignment in assignments:
+        if assignment.date is not None:
+            set_date_for_block(course_key, assignment.block_key, 'due', assignment.date)
 
 
 class BaseWhenException(Exception):

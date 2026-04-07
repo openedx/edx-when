@@ -11,6 +11,7 @@ from django.contrib import auth
 from django.test import TestCase
 from django.urls import reverse
 from edx_django_utils.cache.utils import RequestCache, TieredCache
+from opaque_keys.edx.keys import CourseKey, UsageKey
 from opaque_keys.edx.locator import CourseLocator
 
 from edx_when import api, models
@@ -721,6 +722,376 @@ class ApiTests(TestCase):
         self.assertEqual(response.status_code, 403)
 
 
+class TestGetUserDates(TestCase):
+    """
+    Test cases for the get_user_dates API function.
+    """
+
+    def test_get_user_dates_basic(self):
+        """
+        Test basic functionality of get_user_dates.
+        """
+        course_id = CourseKey.from_string('course-v1:TestX+Test+2023')
+        user_id = 123
+
+        block_key = UsageKey.from_string('block-v1:TestX+Test+2023+type@sequential+block@test')
+
+        policy = models.DatePolicy.objects.create(abs_date=datetime(2023, 1, 15, 10, 0, 0))
+        models.ContentDate.objects.create(
+            course_id=course_id,
+            location=block_key,
+            field='due',
+            active=True,
+            policy=policy,
+            block_type='sequential'
+        )
+
+        result = api.get_user_dates(course_id, user_id)
+
+        expected_key = (block_key, 'due')
+        self.assertIn(expected_key, result)
+        self.assertEqual(result[expected_key], datetime(2023, 1, 15, 10, 0, 0))
+
+    def test_get_user_dates_with_user_overrides(self):
+        """
+        Test get_user_dates with user overrides taking priority.
+        """
+        course_id = CourseKey.from_string('course-v1:TestX+Test+2023')
+        user_id = 123
+
+        block_key = UsageKey.from_string('block-v1:TestX+Test+2023+type@sequential+block@test')
+
+        policy = models.DatePolicy.objects.create(abs_date=datetime(2023, 1, 15, 10, 0, 0))
+        content_date = models.ContentDate.objects.create(
+            course_id=course_id,
+            location=block_key,
+            field='due',
+            active=True,
+            policy=policy,
+            block_type='sequential'
+        )
+
+        user = User.objects.create(username='testuser', id=user_id)
+        models.UserDate.objects.create(
+            user=user,
+            content_date=content_date,
+            abs_date=datetime(2023, 1, 20, 10, 0, 0)
+        )
+
+        result = api.get_user_dates(course_id, user_id)
+
+        expected_key = (block_key, 'due')
+        self.assertIn(expected_key, result)
+        self.assertEqual(result[expected_key], datetime(2023, 1, 20, 10, 0, 0))
+
+    def test_get_user_dates_with_block_type_filter(self):
+        """
+        Test get_user_dates with block type filtering.
+        """
+        course_id = CourseKey.from_string('course-v1:TestX+Test+2023')
+        user_id = 123
+
+        seq_key = UsageKey.from_string('block-v1:TestX+Test+2023+type@sequential+block@seq1')
+        seq_policy = models.DatePolicy.objects.create(abs_date=datetime(2023, 1, 15, 10, 0, 0))
+        models.ContentDate.objects.create(
+            course_id=course_id,
+            location=seq_key,
+            field='due',
+            active=True,
+            policy=seq_policy,
+            block_type='sequential'
+        )
+
+        seq_2_key = UsageKey.from_string('block-v1:TestX+Test+2023+type@sequential+block@seq2')
+        seq_2_policy = models.DatePolicy.objects.create(abs_date=datetime(2023, 1, 16, 10, 0, 0))
+        models.ContentDate.objects.create(
+            course_id=course_id,
+            location=seq_2_key,
+            field='due',
+            active=True,
+            policy=seq_2_policy,
+            block_type='vertical'
+        )
+
+        result = api.get_user_dates(course_id, user_id, block_types=['sequential'])
+
+        self.assertEqual(len(result), 1)
+        self.assertIn((seq_key, 'due'), result)
+        self.assertNotIn((seq_2_key, 'due'), result)
+
+    def test_get_user_dates_with_block_keys_filter(self):
+        """
+        Test get_user_dates with specific block keys filtering.
+        """
+        course_id = CourseKey.from_string('course-v1:TestX+Test+2023')
+        user_id = 123
+
+        block1_key = UsageKey.from_string('block-v1:TestX+Test+2023+type@sequential+block@seq1')
+        block1_policy = models.DatePolicy.objects.create(abs_date=datetime(2023, 1, 15, 10, 0, 0))
+        models.ContentDate.objects.create(
+            course_id=course_id,
+            location=block1_key,
+            field='due',
+            active=True,
+            policy=block1_policy,
+            block_type='sequential'
+        )
+
+        block2_key = UsageKey.from_string('block-v1:TestX+Test+2023+type@sequential+block@seq2')
+        block2_policy = models.DatePolicy.objects.create(abs_date=datetime(2023, 1, 16, 10, 0, 0))
+        models.ContentDate.objects.create(
+            course_id=course_id,
+            location=block2_key,
+            field='due',
+            active=True,
+            policy=block2_policy,
+            block_type='sequential'
+        )
+
+        result = api.get_user_dates(course_id, user_id, block_keys=[block1_key])
+
+        self.assertEqual(len(result), 1)
+        self.assertIn((block1_key, 'due'), result)
+        self.assertNotIn((block2_key, 'due'), result)
+
+    def test_get_user_dates_with_date_types_filter(self):
+        """
+        Test get_user_dates with date type filtering.
+        """
+        course_id = CourseKey.from_string('course-v1:TestX+Test+2023')
+        user_id = 123
+
+        block_key = UsageKey.from_string('block-v1:TestX+Test+2023+type@sequential+block@test')
+
+        due_policy = models.DatePolicy.objects.create(abs_date=datetime(2023, 1, 15, 10, 0, 0))
+        models.ContentDate.objects.create(
+            course_id=course_id,
+            location=block_key,
+            field='due',
+            active=True,
+            policy=due_policy,
+            block_type='sequential'
+        )
+
+        start_policy = models.DatePolicy.objects.create(abs_date=datetime(2023, 1, 10, 10, 0, 0))
+        models.ContentDate.objects.create(
+            course_id=course_id,
+            location=block_key,
+            field='start',
+            active=True,
+            policy=start_policy,
+            block_type='sequential'
+        )
+
+        result = api.get_user_dates(course_id, user_id, date_types=['due'])
+
+        self.assertEqual(len(result), 1)
+        self.assertIn((block_key, 'due'), result)
+        self.assertNotIn((block_key, 'start'), result)
+
+    def test_get_user_dates_multiple_filters(self):
+        """
+        Test get_user_dates with multiple filters combined.
+        """
+        course_id = CourseKey.from_string('course-v1:TestX+Test+2023')
+        user_id = 123
+
+        seq_key = UsageKey.from_string('block-v1:TestX+Test+2023+type@sequential+block@seq1')
+        vert_key = UsageKey.from_string('block-v1:TestX+Test+2023+type@vertical+block@vert1')
+
+        seq_due_policy = models.DatePolicy.objects.create(abs_date=datetime(2023, 1, 15, 10, 0, 0))
+        models.ContentDate.objects.create(
+            course_id=course_id,
+            location=seq_key,
+            field='due',
+            active=True,
+            policy=seq_due_policy,
+            block_type='sequential'
+        )
+
+        seq_start_policy = models.DatePolicy.objects.create(abs_date=datetime(2023, 1, 10, 10, 0, 0))
+        models.ContentDate.objects.create(
+            course_id=course_id,
+            location=seq_key,
+            field='start',
+            active=True,
+            policy=seq_start_policy,
+            block_type='sequential'
+        )
+
+        vert_due_policy = models.DatePolicy.objects.create(abs_date=datetime(2023, 1, 16, 10, 0, 0))
+        models.ContentDate.objects.create(
+            course_id=course_id,
+            location=vert_key,
+            field='due',
+            active=True,
+            policy=vert_due_policy,
+            block_type='vertical'
+        )
+
+        result = api.get_user_dates(
+            course_id, user_id,
+            block_types=['sequential'],
+            date_types=['due']
+        )
+
+        self.assertEqual(len(result), 1)
+        self.assertIn((seq_key, 'due'), result)
+        self.assertNotIn((seq_key, 'start'), result)
+        self.assertNotIn((vert_key, 'due'), result)
+
+    def test_get_user_dates_inactive_dates_excluded(self):
+        """
+        Test that inactive content dates are excluded.
+        """
+        course_id = CourseKey.from_string('course-v1:TestX+Test+2023')
+        user_id = 123
+
+        block_key = UsageKey.from_string('block-v1:TestX+Test+2023+type@sequential+block@test')
+
+        policy = models.DatePolicy.objects.create(abs_date=datetime(2023, 1, 15, 10, 0, 0))
+        models.ContentDate.objects.create(
+            course_id=course_id,
+            location=block_key,
+            field='due',
+            active=False,
+            policy=policy,
+            block_type='sequential'
+        )
+
+        result = api.get_user_dates(course_id, user_id)
+        self.assertEqual(len(result), 0)
+
+    def test_get_user_dates_missing_schedule_error_handled(self):
+        """
+        Test that MissingScheduleError is handled gracefully.
+        """
+        course_id = CourseKey.from_string('course-v1:TestX+Test+2023')
+        user_id = 123
+
+        block_key = UsageKey.from_string('block-v1:TestX+Test+2023+type@sequential+block@test')
+
+        policy = models.DatePolicy.objects.create(rel_date=timedelta(days=7))
+        models.ContentDate.objects.create(
+            course_id=course_id,
+            location=block_key,
+            field='due',
+            active=True,
+            policy=policy,
+            block_type='sequential'
+        )
+
+        result = api.get_user_dates(course_id, user_id)
+        self.assertEqual(len(result), 0)
+
+    def test_get_user_dates_string_course_key(self):
+        """
+        Test get_user_dates with string course key.
+        """
+        course_id_str = 'course-v1:TestX+Test+2023'
+        course_id = CourseKey.from_string(course_id_str)
+        user_id = 123
+
+        block_key = UsageKey.from_string('block-v1:TestX+Test+2023+type@sequential+block@test')
+
+        policy = models.DatePolicy.objects.create(abs_date=datetime(2023, 1, 15, 10, 0, 0))
+        models.ContentDate.objects.create(
+            course_id=course_id,
+            location=block_key,
+            field='due',
+            active=True,
+            policy=policy,
+            block_type='sequential'
+        )
+
+        result = api.get_user_dates(course_id_str, user_id)
+
+        expected_key = (block_key, 'due')
+        self.assertIn(expected_key, result)
+
+    def test_get_user_dates_string_block_keys(self):
+        """
+        Test get_user_dates with string block keys in filter.
+        """
+        course_id = CourseKey.from_string('course-v1:TestX+Test+2023')
+        user_id = 123
+
+        block_key_str = 'block-v1:TestX+Test+2023+type@sequential+block@test'
+        block_key = UsageKey.from_string(block_key_str)
+
+        policy = models.DatePolicy.objects.create(abs_date=datetime(2023, 1, 15, 10, 0, 0))
+        models.ContentDate.objects.create(
+            course_id=course_id,
+            location=block_key,
+            field='due',
+            active=True,
+            policy=policy,
+            block_type='sequential'
+        )
+
+        result = api.get_user_dates(course_id, user_id, block_keys=[block_key_str])
+
+        expected_key = (block_key, 'due')
+        self.assertIn(expected_key, result)
+
+    def test_get_user_dates_empty_result(self):
+        """
+        Test get_user_dates with no matching dates.
+        """
+        course_id = CourseKey.from_string('course-v1:TestX+Test+2023')
+        user_id = 123
+
+        result = api.get_user_dates(course_id, user_id)
+
+        self.assertEqual(result, {})
+
+    def test_get_user_dates_latest_user_override(self):
+        """
+        Test that the latest user override is used when multiple exist.
+        """
+        course_id = CourseKey.from_string('course-v1:TestX+Test+2023')
+        user_id = 123
+
+        block_key = UsageKey.from_string('block-v1:TestX+Test+2023+type@sequential+block@test')
+
+        policy = models.DatePolicy.objects.create(abs_date=datetime(2023, 1, 15, 10, 0, 0))
+        content_date = models.ContentDate.objects.create(
+            course_id=course_id,
+            location=block_key,
+            field='due',
+            active=True,
+            policy=policy,
+            block_type='sequential'
+        )
+
+        user = User.objects.create(username='testuser', id=user_id)
+
+        older_override = models.UserDate.objects.create(
+            user=user,
+            content_date=content_date,
+            abs_date=datetime(2023, 1, 20, 10, 0, 0)
+        )
+        older_override.modified = datetime(2023, 1, 1, 10, 0, 0)
+        older_override.save()
+
+        newer_override = models.UserDate.objects.create(
+            user=user,
+            content_date=content_date,
+            abs_date=datetime(2023, 1, 25, 10, 0, 0)
+        )
+        newer_override.modified = datetime(2023, 1, 2, 10, 0, 0)
+        newer_override.save()
+
+        older_override.refresh_from_db()
+        newer_override.refresh_from_db()
+        self.assertLess(older_override.modified, newer_override.modified)
+
+        result = api.get_user_dates(course_id, user_id)
+
+        expected_key = (block_key, 'due')
+        self.assertEqual(result[expected_key], datetime(2023, 1, 25, 10, 0, 0))
+
+
 class ApiWaffleTests(TestCase):
     """
     Tests for edx_when.api waffle usage.
@@ -747,3 +1118,211 @@ class ApiWaffleTests(TestCase):
     @patch.dict(sys.modules, {'openedx.features.course_experience': None})
     def test_relative_dates_import_error(self):
         assert not api._are_relative_dates_enabled()  # pylint: disable=protected-access
+
+
+class TestResolvePolicyDates(TestCase):
+    """
+    Tests for the _resolve_policy_dates helper.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.course_key = CourseLocator('testX', 'tt101', '2019')
+
+    def test_absolute_date(self):
+        block_key = make_block_id(self.course_key)
+        policy = models.DatePolicy.objects.create(abs_date=datetime(2023, 1, 15))
+        content_date = models.ContentDate.objects.create(
+            course_id=self.course_key, location=block_key, field='due',
+            active=True, policy=policy, block_type='sequential'
+        )
+
+        result = api._resolve_policy_dates([content_date])  # pylint: disable=protected-access
+
+        assert result == {(block_key, 'due'): datetime(2023, 1, 15)}
+
+    def test_relative_date_with_schedule(self):
+        block_key = make_block_id(self.course_key)
+        policy = models.DatePolicy.objects.create(rel_date=timedelta(days=7))
+        content_date = models.ContentDate.objects.create(
+            course_id=self.course_key, location=block_key, field='due',
+            active=True, policy=policy, block_type='sequential'
+        )
+        schedule = Mock(start_date=datetime(2023, 1, 1), created=datetime(2023, 1, 1))
+
+        result = api._resolve_policy_dates([content_date], schedule=schedule)  # pylint: disable=protected-access
+
+        assert result == {(block_key, 'due'): datetime(2023, 1, 8)}
+
+    def test_relative_date_without_schedule_skipped(self):
+        block_key = make_block_id(self.course_key)
+        policy = models.DatePolicy.objects.create(rel_date=timedelta(days=7))
+        content_date = models.ContentDate.objects.create(
+            course_id=self.course_key, location=block_key, field='due',
+            active=True, policy=policy, block_type='sequential'
+        )
+
+        result = api._resolve_policy_dates([content_date])  # pylint: disable=protected-access
+
+        assert not result
+
+    def test_empty_content_dates(self):
+        result = api._resolve_policy_dates([])  # pylint: disable=protected-access
+        assert not result
+
+
+class TestGetUserDatesSelfPaced(TestCase):
+    """
+    Tests for get_user_dates, focusing on schedule-driven (self-paced) behaviour.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.course_key = CourseLocator('testX', 'tt101', '2019')
+        self.user = User(username='tester', email='tester@test.com')
+        self.user.save()
+
+        dummy_schedule_patcher = patch('edx_when.utils.Schedule', DummySchedule)
+        dummy_schedule_patcher.start()
+        self.addCleanup(dummy_schedule_patcher.stop)
+        self.addCleanup(RequestCache.clear_all_namespaces)
+
+    def _make_enrollment_with_schedule(self, start_date, created=None):
+        """Create a DummyCourse/Enrollment/Schedule chain for self.user."""
+        course = DummyCourse(id=self.course_key)
+        course.save()
+        enrollment = DummyEnrollment(user=self.user, course=course)
+        enrollment.save()
+        schedule = DummySchedule(
+            enrollment=enrollment,
+            start_date=start_date,
+            created=created or start_date,
+        )
+        schedule.save()
+        return schedule
+
+    def test_relative_date_resolved_when_schedule_exists(self):
+        block_key = make_block_id(self.course_key)
+        policy = models.DatePolicy.objects.create(rel_date=timedelta(days=7))
+        models.ContentDate.objects.create(
+            course_id=self.course_key, location=block_key, field='due',
+            active=True, policy=policy, block_type='sequential'
+        )
+        self._make_enrollment_with_schedule(start_date=datetime(2023, 1, 1))
+
+        result = api.get_user_dates(self.course_key, self.user.id)
+
+        assert result == {(block_key, 'due'): datetime(2023, 1, 8)}
+
+    def test_relative_date_skipped_without_schedule(self):
+        block_key = make_block_id(self.course_key)
+        policy = models.DatePolicy.objects.create(rel_date=timedelta(days=7))
+        models.ContentDate.objects.create(
+            course_id=self.course_key, location=block_key, field='due',
+            active=True, policy=policy, block_type='sequential'
+        )
+
+        result = api.get_user_dates(self.course_key, self.user.id)
+
+        assert not result
+
+    def test_user_override_takes_priority_over_relative_date(self):
+        block_key = make_block_id(self.course_key)
+        policy = models.DatePolicy.objects.create(rel_date=timedelta(days=7))
+        content_date = models.ContentDate.objects.create(
+            course_id=self.course_key, location=block_key, field='due',
+            active=True, policy=policy, block_type='sequential'
+        )
+        self._make_enrollment_with_schedule(start_date=datetime(2023, 1, 1))
+
+        override_date = datetime(2023, 1, 30)
+        models.UserDate.objects.create(user=self.user, content_date=content_date, abs_date=override_date)
+
+        result = api.get_user_dates(self.course_key, self.user.id)
+
+        assert result[(block_key, 'due')] == override_date
+
+
+class TestGetExistingDueLocations(TestCase):
+    """
+    Tests for get_existing_due_locations.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.course_key = CourseLocator('testX', 'tt101', '2019')
+
+    def test_returns_locations_with_active_due_dates(self):
+        block_key = make_block_id(self.course_key)
+        policy = models.DatePolicy.objects.create(abs_date=datetime(2023, 1, 15))
+        models.ContentDate.objects.create(
+            course_id=self.course_key, location=block_key, field='due',
+            active=True, policy=policy, block_type='sequential'
+        )
+
+        result = api.get_existing_due_locations(self.course_key)
+
+        assert block_key in result
+
+    def test_excludes_inactive_due_dates(self):
+        block_key = make_block_id(self.course_key)
+        policy = models.DatePolicy.objects.create(abs_date=datetime(2023, 1, 15))
+        models.ContentDate.objects.create(
+            course_id=self.course_key, location=block_key, field='due',
+            active=False, policy=policy, block_type='sequential'
+        )
+
+        result = api.get_existing_due_locations(self.course_key)
+
+        assert block_key not in result
+
+    def test_excludes_non_due_fields(self):
+        block_key = make_block_id(self.course_key)
+        policy = models.DatePolicy.objects.create(abs_date=datetime(2023, 1, 15))
+        models.ContentDate.objects.create(
+            course_id=self.course_key, location=block_key, field='start',
+            active=True, policy=policy, block_type='sequential'
+        )
+
+        result = api.get_existing_due_locations(self.course_key)
+
+        assert block_key not in result
+
+    def test_accepts_string_course_key(self):
+        result = api.get_existing_due_locations(str(self.course_key))
+        assert isinstance(result, set)
+
+
+class TestUpdateOrCreateAssignmentsDueDates(TestCase):
+    """
+    Tests for update_or_create_assignments_due_dates.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.course_key = CourseLocator('testX', 'tt101', '2019')
+
+    def test_creates_date_for_assignment(self):
+        block_key = make_block_id(self.course_key)
+        due = datetime(2023, 6, 1)
+        assignment = Mock(block_key=block_key, date=due)
+
+        api.update_or_create_assignments_due_dates(self.course_key, [assignment])
+
+        assert models.ContentDate.objects.filter(
+            course_id=self.course_key, location=block_key, field='due'
+        ).exists()
+
+    def test_skips_assignment_with_null_date(self):
+        block_key = make_block_id(self.course_key)
+        assignment = Mock(block_key=block_key, date=None)
+
+        api.update_or_create_assignments_due_dates(self.course_key, [assignment])
+
+        assert not models.ContentDate.objects.filter(
+            course_id=self.course_key, location=block_key
+        ).exists()
+
+    def test_empty_list_creates_nothing(self):
+        api.update_or_create_assignments_due_dates(self.course_key, [])
+        assert models.ContentDate.objects.count() == 0
