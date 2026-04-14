@@ -46,7 +46,7 @@ coverage[toml]==7.13.5
     # via
     #   -r requirements/test.txt
     #   pytest-cov
-cryptography==46.0.6
+cryptography==46.0.7
     # via
     #   -r requirements/test.txt
     #   pyjwt
@@ -140,7 +140,7 @@ jinja2==3.1.6
     #   sphinx
 keyring==25.7.0
     # via twine
-lxml==6.0.2
+lxml==6.0.4
     # via
     #   -r requirements/test.txt
     #   xblock
@@ -160,7 +160,7 @@ mdurl==0.1.2
     # via markdown-it-py
 mock==5.2.0
     # via -r requirements/test.txt
-more-itertools==11.0.1
+more-itertools==11.0.2
     # via
     #   jaraco-classes
     #   jaraco-functools
@@ -210,7 +210,7 @@ pynacl==1.6.2
     # via
     #   -r requirements/test.txt
     #   edx-django-utils
-pytest==9.0.2
+pytest==9.0.3
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -251,7 +251,7 @@ restructuredtext-lint==2.0.2
     # via doc8
 rfc3986==2.0.0
     # via twine
-rich==14.3.3
+rich==15.0.0
     # via twine
 roman-numerals==4.1.0
     # via sphinx
