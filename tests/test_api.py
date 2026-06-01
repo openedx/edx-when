@@ -985,6 +985,35 @@ class TestGetUserDates(TestCase):
         result = api.get_user_dates(course_id, user_id)
         self.assertEqual(len(result), 0)
 
+    def test_get_user_dates_override_missing_schedule_error_handled(self):
+        """
+        A relative user override with no schedule must be skipped, not raise.
+        """
+        course_id = CourseKey.from_string('course-v1:TestX+Test+2023')
+        user_id = 123
+
+        block_key = UsageKey.from_string('block-v1:TestX+Test+2023+type@sequential+block@test')
+
+        policy = models.DatePolicy.objects.create(rel_date=timedelta(days=7))
+        content_date = models.ContentDate.objects.create(
+            course_id=course_id,
+            location=block_key,
+            field='due',
+            active=True,
+            policy=policy,
+            block_type='sequential'
+        )
+
+        user = User.objects.create(username='testuser', id=user_id)
+        models.UserDate.objects.create(
+            user=user,
+            content_date=content_date,
+            rel_date=timedelta(days=3)
+        )
+
+        result = api.get_user_dates(course_id, user_id)
+        self.assertEqual(len(result), 0)
+
     def test_get_user_dates_string_course_key(self):
         """
         Test get_user_dates with string course key.

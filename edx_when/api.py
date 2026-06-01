@@ -707,7 +707,11 @@ def get_user_dates(course_id, user_id, block_types=None, block_keys=None, date_t
 
     for content_date in content_dates:
         if content_date.user_overrides:
-            dates[(content_date.location, content_date.field)] = content_date.user_overrides[0].actual_date
+            try:
+                actual_date = content_date.user_overrides[0].actual_date
+            except models.MissingScheduleError:
+                continue
+            dates[(content_date.location, content_date.field)] = actual_date
 
     return dates
 
