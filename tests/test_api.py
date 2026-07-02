@@ -1411,9 +1411,10 @@ class TestResolvePolicyDates(TestCase):
             active=True, policy=policy, block_type='sequential'
         )
 
-        result = api._resolve_policy_dates([content_date])  # pylint: disable=protected-access
+        result, policies = api._resolve_policy_dates([content_date])  # pylint: disable=protected-access
 
         assert result == {(block_key, 'due'): datetime(2023, 1, 15)}
+        assert policies == {content_date.id: (block_key, 'due')}
 
     def test_relative_date_with_schedule(self):
         block_key = make_block_id(self.course_key)
@@ -1424,7 +1425,7 @@ class TestResolvePolicyDates(TestCase):
         )
         schedule = Mock(start_date=datetime(2023, 1, 1), created=datetime(2023, 1, 1))
 
-        result = api._resolve_policy_dates([content_date], schedule=schedule)  # pylint: disable=protected-access
+        result, _ = api._resolve_policy_dates([content_date], schedule=schedule)  # pylint: disable=protected-access
 
         assert result == {(block_key, 'due'): datetime(2023, 1, 8)}
 
@@ -1436,13 +1437,14 @@ class TestResolvePolicyDates(TestCase):
             active=True, policy=policy, block_type='sequential'
         )
 
-        result = api._resolve_policy_dates([content_date])  # pylint: disable=protected-access
+        result, _ = api._resolve_policy_dates([content_date])  # pylint: disable=protected-access
 
         assert not result
 
     def test_empty_content_dates(self):
-        result = api._resolve_policy_dates([])  # pylint: disable=protected-access
+        result, policies = api._resolve_policy_dates([])  # pylint: disable=protected-access
         assert not result
+        assert not policies
 
 
 class TestGetUserDatesSelfPaced(TestCase):
@@ -1459,6 +1461,10 @@ class TestGetUserDatesSelfPaced(TestCase):
         dummy_schedule_patcher = patch('edx_when.utils.Schedule', DummySchedule)
         dummy_schedule_patcher.start()
         self.addCleanup(dummy_schedule_patcher.stop)
+
+        relative_dates_patcher = patch('edx_when.api._are_relative_dates_enabled', return_value=True)
+        relative_dates_patcher.start()
+        self.addCleanup(relative_dates_patcher.stop)
         self.addCleanup(RequestCache.clear_all_namespaces)
 
     def _make_enrollment_with_schedule(self, start_date, created=None):
@@ -1517,9 +1523,9 @@ class TestGetUserDatesSelfPaced(TestCase):
         assert result[(block_key, 'due')] == override_date
 
 
-class TestGetExistingDueLocations(TestCase):
+class TestGetLocationsWithDueDates(TestCase):
     """
-    Tests for get_existing_due_locations.
+    Tests for get_locations_with_due_dates.
     """
 
     def setUp(self):
@@ -1534,7 +1540,7 @@ class TestGetExistingDueLocations(TestCase):
             active=True, policy=policy, block_type='sequential'
         )
 
-        result = api.get_existing_due_locations(self.course_key)
+        result = api.get_locations_with_due_dates(self.course_key)
 
         assert block_key in result
 
@@ -1546,7 +1552,7 @@ class TestGetExistingDueLocations(TestCase):
             active=False, policy=policy, block_type='sequential'
         )
 
-        result = api.get_existing_due_locations(self.course_key)
+        result = api.get_locations_with_due_dates(self.course_key)
 
         assert block_key not in result
 
@@ -1558,45 +1564,107 @@ class TestGetExistingDueLocations(TestCase):
             active=True, policy=policy, block_type='sequential'
         )
 
-        result = api.get_existing_due_locations(self.course_key)
+        result = api.get_locations_with_due_dates(self.course_key)
 
         assert block_key not in result
 
     def test_accepts_string_course_key(self):
-        result = api.get_existing_due_locations(str(self.course_key))
+        result = api.get_locations_with_due_dates(str(self.course_key))
         assert isinstance(result, set)
 
 
-class TestUpdateOrCreateAssignmentsDueDates(TestCase):
+class TestGetUserDatesRelativeDates(TestCase):
     """
-    Tests for update_or_create_assignments_due_dates.
+    Tests for get_user_dates relative-date handling: course end cap, self-paced cutoff,
+    and the _are_relative_dates_enabled toggle. These exercise the case where caller
+    filters (date_types/block_types) would otherwise hide the course end row needed to
+    compute the cap/cutoff.
     """
 
     def setUp(self):
         super().setUp()
-        self.course_key = CourseLocator('testX', 'tt101', '2019')
+        self.course_key = CourseKey.from_string('course-v1:TestX+Test+2023')
+        self.course = DummyCourse(id=self.course_key)
+        self.course.save()
+        self.user = User.objects.create(username='rel-tester')
+        self.enrollment = DummyEnrollment(user=self.user, course=self.course)
+        self.enrollment.save()
 
-    def test_creates_date_for_assignment(self):
-        block_key = make_block_id(self.course_key)
-        due = datetime(2023, 6, 1)
-        assignment = Mock(block_key=block_key, date=due)
+        schedule_patcher = patch('edx_when.utils.Schedule', DummySchedule)
+        schedule_patcher.start()
+        self.addCleanup(schedule_patcher.stop)
 
-        api.update_or_create_assignments_due_dates(self.course_key, [assignment])
+        relative_dates_patcher = patch('edx_when.api._are_relative_dates_enabled', return_value=True)
+        relative_dates_patcher.start()
+        self.addCleanup(relative_dates_patcher.stop)
+        self.addCleanup(RequestCache.clear_all_namespaces)
 
-        assert models.ContentDate.objects.filter(
-            course_id=self.course_key, location=block_key, field='due'
-        ).exists()
+        self.due_block = make_block_id(self.course_key, block_type='sequential')
+        self.end_block = make_block_id(self.course_key, block_type='course')
 
-    def test_skips_assignment_with_null_date(self):
-        block_key = make_block_id(self.course_key)
-        assignment = Mock(block_key=block_key, date=None)
+    def _make_schedule(self, start_date, created):
+        DummySchedule(enrollment=self.enrollment, start_date=start_date, created=created).save()
 
-        api.update_or_create_assignments_due_dates(self.course_key, [assignment])
+    def _make_relative_due(self, rel_date):
+        models.ContentDate.objects.create(
+            course_id=self.course_key, location=self.due_block, field='due', active=True,
+            block_type='sequential', policy=models.DatePolicy.objects.create(rel_date=rel_date),
+        )
 
-        assert not models.ContentDate.objects.filter(
-            course_id=self.course_key, location=block_key
-        ).exists()
+    def _make_course_end(self, end_date):
+        models.ContentDate.objects.create(
+            course_id=self.course_key, location=self.end_block, field='end', active=True,
+            block_type='course', policy=models.DatePolicy.objects.create(abs_date=end_date),
+        )
 
-    def test_empty_list_creates_nothing(self):
-        api.update_or_create_assignments_due_dates(self.course_key, [])
-        assert models.ContentDate.objects.count() == 0
+    def test_due_filter_still_applies_course_end_cap(self):
+        """
+        A relative due date is capped at the course end even when date_types=['due']
+        excludes the course end row from the returned/queried set.
+        """
+        self._make_relative_due(timedelta(days=100))
+        self._make_course_end(datetime(2023, 1, 20))
+        # created long ago (passes cutoff), schedule started 2023-01-01.
+        self._make_schedule(start_date=datetime(2023, 1, 1), created=datetime(2022, 1, 1))
+
+        result = api.get_user_dates(self.course_key, self.user.id, date_types=['due'])
+
+        # start (2023-01-01) + 100d = 2023-04-11, capped to the course end 2023-01-20.
+        assert result == {(self.due_block, 'due'): datetime(2023, 1, 20)}
+
+    def test_due_filter_still_applies_course_cutoff(self):
+        """
+        A learner who enrolled after the cutoff gets no relative due date, even when
+        date_types=['due'] excludes the course end row.
+        """
+        self._make_relative_due(timedelta(days=10))
+        self._make_course_end(datetime(2023, 1, 20))
+        # cutoff = end (2023-01-20) - 10d = 2023-01-10; created 2023-01-15 is past it.
+        self._make_schedule(start_date=datetime(2023, 1, 1), created=datetime(2023, 1, 15))
+
+        result = api.get_user_dates(self.course_key, self.user.id, date_types=['due'])
+
+        assert result == {(self.due_block, 'due'): None}
+
+    def test_relative_due_returned_when_relative_dates_enabled(self):
+        """
+        With relative dates enabled and no course end, the resolved relative due date is returned.
+        """
+        self._make_relative_due(timedelta(days=7))
+        self._make_schedule(start_date=datetime(2023, 1, 1), created=datetime(2023, 1, 1))
+
+        result = api.get_user_dates(self.course_key, self.user.id, date_types=['due'])
+
+        assert result == {(self.due_block, 'due'): datetime(2023, 1, 8)}
+
+    def test_relative_due_skipped_when_relative_dates_disabled(self):
+        """
+        With relative dates disabled for the course, relative ContentDate rows are ignored.
+        """
+        self._make_relative_due(timedelta(days=7))
+        self._make_schedule(start_date=datetime(2023, 1, 1), created=datetime(2023, 1, 1))
+
+        with patch('edx_when.api._are_relative_dates_enabled', return_value=False):
+            result = api.get_user_dates(self.course_key, self.user.id, date_types=['due'])
+
+        assert result == {}

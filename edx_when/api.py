@@ -138,26 +138,39 @@ def _get_end_dates_from_content_dates(qset):
     return end_datetime, cutoff_datetime
 
 
-def _resolve_policy_dates(content_dates, schedule=None, end_datetime=None, cutoff_datetime=None):
+def _resolve_policy_dates(
+        content_dates, schedule=None, end_datetime=None, cutoff_datetime=None, course_id=None
+):  # pylint: disable=too-many-positional-arguments
     """
     Resolve ContentDate objects to their policy-derived datetimes.
 
     Passes schedule/end/cutoff so relative dates (self-paced courses) are included.
     Silently skips entries that require a schedule when none is available.
 
+    Arguments:
+        content_dates: iterable of ContentDate objects to resolve.
+        schedule: Schedule obj (optional), used for relative date calculations.
+        end_datetime: course end datetime (optional), caps relative dates.
+        cutoff_datetime: cutoff datetime (optional) for self-paced late starters.
+        course_id: CourseKey (optional). When provided, each location is normalized
+            with ``location.map_into_course(course_id)``.
+
     Returns:
-        dict where keys are (location, field) tuples and values are datetime objects,
-        representing policy-resolved dates.
+        Tuple ``(dates, policies)`` where ``dates`` maps ``(location, field)`` tuples to
+        resolved datetimes and ``policies`` maps ``content_date.id`` to the same key
+        (used to apply user overrides).
     """
     dates = {}
+    policies = {}
     for cdate in content_dates:
+        location = cdate.location.map_into_course(course_id) if course_id else cdate.location
+        key = (location, cdate.field)
         try:
-            dates[(cdate.location, cdate.field)] = cdate.policy.actual_date(
-                schedule, end_datetime, cutoff_datetime
-            )
+            dates[key] = cdate.policy.actual_date(schedule, end_datetime, cutoff_datetime)
         except models.MissingScheduleError:
             pass
-    return dates
+        policies[cdate.id] = key
+    return dates, policies
 
 
 def _processed_results_cache_key(
@@ -264,19 +277,11 @@ def get_dates_for_course(
         )
         TieredCache.set_all_tiers(raw_results_cache_key, qset)
 
-    dates = {}
-    policies = {}
     end_datetime, cutoff_datetime = _get_end_dates_from_content_dates(qset)
 
-    for cdate in qset:
-        key = (cdate.location.map_into_course(course_id), cdate.field)
-        try:
-            dates[key] = cdate.policy.actual_date(schedule, end_datetime, cutoff_datetime)
-        except models.MissingScheduleError:
-            # We had a relative date but no schedule. This is permissible in some cases (staff users viewing a course
-            # they are not enrolled in, for example). Just let it go by.
-            pass
-        policies[cdate.id] = key
+    dates, policies = _resolve_policy_dates(
+        qset, schedule, end_datetime, cutoff_datetime, course_id=course_id
+    )
 
     if user_id:
         for userdate in models.UserDate.objects.filter(
@@ -674,13 +679,16 @@ def get_user_dates(course_id, user_id, block_types=None, block_keys=None, date_t
         User overrides take priority over content defaults
     """
     course_id = _ensure_key(CourseKey, course_id)
+    allow_relative_dates = _are_relative_dates_enabled(course_id)
 
     content_dates_query = models.ContentDate.objects.filter(
         course_id=course_id,
         active=True,
     ).select_related('policy')
 
-    # Apply filters
+    if not allow_relative_dates:
+        content_dates_query = content_dates_query.filter(policy__rel_date__isnull=True)
+
     if block_types:
         content_dates_query = content_dates_query.filter(block_type__in=block_types)
 
@@ -702,8 +710,12 @@ def get_user_dates(course_id, user_id, block_types=None, block_keys=None, date_t
     )
 
     schedule = get_schedule_for_user(user_id, course_id)
-    end_datetime, cutoff_datetime = _get_end_dates_from_content_dates(content_dates)
-    dates = _resolve_policy_dates(content_dates, schedule, end_datetime, cutoff_datetime)
+
+    course_dates_for_bounds = list(
+        models.ContentDate.objects.filter(course_id=course_id, active=True).select_related('policy')
+    )
+    end_datetime, cutoff_datetime = _get_end_dates_from_content_dates(course_dates_for_bounds)
+    dates, _ = _resolve_policy_dates(content_dates, schedule, end_datetime, cutoff_datetime)
 
     for content_date in content_dates:
         if content_date.user_overrides:
@@ -716,7 +728,7 @@ def get_user_dates(course_id, user_id, block_types=None, block_keys=None, date_t
     return dates
 
 
-def get_existing_due_locations(course_key):
+def get_locations_with_due_dates(course_key):
     """
     Return the set of block locations that already have an active 'due' ContentDate for the given course.
 
@@ -731,20 +743,6 @@ def get_existing_due_locations(course_key):
         models.ContentDate.objects.filter(course_id=course_key, field='due', active=True)
         .values_list('location', flat=True)
     )
-
-
-def update_or_create_assignments_due_dates(course_key, assignments):
-    """
-    Create or update ContentDate entries for a list of assignment objects.
-
-    Arguments:
-        course_key: either a CourseKey or string representation of same
-        assignments: iterable of objects with attributes ``block_key`` (UsageKey) and ``date`` (datetime)
-    """
-    course_key = _ensure_key(CourseKey, course_key)
-    for assignment in assignments:
-        if assignment.date is not None:
-            set_date_for_block(course_key, assignment.block_key, 'due', assignment.date)
 
 
 class BaseWhenException(Exception):
