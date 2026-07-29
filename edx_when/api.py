@@ -140,7 +140,7 @@ def _get_end_dates_from_content_dates(qset):
 
 def _resolve_policy_dates(
         content_dates, schedule=None, end_datetime=None, cutoff_datetime=None, course_id=None
-):  # pylint: disable=too-many-positional-arguments
+):
     """
     Resolve ContentDate objects to their policy-derived datetimes.
 

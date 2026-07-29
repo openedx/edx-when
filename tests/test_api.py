@@ -1667,4 +1667,4 @@ class TestGetUserDatesRelativeDates(TestCase):
         with patch('edx_when.api._are_relative_dates_enabled', return_value=False):
             result = api.get_user_dates(self.course_key, self.user.id, date_types=['due'])
 
-        assert result == {}
+        assert not result
