@@ -963,9 +963,13 @@ class TestGetUserDates(TestCase):
         result = api.get_user_dates(course_id, user_id)
         self.assertEqual(len(result), 0)
 
-    def test_get_user_dates_missing_schedule_error_handled(self):
+    @patch('edx_when.api._are_relative_dates_enabled', return_value=True)
+    def test_get_user_dates_missing_schedule_error_handled(self, _mock_relative_dates_enabled):
         """
         Test that MissingScheduleError is handled gracefully.
+
+        Relative dates must be enabled, otherwise the rel_date ContentDate is filtered
+        out of the query and the resolution path under test is never reached.
         """
         course_id = CourseKey.from_string('course-v1:TestX+Test+2023')
         user_id = 123
@@ -985,9 +989,13 @@ class TestGetUserDates(TestCase):
         result = api.get_user_dates(course_id, user_id)
         self.assertEqual(len(result), 0)
 
-    def test_get_user_dates_override_missing_schedule_error_handled(self):
+    @patch('edx_when.api._are_relative_dates_enabled', return_value=True)
+    def test_get_user_dates_override_missing_schedule_error_handled(self, _mock_relative_dates_enabled):
         """
         A relative user override with no schedule must be skipped, not raise.
+
+        Relative dates must be enabled, otherwise the rel_date ContentDate is filtered
+        out of the query and the override branch under test is never reached.
         """
         course_id = CourseKey.from_string('course-v1:TestX+Test+2023')
         user_id = 123
@@ -1668,3 +1676,51 @@ class TestGetUserDatesRelativeDates(TestCase):
             result = api.get_user_dates(self.course_key, self.user.id, date_types=['due'])
 
         assert not result
+
+
+class TestOverrideDeduplication(TestCase):
+    """
+    Tests that override lookups keep only the most recently modified UserDate row.
+
+    ``set_date_for_block`` appends a new UserDate row per override, so several rows can
+    exist for the same user/block pair.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.course_id = CourseKey.from_string('course-v1:testX+tt105+2019')
+        self.block_key = make_block_id(self.course_id)
+        self.user = User.objects.create(username='dedup-tester', email='dedup@test.com')
+        self.content_date = models.ContentDate.objects.create(
+            course_id=self.course_id,
+            location=self.block_key,
+            field='due',
+            active=True,
+            policy=models.DatePolicy.objects.create(abs_date=datetime(2019, 3, 22)),
+            block_type=self.block_key.block_type,
+        )
+        self.older_date = datetime(2019, 4, 1)
+        self.newer_date = datetime(2019, 4, 2)
+        older = self._make_override(self.older_date, datetime(2019, 5, 1))
+        newer = self._make_override(self.newer_date, datetime(2019, 5, 2))
+        assert older.modified < newer.modified
+
+    def _make_override(self, abs_date, modified):
+        """Create a UserDate with an explicit ``modified`` timestamp."""
+        override = models.UserDate.objects.create(
+            user=self.user, content_date=self.content_date, abs_date=abs_date
+        )
+        override.modified = modified
+        override.save()
+        override.refresh_from_db()
+        return override
+
+    def test_get_overrides_for_block_keeps_latest_per_user(self):
+        overrides = api.get_overrides_for_block(self.course_id, self.block_key)
+        assert overrides == [
+            (self.user.username, 'unknown', self.newer_date, self.user.email, self.block_key)
+        ]
+
+    def test_get_overrides_for_user_keeps_latest_per_block(self):
+        overrides = list(api.get_overrides_for_user(self.course_id, self.user))
+        assert overrides == [{'location': self.block_key, 'actual_date': self.newer_date}]
