@@ -2,4 +2,6 @@
 Central source of course block dates for the LMS.
 """
 
-__version__ = '4.1.0'
+from importlib.metadata import version
+
+__version__ = version("edx-when")

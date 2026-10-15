@@ -1,0 +1,85 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm>8.1"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "edx-when"
+description = "Your project description goes here"
+requires-python = ">=3.12"
+license = "AGPL-3.0-or-later"
+license-files = ["LICENSE.txt", "AUTHORS"]
+authors = [
+    {name = "Open edX Project", email = "oscm@openedx.org"},
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Framework :: Django",
+    "Framework :: Django :: 4.2",
+    "Framework :: Django :: 5.2",
+    "Intended Audience :: Developers",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+]
+keywords = [
+    "Django",
+    "edx",
+]
+
+dynamic = ["readme", "version"]
+
+dependencies = [
+    "Django>=1.11",
+    "django-model-utils",
+    "edx-django-utils",
+    "edx-drf-extensions",
+    "edx-opaque-keys",
+    "xblock",
+]
+
+[project.entry-points."lms.djangoapp"]
+edx_when = "edx_when.apps:EdxWhenConfig"
+
+[project.entry-points."cms.djangoapp"]
+edx_when = "edx_when.apps:EdxWhenConfig"
+
+[project.entry-points."openedx.block_structure_transformer"]
+load_date_data = "edx_when.field_data:DateOverrideTransformer"
+
+[project.urls]
+Homepage = "https://github.com/openedx/edx-when"
+Repository = "https://github.com/openedx/edx-when"
+
+[tool.setuptools]
+include-package-data = false
+
+[tool.setuptools.dynamic]
+readme = {file = ["README.rst", "CHANGELOG.rst"], content-type = "text/x-rst"}
+
+[tool.setuptools.packages.find]
+include = ["edx_when", "edx_when.*"]
+exclude = ["*tests*"]
+
+[tool.setuptools.package-data]
+edx_when = ["templates/**/*"]
+
+[tool.setuptools_scm]
+version_scheme = "only-version"
+local_scheme = "no-local-version"
+
+[tool.isort]
+indent = "    "
+line_length = 120
+multi_line_output = 3
+
+[tool.coverage.run]
+branch = true
+data_file = ".coverage"
+source = ["edx_when"]
+omit = [
+    "test_settings",
+    "*/migrations/*",
+    "*admin.py",
+    "*static*",
+    "*templates*",
+]
