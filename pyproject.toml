@@ -101,6 +101,7 @@ include-package-data = false
 readme = {file = ["README.rst", "CHANGELOG.rst"], content-type = "text/x-rst"}
 
 [tool.setuptools.packages.find]
+where = ["src"]
 include = ["edx_when", "edx_when.*"]
 exclude = ["*tests*"]
 
@@ -150,7 +151,7 @@ multi_line_output = 3
 [tool.coverage.run]
 branch = true
 data_file = ".coverage"
-source = ["edx_when"]
+source_pkgs = ["edx_when"]
 omit = [
     "test_settings",
     "*/migrations/*",

@@ -38,7 +38,7 @@ JWT_AUTH = {
 }
 
 LOCALE_PATHS = [
-    root('edx_when', 'conf', 'locale'),
+    root('src', 'edx_when', 'conf', 'locale'),
 ]
 
 ROOT_URLCONF = 'edx_when.urls'
