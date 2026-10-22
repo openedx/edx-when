@@ -185,7 +185,7 @@ path==16.16.0
     # via edx-i18n-tools
 path-py==11.5.0
     # via -r requirements/dev.in
-pip-tools==7.6.0
+pip-tools==7.6.2
     # via -r requirements/pip-tools.txt
 platformdirs==4.11.0
     # via
